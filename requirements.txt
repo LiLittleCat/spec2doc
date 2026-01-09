@@ -1,0 +1,5 @@
+PySide6
+SQLAlchemy
+PyYAML
+docxtpl
+python-docx
