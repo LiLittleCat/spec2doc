@@ -3,9 +3,18 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-def render_word_docs(api_model: dict, db_model: dict, template_path: Optional[str], output_dir: str) -> list[str]:
+def render_word_docs(
+    api_model: dict | None,
+    db_model: dict | None,
+    template_path: Optional[str],
+    output_dir: str,
+    include_api: bool = True,
+    include_db: bool = True,
+) -> list[str]:
     out_dir = Path(output_dir).resolve()
     out_files: list[str] = []
+    api_model = api_model or {}
+    db_model = db_model or {}
 
     if template_path:
         # 模板驱动：排版最好、最适合推广
@@ -27,39 +36,45 @@ def render_word_docs(api_model: dict, db_model: dict, template_path: Optional[st
     from docx import Document
 
     doc = Document()
-    doc.add_heading(f"{api_model.get('title', 'API')} 设计文档", level=0)
+    if include_db and not include_api:
+        title = "数据库设计文档"
+    else:
+        title = f"{api_model.get('title', 'API')} 设计文档"
+    doc.add_heading(title, level=0)
 
     # API section
-    doc.add_heading("接口设计", level=1)
-    eps = api_model.get("endpoints", [])
-    doc.add_paragraph(f"接口数量：{len(eps)}")
+    if include_api:
+        doc.add_heading("接口设计", level=1)
+        eps = api_model.get("endpoints", [])
+        doc.add_paragraph(f"接口数量：{len(eps)}")
 
-    for ep in eps[:200]:  # 防止太大先截断，可自行改
-        doc.add_heading(f"{ep['method']} {ep['path']}", level=2)
-        if ep.get("summary"):
-            doc.add_paragraph(f"摘要：{ep['summary']}")
-        if ep.get("operationId"):
-            doc.add_paragraph(f"operationId：{ep['operationId']}")
+        for ep in eps[:200]:  # 防止太大先截断，可自行改
+            doc.add_heading(f"{ep['method']} {ep['path']}", level=2)
+            if ep.get("summary"):
+                doc.add_paragraph(f"摘要：{ep['summary']}")
+            if ep.get("operationId"):
+                doc.add_paragraph(f"operationId：{ep['operationId']}")
 
     # DB section
-    doc.add_heading("数据库设计", level=1)
-    tables = db_model.get("tables", [])
-    doc.add_paragraph(f"表数量：{len(tables)}")
+    if include_db:
+        doc.add_heading("数据库设计", level=1)
+        tables = db_model.get("tables", [])
+        doc.add_paragraph(f"表数量：{len(tables)}")
 
-    for t in tables[:200]:
-        doc.add_heading(f"表：{t['name']}", level=2)
-        table = doc.add_table(rows=1, cols=4)
-        hdr = table.rows[0].cells
-        hdr[0].text = "字段"
-        hdr[1].text = "类型"
-        hdr[2].text = "可空"
-        hdr[3].text = "默认值"
-        for c in t.get("columns", []):
-            row = table.add_row().cells
-            row[0].text = str(c.get("name", ""))
-            row[1].text = str(c.get("type", ""))
-            row[2].text = "YES" if c.get("nullable", True) else "NO"
-            row[3].text = str(c.get("default", "") or "")
+        for t in tables[:200]:
+            doc.add_heading(f"表：{t['name']}", level=2)
+            table = doc.add_table(rows=1, cols=4)
+            hdr = table.rows[0].cells
+            hdr[0].text = "字段"
+            hdr[1].text = "类型"
+            hdr[2].text = "可空"
+            hdr[3].text = "默认值"
+            for c in t.get("columns", []):
+                row = table.add_row().cells
+                row[0].text = str(c.get("name", ""))
+                row[1].text = str(c.get("type", ""))
+                row[2].text = "YES" if c.get("nullable", True) else "NO"
+                row[3].text = str(c.get("default", "") or "")
 
     out_path = out_dir / "Spec2Doc_简版.docx"
     doc.save(str(out_path))

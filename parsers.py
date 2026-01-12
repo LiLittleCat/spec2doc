@@ -1,16 +1,24 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import yaml
+
+def load_openapi_from_text(text: str) -> dict:
+    if not text.strip():
+        raise ValueError("OpenAPI 内容为空")
+    try:
+        data = yaml.safe_load(text)
+    except Exception as exc:
+        raise ValueError(f"OpenAPI 解析失败: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("OpenAPI 内容不是有效对象")
+    return data
 
 
 def load_openapi(path: str) -> dict:
     p = Path(path).expanduser().resolve()
     text = p.read_text(encoding="utf-8")
-    if p.suffix.lower() in [".yaml", ".yml"]:
-        return yaml.safe_load(text)
-    return json.loads(text)
+    return load_openapi_from_text(text)
 
 
 def build_api_model(spec: dict) -> dict:

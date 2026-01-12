@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFileDialog, QTextEdit,
-    QGroupBox, QFormLayout, QMessageBox, QProgressBar, QCheckBox
+    QGroupBox, QFormLayout, QMessageBox, QProgressBar
 )
 
 from workers import run_in_threadpool
@@ -31,210 +30,239 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs)
 
-        # Bottom bar: progress + generate
-        bottom = QHBoxLayout()
-        layout.addLayout(bottom)
-
-        self.progress = QProgressBar()
-        self.progress.setRange(0, 100)
-        self.progress.setValue(0)
-        bottom.addWidget(self.progress, 1)
-
-        self.btn_generate = QPushButton("一键生成 Word")
-        self.btn_generate.clicked.connect(self.on_generate)
-        bottom.addWidget(self.btn_generate)
-
-        # ---- Tab: OpenAPI
+        # ---- Tab: API
         self.tab_api = QWidget()
-        self.tabs.addTab(self.tab_api, "OpenAPI")
-        self._build_tab_openapi()
+        self.tabs.addTab(self.tab_api, "接口转文档")
+        self._build_tab_api()
 
         # ---- Tab: Database
         self.tab_db = QWidget()
-        self.tabs.addTab(self.tab_db, "数据库")
+        self.tabs.addTab(self.tab_db, "数据库转文档")
         self._build_tab_db()
-
-        # ---- Tab: Template & Output
-        self.tab_out = QWidget()
-        self.tabs.addTab(self.tab_out, "模板 & 输出")
-        self._build_tab_output()
-
-        # ---- Tab: Logs
-        self.tab_log = QWidget()
-        self.tabs.addTab(self.tab_log, "日志")
-        self._build_tab_logs()
 
         self._load_settings()
 
     # ---------------- UI builders ----------------
-    def _build_tab_openapi(self):
+    def _build_tab_api(self):
         layout = QVBoxLayout(self.tab_api)
 
-        box = QGroupBox("OpenAPI 规范")
-        layout.addWidget(box)
-        form = QFormLayout(box)
+        box_input = QGroupBox("OpenAPI 输入")
+        layout.addWidget(box_input)
+        form_input = QFormLayout(box_input)
 
-        self.ed_openapi = QLineEdit()
-        self.ed_openapi.setPlaceholderText("选择 openapi.yaml / openapi.json")
-        btn = QPushButton("浏览…")
-        btn.clicked.connect(self.pick_openapi)
-
+        self.ed_openapi_path = QLineEdit()
+        self.ed_openapi_path.setPlaceholderText("选择 openapi.yaml / openapi.json")
+        btn_pick = QPushButton("浏览…")
+        btn_pick.clicked.connect(self.pick_openapi)
         row = QHBoxLayout()
-        row.addWidget(self.ed_openapi, 1)
-        row.addWidget(btn)
-        form.addRow(QLabel("OpenAPI 文件:"), row)
+        row.addWidget(self.ed_openapi_path, 1)
+        row.addWidget(btn_pick)
+        form_input.addRow(QLabel("文件:"), row)
 
-        layout.addStretch(1)
+        self.ed_openapi_text = QTextEdit()
+        self.ed_openapi_text.setPlaceholderText("粘贴 OpenAPI YAML / JSON 内容")
+        self.ed_openapi_text.setLineWrapMode(QTextEdit.NoWrap)
+        self.ed_openapi_text.setMinimumHeight(140)
+        form_input.addRow(QLabel("或粘贴内容:"), self.ed_openapi_text)
+
+        box_out = QGroupBox("输出设置")
+        layout.addWidget(box_out)
+        form_out = QFormLayout(box_out)
+
+        self.ed_tpl_api = QLineEdit()
+        self.ed_tpl_api.setPlaceholderText("选择 .docx 模板（可选）")
+        btn_tpl = QPushButton("浏览…")
+        btn_tpl.clicked.connect(self.pick_template_api)
+        row_tpl = QHBoxLayout()
+        row_tpl.addWidget(self.ed_tpl_api, 1)
+        row_tpl.addWidget(btn_tpl)
+        form_out.addRow(QLabel("模板文件:"), row_tpl)
+
+        self.ed_outdir_api = QLineEdit()
+        self.ed_outdir_api.setPlaceholderText("选择输出目录")
+        btn_out = QPushButton("浏览…")
+        btn_out.clicked.connect(self.pick_outdir_api)
+        row_out = QHBoxLayout()
+        row_out.addWidget(self.ed_outdir_api, 1)
+        row_out.addWidget(btn_out)
+        form_out.addRow(QLabel("输出目录:"), row_out)
+
+        box_log, self.log_api = self._build_log_group()
+        layout.addWidget(box_log, 1)
+
+        bottom = QHBoxLayout()
+        self.progress_api = QProgressBar()
+        self.progress_api.setRange(0, 100)
+        self.progress_api.setValue(0)
+        self.btn_generate_api = QPushButton("生成接口文档")
+        self.btn_generate_api.clicked.connect(self.on_generate_api)
+        bottom.addWidget(self.progress_api, 1)
+        bottom.addWidget(self.btn_generate_api)
+        layout.addLayout(bottom)
 
     def _build_tab_db(self):
         layout = QVBoxLayout(self.tab_db)
 
-        # DB Connection
-        box_db = QGroupBox("数据库连接（推荐）")
+        box_db = QGroupBox("数据库连接")
         layout.addWidget(box_db)
         form_db = QFormLayout(box_db)
-
-        self.ck_use_db = QCheckBox("使用数据库连接反射结构")
-        self.ck_use_db.setChecked(True)
-        form_db.addRow(self.ck_use_db)
 
         self.ed_dburl = QLineEdit()
         self.ed_dburl.setPlaceholderText("例如: mysql+pymysql://user:pass@host:3306/dbname  或  postgresql+psycopg://...")
         form_db.addRow(QLabel("SQLAlchemy URL:"), self.ed_dburl)
 
-        # DDL
-        box_ddl = QGroupBox("DDL 文件（可选备份）")
+        box_ddl = QGroupBox("DDL 输入")
         layout.addWidget(box_ddl)
         form_ddl = QFormLayout(box_ddl)
 
-        self.ck_use_ddl = QCheckBox("使用 DDL 文件解析")
-        self.ck_use_ddl.setChecked(False)
-        form_ddl.addRow(self.ck_use_ddl)
-
-        self.ed_ddl = QLineEdit()
-        self.ed_ddl.setPlaceholderText("选择 schema.sql / ddl.sql")
+        self.ed_ddl_path = QLineEdit()
+        self.ed_ddl_path.setPlaceholderText("选择 schema.sql / ddl.sql")
         btn = QPushButton("浏览…")
         btn.clicked.connect(self.pick_ddl)
-
         row = QHBoxLayout()
-        row.addWidget(self.ed_ddl, 1)
+        row.addWidget(self.ed_ddl_path, 1)
         row.addWidget(btn)
         form_ddl.addRow(QLabel("DDL 文件:"), row)
 
-        layout.addStretch(1)
+        self.ed_ddl_text = QTextEdit()
+        self.ed_ddl_text.setPlaceholderText("粘贴 DDL SQL 内容")
+        self.ed_ddl_text.setLineWrapMode(QTextEdit.NoWrap)
+        self.ed_ddl_text.setMinimumHeight(140)
+        form_ddl.addRow(QLabel("或粘贴内容:"), self.ed_ddl_text)
 
-    def _build_tab_output(self):
-        layout = QVBoxLayout(self.tab_out)
-
-        box_tpl = QGroupBox("Word 模板（docxtpl）")
-        layout.addWidget(box_tpl)
-        form_tpl = QFormLayout(box_tpl)
-
-        self.ed_tpl = QLineEdit()
-        self.ed_tpl.setPlaceholderText("选择 .docx 模板（可选；不选则用 python-docx 生成简版）")
-        btn = QPushButton("浏览…")
-        btn.clicked.connect(self.pick_template)
-        row = QHBoxLayout()
-        row.addWidget(self.ed_tpl, 1)
-        row.addWidget(btn)
-        form_tpl.addRow(QLabel("模板文件:"), row)
-
-        box_out = QGroupBox("输出")
+        box_out = QGroupBox("输出设置")
         layout.addWidget(box_out)
         form_out = QFormLayout(box_out)
 
-        self.ed_outdir = QLineEdit()
-        self.ed_outdir.setPlaceholderText("选择输出目录")
-        btn2 = QPushButton("浏览…")
-        btn2.clicked.connect(self.pick_outdir)
-        row2 = QHBoxLayout()
-        row2.addWidget(self.ed_outdir, 1)
-        row2.addWidget(btn2)
-        form_out.addRow(QLabel("输出目录:"), row2)
+        self.ed_tpl_db = QLineEdit()
+        self.ed_tpl_db.setPlaceholderText("选择 .docx 模板（可选）")
+        btn_tpl = QPushButton("浏览…")
+        btn_tpl.clicked.connect(self.pick_template_db)
+        row_tpl = QHBoxLayout()
+        row_tpl.addWidget(self.ed_tpl_db, 1)
+        row_tpl.addWidget(btn_tpl)
+        form_out.addRow(QLabel("模板文件:"), row_tpl)
 
-        layout.addStretch(1)
+        self.ed_outdir_db = QLineEdit()
+        self.ed_outdir_db.setPlaceholderText("选择输出目录")
+        btn_out = QPushButton("浏览…")
+        btn_out.clicked.connect(self.pick_outdir_db)
+        row_out = QHBoxLayout()
+        row_out.addWidget(self.ed_outdir_db, 1)
+        row_out.addWidget(btn_out)
+        form_out.addRow(QLabel("输出目录:"), row_out)
 
-    def _build_tab_logs(self):
-        layout = QVBoxLayout(self.tab_log)
-        self.log = QTextEdit()
-        self.log.setReadOnly(True)
-        self.log.setLineWrapMode(QTextEdit.NoWrap)
-        layout.addWidget(self.log)
+        box_log, self.log_db = self._build_log_group()
+        layout.addWidget(box_log, 1)
+
+        bottom = QHBoxLayout()
+        self.progress_db = QProgressBar()
+        self.progress_db.setRange(0, 100)
+        self.progress_db.setValue(0)
+        self.btn_generate_db = QPushButton("生成数据库文档")
+        self.btn_generate_db.clicked.connect(self.on_generate_db)
+        bottom.addWidget(self.progress_db, 1)
+        bottom.addWidget(self.btn_generate_db)
+        layout.addLayout(bottom)
+
+    def _build_log_group(self) -> tuple[QGroupBox, QTextEdit]:
+        box = QGroupBox("日志")
+        layout = QVBoxLayout(box)
+        log = QTextEdit()
+        log.setReadOnly(True)
+        log.setLineWrapMode(QTextEdit.NoWrap)
+        layout.addWidget(log)
 
         bar = QHBoxLayout()
         layout.addLayout(bar)
-
         btn_clear = QPushButton("清空日志")
-        btn_clear.clicked.connect(lambda: self.log.clear())
+        btn_clear.clicked.connect(log.clear)
         bar.addWidget(btn_clear)
         bar.addStretch(1)
+        return box, log
 
     # ---------------- file pickers ----------------
-    def pick_openapi(self):
-        p, _ = QFileDialog.getOpenFileName(self, "选择 OpenAPI 文件", self._last_dir(), "OpenAPI (*.yaml *.yml *.json);;All (*.*)")
+    def _pick_file(self, title: str, file_filter: str, target: QLineEdit):
+        p, _ = QFileDialog.getOpenFileName(self, title, self._last_dir(), file_filter)
         if p:
-            self.ed_openapi.setText(p)
+            target.setText(p)
             self._set_last_dir(str(Path(p).parent))
 
-    def pick_ddl(self):
-        p, _ = QFileDialog.getOpenFileName(self, "选择 DDL 文件", self._last_dir(), "SQL (*.sql);;All (*.*)")
+    def _pick_dir(self, title: str, target: QLineEdit):
+        p = QFileDialog.getExistingDirectory(self, title, self._last_dir())
         if p:
-            self.ed_ddl.setText(p)
-            self._set_last_dir(str(Path(p).parent))
-
-    def pick_template(self):
-        p, _ = QFileDialog.getOpenFileName(self, "选择 Word 模板", self._last_dir(), "Word (*.docx);;All (*.*)")
-        if p:
-            self.ed_tpl.setText(p)
-            self._set_last_dir(str(Path(p).parent))
-
-    def pick_outdir(self):
-        p = QFileDialog.getExistingDirectory(self, "选择输出目录", self._last_dir())
-        if p:
-            self.ed_outdir.setText(p)
+            target.setText(p)
             self._set_last_dir(p)
 
+    def pick_openapi(self):
+        self._pick_file("选择 OpenAPI 文件", "OpenAPI (*.yaml *.yml *.json);;All (*.*)", self.ed_openapi_path)
+
+    def pick_ddl(self):
+        self._pick_file("选择 DDL 文件", "SQL (*.sql);;All (*.*)", self.ed_ddl_path)
+
+    def pick_template_api(self):
+        self._pick_file("选择 Word 模板", "Word (*.docx);;All (*.*)", self.ed_tpl_api)
+
+    def pick_template_db(self):
+        self._pick_file("选择 Word 模板", "Word (*.docx);;All (*.*)", self.ed_tpl_db)
+
+    def pick_outdir_api(self):
+        self._pick_dir("选择输出目录", self.ed_outdir_api)
+
+    def pick_outdir_db(self):
+        self._pick_dir("选择输出目录", self.ed_outdir_db)
+
     # ---------------- generate ----------------
-    def on_generate(self):
-        inputs = self._collect_inputs()
-        if not inputs.openapi_path:
-            QMessageBox.warning(self, "缺少输入", "请先选择 OpenAPI 文件")
+    def on_generate_api(self):
+        inputs = self._collect_api_inputs()
+        if not inputs.openapi_text and not inputs.openapi_path:
+            QMessageBox.warning(self, "缺少输入", "请上传或粘贴 OpenAPI 内容")
             self.tabs.setCurrentWidget(self.tab_api)
             return
         if not inputs.output_dir:
             QMessageBox.warning(self, "缺少输入", "请选择输出目录")
-            self.tabs.setCurrentWidget(self.tab_out)
-            return
-        if inputs.use_db and not inputs.db_url.strip():
-            QMessageBox.warning(self, "缺少输入", "你选择了“使用数据库连接”，但没有填写 DB URL")
-            self.tabs.setCurrentWidget(self.tab_db)
-            return
-        if inputs.use_ddl and not inputs.ddl_path.strip():
-            QMessageBox.warning(self, "缺少输入", "你选择了“使用 DDL 文件”，但没有选择 DDL")
-            self.tabs.setCurrentWidget(self.tab_db)
+            self.tabs.setCurrentWidget(self.tab_api)
             return
 
         self._save_settings()
+        self._run_generate(inputs, self.progress_api, self.log_api, self.btn_generate_api)
 
-        self._log("开始生成…")
-        self.progress.setValue(0)
-        self.btn_generate.setEnabled(False)
+    def on_generate_db(self):
+        inputs = self._collect_db_inputs()
+        if not inputs.output_dir:
+            QMessageBox.warning(self, "缺少输入", "请选择输出目录")
+            self.tabs.setCurrentWidget(self.tab_db)
+            return
+        if not inputs.use_db and not inputs.use_ddl:
+            QMessageBox.warning(self, "缺少输入", "请填写数据库连接或提供 DDL 内容")
+            self.tabs.setCurrentWidget(self.tab_db)
+            return
+        if inputs.use_db and inputs.use_ddl:
+            self._log_to(self.log_db, "检测到同时填写了 DB 和 DDL，将优先使用数据库连接。")
+
+        self._save_settings()
+        self._run_generate(inputs, self.progress_db, self.log_db, self.btn_generate_db)
+
+    def _run_generate(self, inputs: AppInputs, bar: QProgressBar, log: QTextEdit, button: QPushButton):
+        self._log_to(log, "开始生成…")
+        bar.setValue(0)
+        button.setEnabled(False)
 
         def progress_cb(pct: int, msg: str):
-            self.progress.setValue(max(0, min(100, pct)))
+            bar.setValue(max(0, min(100, pct)))
             if msg:
-                self._log(msg)
+                self._log_to(log, msg)
 
         def done_cb(result: dict | None, err: Exception | None):
-            self.btn_generate.setEnabled(True)
+            button.setEnabled(True)
             if err:
-                self._log(f"[ERROR] {err}")
+                self._log_to(log, f"[ERROR] {err}")
                 QMessageBox.critical(self, "生成失败", str(err))
                 return
             out_files = (result or {}).get("files", [])
-            self._log("生成完成：")
+            self._log_to(log, "生成完成：")
             for f in out_files:
-                self._log(f" - {f}")
+                self._log_to(log, f" - {f}")
             QMessageBox.information(self, "完成", "Word 文档已生成。")
 
         run_in_threadpool(
@@ -244,20 +272,41 @@ class MainWindow(QMainWindow):
         )
 
     # ---------------- helpers ----------------
-    def _collect_inputs(self) -> AppInputs:
+    def _collect_api_inputs(self) -> AppInputs:
         return AppInputs(
-            openapi_path=self.ed_openapi.text().strip(),
-            db_url=self.ed_dburl.text().strip(),
-            ddl_path=self.ed_ddl.text().strip(),
-            template_path=self.ed_tpl.text().strip(),
-            output_dir=self.ed_outdir.text().strip(),
-            use_db=self.ck_use_db.isChecked(),
-            use_ddl=self.ck_use_ddl.isChecked(),
+            mode="api",
+            openapi_path=self.ed_openapi_path.text().strip(),
+            openapi_text=self.ed_openapi_text.toPlainText().strip(),
+            db_url="",
+            ddl_path="",
+            ddl_text="",
+            template_path=self.ed_tpl_api.text().strip(),
+            output_dir=self.ed_outdir_api.text().strip(),
+            use_db=False,
+            use_ddl=False,
         )
 
-    def _log(self, s: str):
-        self.log.append(s)
-        self.tabs.setCurrentWidget(self.tab_log)
+    def _collect_db_inputs(self) -> AppInputs:
+        db_url = self.ed_dburl.text().strip()
+        ddl_path = self.ed_ddl_path.text().strip()
+        ddl_text = self.ed_ddl_text.toPlainText().strip()
+        use_db = bool(db_url)
+        use_ddl = bool(ddl_path or ddl_text)
+        return AppInputs(
+            mode="db",
+            openapi_path="",
+            openapi_text="",
+            db_url=db_url,
+            ddl_path=ddl_path,
+            ddl_text=ddl_text,
+            template_path=self.ed_tpl_db.text().strip(),
+            output_dir=self.ed_outdir_db.text().strip(),
+            use_db=use_db,
+            use_ddl=use_ddl,
+        )
+
+    def _log_to(self, log: QTextEdit, s: str):
+        log.append(s)
 
     def _last_dir(self) -> str:
         return self.settings.value("last_dir", str(Path.home()))
@@ -266,19 +315,19 @@ class MainWindow(QMainWindow):
         self.settings.setValue("last_dir", p)
 
     def _load_settings(self):
-        self.ed_openapi.setText(self.settings.value("openapi_path", ""))
+        self.ed_openapi_path.setText(self.settings.value("openapi_path", ""))
         self.ed_dburl.setText(self.settings.value("db_url", ""))
-        self.ed_ddl.setText(self.settings.value("ddl_path", ""))
-        self.ed_tpl.setText(self.settings.value("template_path", ""))
-        self.ed_outdir.setText(self.settings.value("output_dir", ""))
-        self.ck_use_db.setChecked(self.settings.value("use_db", True, type=bool))
-        self.ck_use_ddl.setChecked(self.settings.value("use_ddl", False, type=bool))
+        self.ed_ddl_path.setText(self.settings.value("ddl_path", ""))
+        self.ed_tpl_api.setText(self.settings.value("template_path_api", ""))
+        self.ed_outdir_api.setText(self.settings.value("output_dir_api", ""))
+        self.ed_tpl_db.setText(self.settings.value("template_path_db", ""))
+        self.ed_outdir_db.setText(self.settings.value("output_dir_db", ""))
 
     def _save_settings(self):
-        self.settings.setValue("openapi_path", self.ed_openapi.text().strip())
+        self.settings.setValue("openapi_path", self.ed_openapi_path.text().strip())
         self.settings.setValue("db_url", self.ed_dburl.text().strip())
-        self.settings.setValue("ddl_path", self.ed_ddl.text().strip())
-        self.settings.setValue("template_path", self.ed_tpl.text().strip())
-        self.settings.setValue("output_dir", self.ed_outdir.text().strip())
-        self.settings.setValue("use_db", self.ck_use_db.isChecked())
-        self.settings.setValue("use_ddl", self.ck_use_ddl.isChecked())
+        self.settings.setValue("ddl_path", self.ed_ddl_path.text().strip())
+        self.settings.setValue("template_path_api", self.ed_tpl_api.text().strip())
+        self.settings.setValue("output_dir_api", self.ed_outdir_api.text().strip())
+        self.settings.setValue("template_path_db", self.ed_tpl_db.text().strip())
+        self.settings.setValue("output_dir_db", self.ed_outdir_db.text().strip())
