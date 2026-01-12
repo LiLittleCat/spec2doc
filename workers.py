@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Optional, Tuple
-from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot
+from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot, Qt
 
 
 class _Signals(QObject):
@@ -24,6 +24,8 @@ class _Task(QRunnable):
         except Exception as e:
             self.signals.done.emit(None, e)
 
+_active_tasks: list["_Task"] = []
+
 
 def run_in_threadpool(
     fn: Callable,
@@ -33,6 +35,14 @@ def run_in_threadpool(
 ):
     pool = QThreadPool.globalInstance()
     task = _Task(fn, args, kwargs or {})
-    if on_done:
-        task.signals.done.connect(on_done)
+    _active_tasks.append(task)
+
+    def _done_wrapper(result: Any, err: Optional[Exception]):
+        if task in _active_tasks:
+            _active_tasks.remove(task)
+        if on_done:
+            on_done(result, err)
+
+    task._done_wrapper = _done_wrapper
+    task.signals.done.connect(_done_wrapper, Qt.QueuedConnection)
     pool.start(task)

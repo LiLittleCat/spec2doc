@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.tab_db, "数据库转文档")
         self._build_tab_db()
 
+        self._active_callbacks: list = []
         self._load_settings()
 
     # ---------------- UI builders ----------------
@@ -254,6 +255,8 @@ class MainWindow(QMainWindow):
                 self._log_to(log, msg)
 
         def done_cb(result: dict | None, err: Exception | None):
+            if done_cb in self._active_callbacks:
+                self._active_callbacks.remove(done_cb)
             button.setEnabled(True)
             if err:
                 self._log_to(log, f"[ERROR] {err}")
@@ -270,6 +273,7 @@ class MainWindow(QMainWindow):
             args=(inputs, progress_cb),
             on_done=done_cb
         )
+        self._active_callbacks.append(done_cb)
 
     # ---------------- helpers ----------------
     def _collect_api_inputs(self) -> AppInputs:

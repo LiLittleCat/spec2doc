@@ -85,3 +85,4 @@ context.debug.json
 *.local
 *.env
 .env.*
+test/

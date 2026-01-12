@@ -4,9 +4,8 @@ from pathlib import Path
 from typing import Callable
 
 from models import AppInputs
-from parsers import load_openapi, load_openapi_from_text, build_api_model
-from db_introspect import reflect_db_schema
-from word_render import render_word_docs
+from api_doc_service import generate_api_doc
+from db_doc_service import generate_db_doc
 
 
 def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> dict:
@@ -15,43 +14,28 @@ def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> di
 
     if inputs.mode == "api":
         progress(5, "读取 OpenAPI…")
-        if inputs.openapi_text.strip():
-            spec = load_openapi_from_text(inputs.openapi_text)
-        else:
-            spec = load_openapi(inputs.openapi_path)
-        api_model = build_api_model(spec)
-        progress(25, f"解析 OpenAPI 完成：{len(api_model.get('endpoints', []))} 个接口")
-
-        progress(70, "渲染 Word…")
-        files = render_word_docs(
-            api_model=api_model,
-            db_model={},
+        files = generate_api_doc(
+            openapi_path=inputs.openapi_path,
+            openapi_text=inputs.openapi_text,
             template_path=inputs.template_path or None,
             output_dir=str(out_dir),
-            include_api=True,
-            include_db=False,
         )
         progress(100, "完成")
         return {"files": files}
 
     progress(10, "准备数据库文档…")
-    db_model = {}
     if inputs.use_db and inputs.db_url:
         progress(30, "连接数据库并反射结构…")
-        db_model = reflect_db_schema(inputs.db_url)
-        progress(60, f"数据库反射完成：{len(db_model.get('tables', []))} 张表")
     elif inputs.use_ddl and (inputs.ddl_path or inputs.ddl_text):
         progress(35, "检测到 DDL（当前骨架未实现 DDL 解析，可后续补上）")
-        # 这里后面你可以用 sqlglot 把 DDL 变成 db_model
 
     progress(70, "渲染 Word…")
-    files = render_word_docs(
-        api_model={"title": "数据库", "version": "", "endpoints": []},
-        db_model=db_model,
+    files = generate_db_doc(
+        db_url=inputs.db_url if inputs.use_db else "",
+        ddl_path=inputs.ddl_path if inputs.use_ddl else "",
+        ddl_text=inputs.ddl_text if inputs.use_ddl else "",
         template_path=inputs.template_path or None,
         output_dir=str(out_dir),
-        include_api=False,
-        include_db=True,
     )
 
     progress(100, "完成")
