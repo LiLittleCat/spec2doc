@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime
+from typing import Callable, Optional
 import re
 
 from parsers import load_openapi, load_openapi_from_text, build_api_model
@@ -24,11 +26,35 @@ def _sanitize_value(value):
     return value
 
 
+def _emit(log: Optional[Callable[[str], None]], msg: str) -> None:
+    if log:
+        log(msg)
+
+
+def _format_parameters(params: list[dict]) -> str:
+    if not params:
+        return ""
+    buckets: dict[str, list[str]] = {}
+    for p in params:
+        name = p.get("name") if isinstance(p, dict) else ""
+        loc = p.get("in") if isinstance(p, dict) else ""
+        if not name or not loc:
+            continue
+        buckets.setdefault(loc, []).append(str(name))
+    parts = []
+    for key in ("path", "query", "header", "cookie"):
+        names = buckets.get(key, [])
+        if names:
+            parts.append(f"{key}=" + ",".join(names))
+    return "；".join(parts)
+
+
 def generate_api_doc(
     openapi_path: str,
     openapi_text: str,
     template_path: str | None,
     output_dir: str,
+    log: Optional[Callable[[str], None]] = None,
 ) -> list[str]:
     out_dir = Path(output_dir).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -41,6 +67,26 @@ def generate_api_doc(
         raise ValueError("缺少 OpenAPI 文件或内容")
 
     api_model = _sanitize_value(build_api_model(spec))
+    endpoints = api_model.get("endpoints", []) or []
+    _emit(log, f"解析 OpenAPI 完成：{len(endpoints)} 个接口")
+    for ep in endpoints:
+        method = ep.get("method", "")
+        path = ep.get("path", "")
+        title = ep.get("summary") or ep.get("operationId") or ""
+        title_part = f" - {title}" if title else ""
+        _emit(log, f"接口：{method} {path}{title_part}")
+
+        param_desc = _format_parameters(ep.get("parameters", []) or [])
+        _emit(log, f"  参数：{param_desc or '无'}")
+
+        req_fields = [f.get("name", "") for f in ep.get("req_fields", []) if f.get("name")]
+        resp_fields = [f.get("name", "") for f in ep.get("resp_fields", []) if f.get("name")]
+        _emit(log, f"  请求体字段：{'、'.join(req_fields) if req_fields else '无'}")
+        _emit(log, f"  返回字段：{'、'.join(resp_fields) if resp_fields else '无'}")
+
+    _emit(log, "渲染 Word…")
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    output_filename = f"Spec2Doc_接口设计文档_{ts}.docx"
     return render_word_docs(
         api_model=api_model,
         db_model={},
@@ -48,4 +94,5 @@ def generate_api_doc(
         output_dir=str(out_dir),
         include_api=True,
         include_db=False,
+        output_filename=output_filename,
     )

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Qt, QObject, Signal
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFileDialog, QTextEdit,
@@ -14,6 +15,10 @@ from models import AppInputs
 from generators import generate_docs
 
 
+class _ProgressEmitter(QObject):
+    progress = Signal(int, str)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -21,10 +26,25 @@ class MainWindow(QMainWindow):
         self.resize(980, 680)
 
         self.settings = QSettings("Spec2Doc", "Spec2DocApp")
+        self._logo_path = Path(__file__).resolve().parent / "assets" / "logo.svg"
+        if self._logo_path.exists():
+            self.setWindowIcon(QIcon(str(self._logo_path)))
 
         root = QWidget()
         self.setCentralWidget(root)
         layout = QVBoxLayout(root)
+
+        header = QHBoxLayout()
+        if self._logo_path.exists():
+            logo = QLabel()
+            pixmap = QPixmap(str(self._logo_path))
+            if not pixmap.isNull():
+                logo.setPixmap(pixmap.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                header.addWidget(logo)
+        title = QLabel("Spec2Doc")
+        header.addWidget(title)
+        header.addStretch(1)
+        layout.addLayout(header)
 
         # Tabs
         self.tabs = QTabWidget()
@@ -41,6 +61,7 @@ class MainWindow(QMainWindow):
         self._build_tab_db()
 
         self._active_callbacks: list = []
+        self._active_emitters: list[_ProgressEmitter] = []
         self._load_settings()
 
     # ---------------- UI builders ----------------
@@ -249,14 +270,24 @@ class MainWindow(QMainWindow):
         bar.setValue(0)
         button.setEnabled(False)
 
-        def progress_cb(pct: int, msg: str):
+        emitter = _ProgressEmitter()
+        self._active_emitters.append(emitter)
+
+        def on_progress(pct: int, msg: str):
             bar.setValue(max(0, min(100, pct)))
             if msg:
                 self._log_to(log, msg)
 
+        emitter.progress.connect(on_progress, Qt.QueuedConnection)
+
+        def progress_cb(pct: int, msg: str):
+            emitter.progress.emit(pct, msg)
+
         def done_cb(result: dict | None, err: Exception | None):
             if done_cb in self._active_callbacks:
                 self._active_callbacks.remove(done_cb)
+            if emitter in self._active_emitters:
+                self._active_emitters.remove(emitter)
             button.setEnabled(True)
             if err:
                 self._log_to(log, f"[ERROR] {err}")

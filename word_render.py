@@ -11,6 +11,7 @@ def render_word_docs(
     output_dir: str,
     include_api: bool = True,
     include_db: bool = True,
+    output_filename: Optional[str] = None,
 ) -> list[str]:
     out_dir = Path(output_dir).resolve()
     out_files: list[str] = []
@@ -28,7 +29,7 @@ def render_word_docs(
         }
         tpl.render(context)
 
-        out_path = out_dir / "Spec2Doc_设计文档.docx"
+        out_path = out_dir / (output_filename or "Spec2Doc_设计文档.docx")
         tpl.save(str(out_path))
         if include_api:
             _fill_endpoint_tables(str(out_path), api_model.get("endpoints", []))
@@ -79,7 +80,7 @@ def render_word_docs(
                 row[2].text = "YES" if c.get("nullable", True) else "NO"
                 row[3].text = str(c.get("default", "") or "")
 
-    out_path = out_dir / "Spec2Doc_简版.docx"
+    out_path = out_dir / (output_filename or "Spec2Doc_简版.docx")
     doc.save(str(out_path))
     out_files.append(str(out_path))
     return out_files

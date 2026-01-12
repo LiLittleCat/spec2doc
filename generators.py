@@ -19,6 +19,7 @@ def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> di
             openapi_text=inputs.openapi_text,
             template_path=inputs.template_path or None,
             output_dir=str(out_dir),
+            log=lambda msg: progress(30, msg),
         )
         progress(100, "完成")
         return {"files": files}

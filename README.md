@@ -1,5 +1,7 @@
 # Spec2Doc
 
+![Spec2Doc Logo](assets/logo.svg)
+
 Spec2Doc 是一个**规范驱动的文档生成器**：从 **OpenAPI 规范** + **数据库结构（连接反射 / DDL）** 自动生成标准化的 **接口设计** 与 **数据库设计** Word 文档（`.docx`）。  
 目标：减少重复写文档的时间，让输出更统一、更易推广。
 
@@ -12,8 +14,9 @@ Spec2Doc 是一个**规范驱动的文档生成器**：从 **OpenAPI 规范** + 
 - ✅ 生成 Word 文档
   - 推荐：使用 **docxtpl 模板**渲染（排版/样式由模板控制，更像“人工写的”）
   - 备选：无模板时使用 **python-docx** 生成简版文档
-- ✅ GUI 桌面应用（PySide6 / Qt）
-- ✅ 生成过程后台线程执行，带日志与进度条
+- ✅ GUI 桌面应用（PySide6 / Qt，接口转文档 / 数据库转文档两个 Tab）
+- ✅ 每个 Tab 支持上传文件或粘贴内容，带日志与进度条
+- ✅ 生成核心逻辑已剥离为独立模块，便于改 GUI 或做 CLI/服务化
 
 > 说明：目前版本偏 MVP，输出内容可逐步扩展（参数表、响应字段展开、错误码、索引/外键/注释、ER 图等）。
 
@@ -80,11 +83,15 @@ python app.py
 
 运行后在 GUI 中：
 
-1. 选择 OpenAPI 文件
-2. 填写 DB URL（或选择 DDL 文件）
+1. 选择「接口转文档」或「数据库转文档」Tab
+2. 上传文件或粘贴内容（若两者同时存在，**优先使用粘贴内容**）
 3. 选择 Word 模板（可选）
 4. 选择输出目录
-5. 点击「一键生成 Word」
+5. 点击生成按钮
+
+数据库 Tab：
+- 支持直接填写 DB URL 连接反射
+- 或提供 DDL 文件/粘贴 DDL（若 DB URL 和 DDL 同时存在，**优先使用 DB 连接**）
 
 ---
 
@@ -132,9 +139,65 @@ Spec2Doc 使用 `docxtpl` 渲染 `.docx` 模板：模板中写 Jinja2 占位符/
 
 * 变量：`{{ api.title }}`、`{{ api.version }}`
 * 循环：`{% for ep in api.endpoints %} ... {% endfor %}`
-* 表格行循环：在表格行第一格放 `{% for c in t.columns %}`，最后一格放 `{% endfor %}`，该行会自动复制多行。
 
-> 建议：在渲染前把 context 输出为 `context.debug.json` 方便调试字段名是否对齐。
+### 模板变量清单
+
+**顶层变量**
+- `api`：接口模型
+- `db`：数据库模型
+
+**接口模型（api）**
+- `api.title`：接口文档标题
+- `api.version`：版本号（来自 OpenAPI info.version）
+- `api.endpoints`：接口列表
+
+**接口项（ep）**
+- `ep.method`：HTTP 方法（GET/POST/PUT/...）
+- `ep.path`：接口路径
+- `ep.summary`：摘要
+- `ep.description`：描述
+- `ep.operationId`：操作 ID
+- `ep.tags`：标签数组
+- `ep.parameters`：原始 OpenAPI parameters（未展开）
+- `ep.requestBody`：原始 OpenAPI requestBody
+- `ep.responses`：原始 OpenAPI responses
+- `ep.security`：原始 OpenAPI security
+- `ep.request_content_type`：请求体 content-type（取第一个）
+- `ep.req_fields`：请求参数字段（由 schema 推导）
+- `ep.resp_fields`：响应参数字段（由 schema 推导）
+
+**字段项（f in ep.req_fields / ep.resp_fields）**
+- `f.name`：字段名
+- `f.type`：字段类型（$ref 会简化为类型名）
+- `f.required`：是否必填
+- `f.description`：字段描述
+
+**数据库模型（db）**
+- `db.tables`：表列表
+
+**表项（t in db.tables）**
+- `t.name`：表名
+- `t.columns`：字段列表
+- `t.pk`：主键字段名数组
+- `t.indexes`：索引列表（SQLAlchemy inspector 原始结构）
+- `t.foreign_keys`：外键列表（SQLAlchemy inspector 原始结构）
+
+**字段项（c in t.columns）**
+- `c.name`：字段名
+- `c.type`：字段类型（字符串）
+- `c.nullable`：是否可空
+- `c.default`：默认值
+
+> 说明：若 OpenAPI 未提供 requestBody/responses 或 schema 无字段信息，`req_fields`/`resp_fields` 可能为空。
+
+**接口参数表的推荐方式（避免表格错列）：**
+- 在「请求参数」表格中保留一行样例，内容为占位符：  
+  `__REQ_NAME__` / `__REQ_TYPE__` / `__REQ_REQUIRED__` / `__REQ_DESC__`
+- 在「返回参数」表格中保留一行样例，内容为占位符：  
+  `__RESP_NAME__` / `__RESP_TYPE__` / `__RESP_REQUIRED__` / `__RESP_DESC__`
+- 程序渲染后会自动复制该行并填充字段，不再依赖 docxtpl 的表格行循环。
+
+> 建议：模板可参考 `template.docx`，如需扩展字段，保持占位符一致即可。
 
 ---
 
@@ -150,6 +213,8 @@ spec2doc/
   parsers.py           # OpenAPI 读取与中间模型
   db_introspect.py     # DB 结构反射
   word_render.py       # docxtpl/python-docx 输出
+  api_doc_service.py   # 接口文档核心逻辑（可独立调用）
+  db_doc_service.py    # 数据库文档核心逻辑（可独立调用）
   requirements.txt
 ```
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime
 import re
 
 from db_introspect import reflect_db_schema
@@ -41,6 +42,8 @@ def generate_db_doc(
         # 预留：后续可用 sqlglot 解析 DDL 生成 db_model
         db_model = {}
 
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    output_filename = f"Spec2Doc_数据库设计文档_{ts}.docx"
     return render_word_docs(
         api_model={"title": "数据库", "version": "", "endpoints": []},
         db_model=db_model,
@@ -48,4 +51,5 @@ def generate_db_doc(
         output_dir=str(out_dir),
         include_api=False,
         include_db=True,
+        output_filename=output_filename,
     )
