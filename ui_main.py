@@ -35,14 +35,14 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(root)
 
         header = QHBoxLayout()
-        if self._logo_path.exists():
-            logo = QLabel()
-            pixmap = QPixmap(str(self._logo_path))
-            if not pixmap.isNull():
-                logo.setPixmap(pixmap.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-                header.addWidget(logo)
-        title = QLabel("Spec2Doc")
-        header.addWidget(title)
+        # if self._logo_path.exists():
+        #     logo = QLabel()
+        #     pixmap = QPixmap(str(self._logo_path))
+        #     if not pixmap.isNull():
+        #         logo.setPixmap(pixmap.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        #         header.addWidget(logo)
+        # title = QLabel("Spec2Doc")
+        # header.addWidget(title)
         header.addStretch(1)
         layout.addLayout(header)
 
