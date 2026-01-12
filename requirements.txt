@@ -3,3 +3,4 @@ SQLAlchemy
 PyYAML
 docxtpl
 python-docx
+openapi-core
