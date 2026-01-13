@@ -115,6 +115,46 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
             else:
                 _fill_table_rows(req_table, "__REQ_NAME__", req_rows)
         
+        # 处理请求体嵌套结构（使用 __REQ_NESTED_NAME__ 占位符）- 在响应表之前
+        req_nested = ep.get("req_nested", {})
+        req_nested_table, t_idx = _find_table_with_token(tables, "__REQ_NESTED_NAME__", t_idx)
+        
+        if req_nested_table is not None:
+            if req_nested:
+                from copy import deepcopy
+                template_element = deepcopy(req_nested_table._element)
+                parent = req_nested_table._element.getparent()
+                
+                nested_list = list(req_nested.items())
+                first_path, first_info = nested_list[0]
+                first_rows = _build_nested_rows(first_info, "__REQ_NESTED")
+                if first_rows:
+                    first_table_idx = list(parent).index(req_nested_table._element)
+                    _insert_nested_label(doc, parent, first_table_idx, f"请求.{first_path}", first_info)
+                    _fill_table_rows(req_nested_table, "__REQ_NESTED_NAME__", first_rows)
+                else:
+                    tables_to_remove_ids.add(id(req_nested_table))
+                
+                # 后续嵌套：复制模板
+                if len(nested_list) > 1:
+                    first_table_idx = list(parent).index(req_nested_table._element)
+                    insert_offset = 1
+                    for nested_path, nested_info in nested_list[1:]:
+                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, f"请求.{nested_path}", nested_info)
+                        insert_offset += 1
+                        cloned_table_elem = deepcopy(template_element)
+                        parent.insert(first_table_idx + insert_offset, cloned_table_elem)
+                        from docx.table import Table
+                        cloned_table = Table(cloned_table_elem, doc)
+                        nested_rows = _build_nested_rows(nested_info, "__REQ_NESTED")
+                        if nested_rows:
+                            _fill_table_rows(cloned_table, "__REQ_NESTED_NAME__", nested_rows)
+                        else:
+                            cloned_table._element.getparent().remove(cloned_table._element)
+                        insert_offset += 1
+            else:
+                tables_to_remove_ids.add(id(req_nested_table))
+        
         # 处理响应表格
         resp_table, t_idx = _find_table_with_token(tables, "__RESP_NAME__", t_idx)
         if resp_table is not None:
@@ -124,66 +164,45 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
             else:
                 _fill_table_rows(resp_table, "__RESP_NAME__", resp_rows)
         
-        # 合并请求体和响应体的嵌套结构，统一处理
-        req_nested = ep.get("req_nested", {})
+        # 处理响应嵌套结构（使用 __RESP_NESTED_NAME__ 占位符）
         resp_nested = ep.get("resp_nested", {})
+        resp_nested_table, t_idx = _find_table_with_token(tables, "__RESP_NESTED_NAME__", t_idx)
         
-        # 合并所有嵌套结构（请求在前，响应在后）
-        all_nested = []
-        for path, info in req_nested.items():
-            all_nested.append((f"请求.{path}", info))
-        for path, info in resp_nested.items():
-            all_nested.append((f"响应.{path}", info))
-        
-        # 找到嵌套表格模板（每个接口只有一个）
-        first_nested_table, t_idx = _find_table_with_token(tables, "__NESTED_NAME__", t_idx)
-        
-        if first_nested_table is not None:
-            if all_nested:
+        if resp_nested_table is not None:
+            if resp_nested:
                 from copy import deepcopy
+                template_element = deepcopy(resp_nested_table._element)
+                parent = resp_nested_table._element.getparent()
                 
-                # 先保存模板副本（在填充数据之前！）
-                template_element = deepcopy(first_nested_table._element)
-                parent = first_nested_table._element.getparent()
-                
-                # 第一个嵌套结构使用原始表格
-                first_path, first_info = all_nested[0]
-                first_rows = _build_nested_rows(first_info)
+                nested_list = list(resp_nested.items())
+                first_path, first_info = nested_list[0]
+                first_rows = _build_nested_rows(first_info, "__RESP_NESTED")
                 if first_rows:
-                    first_table_idx = list(parent).index(first_nested_table._element)
-                    _insert_nested_label(doc, parent, first_table_idx, first_path, first_info)
-                    _fill_table_rows(first_nested_table, "__NESTED_NAME__", first_rows)
+                    first_table_idx = list(parent).index(resp_nested_table._element)
+                    _insert_nested_label(doc, parent, first_table_idx, f"响应.{first_path}", first_info)
+                    _fill_table_rows(resp_nested_table, "__RESP_NESTED_NAME__", first_rows)
                 else:
-                    tables_to_remove_ids.add(id(first_nested_table))
+                    tables_to_remove_ids.add(id(resp_nested_table))
                 
-                # 后续嵌套结构：复制表格模板并插入
-                if len(all_nested) > 1:
-                    first_table_idx = list(parent).index(first_nested_table._element)
+                # 后续嵌套：复制模板
+                if len(nested_list) > 1:
+                    first_table_idx = list(parent).index(resp_nested_table._element)
                     insert_offset = 1
-                    
-                    for nested_path, nested_info in all_nested[1:]:
-                        # 先插入标题段落
-                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, nested_path, nested_info)
+                    for nested_path, nested_info in nested_list[1:]:
+                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, f"响应.{nested_path}", nested_info)
                         insert_offset += 1
-                        
-                        # 从保存的模板复制
                         cloned_table_elem = deepcopy(template_element)
                         parent.insert(first_table_idx + insert_offset, cloned_table_elem)
-                        
-                        # 创建新的 Table 对象并填充
                         from docx.table import Table
                         cloned_table = Table(cloned_table_elem, doc)
-                        
-                        nested_rows = _build_nested_rows(nested_info)
+                        nested_rows = _build_nested_rows(nested_info, "__RESP_NESTED")
                         if nested_rows:
-                            _fill_table_rows(cloned_table, "__NESTED_NAME__", nested_rows)
+                            _fill_table_rows(cloned_table, "__RESP_NESTED_NAME__", nested_rows)
                         else:
                             cloned_table._element.getparent().remove(cloned_table._element)
-                        
                         insert_offset += 1
             else:
-                # 没有任何嵌套数据，删除这个空的嵌套表格
-                tables_to_remove_ids.add(id(first_nested_table))
+                tables_to_remove_ids.add(id(resp_nested_table))
     
     # 删除所有空表 - 根据 ID 去重
     for table in tables:
@@ -317,14 +336,19 @@ def _build_param_rows(ep: dict) -> list[dict]:
     return rows
 
 
-def _build_nested_rows(nested_info: dict) -> list[dict]:
-    """构建嵌套结构表格行"""
+def _build_nested_rows(nested_info: dict, prefix: str = "__NESTED") -> list[dict]:
+    """构建嵌套结构表格行
+    
+    Args:
+        nested_info: 嵌套结构信息
+        prefix: 占位符前缀，如 "__REQ_NESTED" 或 "__RESP_NESTED"
+    """
     rows = []
     for f in nested_info.get("fields", []) or []:
         rows.append({
-            "__NESTED_NAME__": f.get("name", ""),
-            "__NESTED_TYPE__": f.get("type", ""),
-            "__NESTED_REQUIRED__": "Y" if f.get("required") else "N",
-            "__NESTED_DESC__": f.get("description", ""),
+            f"{prefix}_NAME__": f.get("name", ""),
+            f"{prefix}_TYPE__": f.get("type", ""),
+            f"{prefix}_REQUIRED__": "Y" if f.get("required") else "N",
+            f"{prefix}_DESC__": f.get("description", ""),
         })
     return rows
