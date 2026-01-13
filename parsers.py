@@ -78,6 +78,32 @@ def _extract_request_info(op: dict, spec_path: Spec) -> tuple[str, list[dict]]:
     return content_type, _schema_to_fields(schema, spec_path)
 
 
+def _extract_parameters(params: list) -> list[dict]:
+    """将 OpenAPI parameters 数组转换为结构化字段列表"""
+    if not params or not isinstance(params, list):
+        return []
+    fields = []
+    for p in params:
+        if not isinstance(p, dict):
+            continue
+        name = p.get("name", "")
+        if not name:
+            continue
+        param_in = p.get("in", "")
+        schema = p.get("schema", {})
+        param_type = ""
+        if isinstance(schema, dict):
+            param_type = schema.get("type", "")
+        fields.append({
+            "name": name,
+            "type": param_type,
+            "in": param_in,
+            "required": p.get("required", False),
+            "description": p.get("description", ""),
+        })
+    return fields
+
+
 def _extract_response_fields(op: dict, spec_path: Spec) -> list[dict]:
     responses = op.get("responses") or {}
     if not isinstance(responses, dict) or not responses:
@@ -130,6 +156,7 @@ def build_api_model(spec: dict) -> dict:
             op = op or {}
             request_content_type, req_fields = _extract_request_info(op, spec_path)
             resp_fields = _extract_response_fields(op, spec_path)
+            param_fields = _extract_parameters(op.get("parameters", []))
             endpoints.append({
                 "method": method.upper(),
                 "path": url,
@@ -144,6 +171,7 @@ def build_api_model(spec: dict) -> dict:
                 "request_content_type": request_content_type,
                 "req_fields": req_fields,
                 "resp_fields": resp_fields,
+                "param_fields": param_fields,
             })
 
     info = spec.get("info", {}) or {}

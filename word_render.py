@@ -92,13 +92,44 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
     doc = Document(docx_path)
     tables = list(doc.tables)
     t_idx = 0
+    
+    tables_to_remove = []  # 记录需要删除的空表
+    
     for ep in endpoints:
+        # 处理参数表格
+        param_table, t_idx = _find_table_with_token(tables, "__PARAM_NAME__", t_idx)
+        if param_table is not None:
+            param_rows = _build_param_rows(ep)
+            if not param_rows:
+                # 没有参数，标记表格为待删除
+                tables_to_remove.append(param_table)
+            else:
+                _fill_table_rows(param_table, "__PARAM_NAME__", param_rows)
+        
+        # 处理请求体表格
         req_table, t_idx = _find_table_with_token(tables, "__REQ_NAME__", t_idx)
         if req_table is not None:
-            _fill_table_rows(req_table, "__REQ_NAME__", _build_req_rows(ep))
+            req_rows = _build_req_rows(ep)
+            if not req_rows:
+                # 没有请求体字段，标记表格为待删除
+                tables_to_remove.append(req_table)
+            else:
+                _fill_table_rows(req_table, "__REQ_NAME__", req_rows)
+        
+        # 处理响应表格
         resp_table, t_idx = _find_table_with_token(tables, "__RESP_NAME__", t_idx)
         if resp_table is not None:
-            _fill_table_rows(resp_table, "__RESP_NAME__", _build_resp_rows(ep))
+            resp_rows = _build_resp_rows(ep)
+            if not resp_rows:
+                # 没有响应字段，标记表格为待删除
+                tables_to_remove.append(resp_table)
+            else:
+                _fill_table_rows(resp_table, "__RESP_NAME__", resp_rows)
+    
+    # 删除所有空表
+    for table in tables_to_remove:
+        table._element.getparent().remove(table._element)
+    
     doc.save(docx_path)
 
 
@@ -163,5 +194,18 @@ def _build_resp_rows(ep: dict) -> list[dict]:
             "__RESP_TYPE__": f.get("type", ""),
             "__RESP_REQUIRED__": "Y" if f.get("required") else "N",
             "__RESP_DESC__": f.get("description", ""),
+        })
+    return rows
+
+
+def _build_param_rows(ep: dict) -> list[dict]:
+    """构建参数表格行（包括 query、path、header、cookie 等参数）"""
+    rows = []
+    for f in ep.get("param_fields", []) or []:
+        rows.append({
+            "__PARAM_NAME__": f.get("name", ""),
+            "__PARAM_TYPE__": f.get("type", ""),
+            "__PARAM_REQUIRED__": "Y" if f.get("required") else "N",
+            "__PARAM_DESC__": f.get("description", ""),
         })
     return rows

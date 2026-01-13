@@ -79,8 +79,10 @@ def generate_api_doc(
         param_desc = _format_parameters(ep.get("parameters", []) or [])
         _emit(log, f"  参数：{param_desc or '无'}")
 
+        param_fields = [f"{f.get('name', '')}({f.get('in', '')})" for f in ep.get("param_fields", []) if f.get("name")]
         req_fields = [f.get("name", "") for f in ep.get("req_fields", []) if f.get("name")]
         resp_fields = [f.get("name", "") for f in ep.get("resp_fields", []) if f.get("name")]
+        _emit(log, f"  参数字段：{'、'.join(param_fields) if param_fields else '无'}")
         _emit(log, f"  请求体字段：{'、'.join(req_fields) if req_fields else '无'}")
         _emit(log, f"  返回字段：{'、'.join(resp_fields) if resp_fields else '无'}")
 
