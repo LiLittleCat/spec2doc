@@ -101,7 +101,6 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
         if param_table is not None:
             param_rows = _build_param_rows(ep)
             if not param_rows:
-                # 没有参数，标记表格为待删除
                 tables_to_remove.append(param_table)
             else:
                 _fill_table_rows(param_table, "__PARAM_NAME__", param_rows)
@@ -111,20 +110,43 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
         if req_table is not None:
             req_rows = _build_req_rows(ep)
             if not req_rows:
-                # 没有请求体字段，标记表格为待删除
                 tables_to_remove.append(req_table)
             else:
                 _fill_table_rows(req_table, "__REQ_NAME__", req_rows)
+        
+        # 处理请求体嵌套结构
+        req_nested = ep.get("req_nested", {})
+        for nested_path in sorted(req_nested.keys()):
+            nested_info = req_nested[nested_path]
+            nested_table, t_idx = _find_table_with_token(tables, "__NESTED_NAME__", t_idx)
+            if nested_table is not None:
+                nested_rows = _build_nested_rows(nested_info)
+                if nested_rows:
+                    # 更新表格前的标题（如果有）
+                    _fill_table_rows(nested_table, "__NESTED_NAME__", nested_rows)
+                else:
+                    tables_to_remove.append(nested_table)
         
         # 处理响应表格
         resp_table, t_idx = _find_table_with_token(tables, "__RESP_NAME__", t_idx)
         if resp_table is not None:
             resp_rows = _build_resp_rows(ep)
             if not resp_rows:
-                # 没有响应字段，标记表格为待删除
                 tables_to_remove.append(resp_table)
             else:
                 _fill_table_rows(resp_table, "__RESP_NAME__", resp_rows)
+        
+        # 处理响应嵌套结构
+        resp_nested = ep.get("resp_nested", {})
+        for nested_path in sorted(resp_nested.keys()):
+            nested_info = resp_nested[nested_path]
+            nested_table, t_idx = _find_table_with_token(tables, "__NESTED_NAME__", t_idx)
+            if nested_table is not None:
+                nested_rows = _build_nested_rows(nested_info)
+                if nested_rows:
+                    _fill_table_rows(nested_table, "__NESTED_NAME__", nested_rows)
+                else:
+                    tables_to_remove.append(nested_table)
     
     # 删除所有空表
     for table in tables_to_remove:
@@ -207,5 +229,18 @@ def _build_param_rows(ep: dict) -> list[dict]:
             "__PARAM_TYPE__": f.get("type", ""),
             "__PARAM_REQUIRED__": "Y" if f.get("required") else "N",
             "__PARAM_DESC__": f.get("description", ""),
+        })
+    return rows
+
+
+def _build_nested_rows(nested_info: dict) -> list[dict]:
+    """构建嵌套结构表格行"""
+    rows = []
+    for f in nested_info.get("fields", []) or []:
+        rows.append({
+            "__NESTED_NAME__": f.get("name", ""),
+            "__NESTED_TYPE__": f.get("type", ""),
+            "__NESTED_REQUIRED__": "Y" if f.get("required") else "N",
+            "__NESTED_DESC__": f.get("description", ""),
         })
     return rows

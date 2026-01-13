@@ -87,4 +87,7 @@ context.debug.json
 .env.*
 test/
 
+# =========================
+# docx templates
+# =========================
 !assets/*.docx
