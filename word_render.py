@@ -402,6 +402,10 @@ def _fill_db_tables(docx_path: str, db_tables: list[dict]) -> None:
     
     # 获取模板段落（如果有）
     template_para = doc.paragraphs[template_para_idx] if template_para_idx is not None else None
+    template_para_elem_tpl = deepcopy(template_para._element) if template_para else None
+
+    template_table_elem = template_table._element
+    template_table_elem_tpl = deepcopy(template_table_elem)
     
     # 处理第一个表
     first_table = db_tables[0]
@@ -421,21 +425,15 @@ def _fill_db_tables(docx_path: str, db_tables: list[dict]) -> None:
     # 处理后续的表 - 需要复制模板段落和表格
     if len(db_tables) > 1:
         # 获取模板表格在文档中的位置
-        body = doc.element.body
-        template_table_elem = template_table._element
         table_parent = template_table_elem.getparent()
         template_table_idx_in_body = list(table_parent).index(template_table_elem)
-        
-        # 如果有模板段落，获取它的元素
-        template_para_elem = template_para._element if template_para else None
         
         insert_idx = template_table_idx_in_body + 1
         
         for db_table in db_tables[1:]:
             # 复制段落
-            if template_para_elem is not None:
-                from copy import deepcopy
-                new_para_elem = deepcopy(template_para_elem)
+            if template_para_elem_tpl is not None:
+                new_para_elem = deepcopy(template_para_elem_tpl)
                 table_parent.insert(insert_idx, new_para_elem)
                 
                 # 替换新段落中的占位符
@@ -449,8 +447,7 @@ def _fill_db_tables(docx_path: str, db_tables: list[dict]) -> None:
                 insert_idx += 1
             
             # 复制表格
-            from copy import deepcopy
-            new_table_elem = deepcopy(template_table_elem)
+            new_table_elem = deepcopy(template_table_elem_tpl)
             table_parent.insert(insert_idx, new_table_elem)
             
             # 填充新表格
