@@ -130,7 +130,7 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
                 first_rows = _build_nested_rows(first_info, "__REQ_NESTED")
                 if first_rows:
                     first_table_idx = list(parent).index(req_nested_table._element)
-                    _insert_nested_label(doc, parent, first_table_idx, f"请求.{first_path}", first_info)
+                    _insert_nested_label(doc, parent, first_table_idx, f"{first_path}", first_info)
                     _fill_table_rows(req_nested_table, "__REQ_NESTED_NAME__", first_rows)
                 else:
                     tables_to_remove_ids.add(id(req_nested_table))
@@ -140,7 +140,7 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
                     first_table_idx = list(parent).index(req_nested_table._element)
                     insert_offset = 1
                     for nested_path, nested_info in nested_list[1:]:
-                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, f"请求.{nested_path}", nested_info)
+                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, f"{nested_path}", nested_info)
                         insert_offset += 1
                         cloned_table_elem = deepcopy(template_element)
                         parent.insert(first_table_idx + insert_offset, cloned_table_elem)
@@ -179,7 +179,7 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
                 first_rows = _build_nested_rows(first_info, "__RESP_NESTED")
                 if first_rows:
                     first_table_idx = list(parent).index(resp_nested_table._element)
-                    _insert_nested_label(doc, parent, first_table_idx, f"响应.{first_path}", first_info)
+                    _insert_nested_label(doc, parent, first_table_idx, f"{first_path}", first_info)
                     _fill_table_rows(resp_nested_table, "__RESP_NESTED_NAME__", first_rows)
                 else:
                     tables_to_remove_ids.add(id(resp_nested_table))
@@ -189,7 +189,7 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
                     first_table_idx = list(parent).index(resp_nested_table._element)
                     insert_offset = 1
                     for nested_path, nested_info in nested_list[1:]:
-                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, f"响应.{nested_path}", nested_info)
+                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, f"{nested_path}", nested_info)
                         insert_offset += 1
                         cloned_table_elem = deepcopy(template_element)
                         parent.insert(first_table_idx + insert_offset, cloned_table_elem)
