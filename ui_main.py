@@ -7,7 +7,8 @@ from PySide6.QtGui import QIcon, QPixmap, QDesktopServices
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFileDialog, QTextEdit,
-    QGroupBox, QFormLayout, QMessageBox, QProgressBar
+    QGroupBox, QFormLayout, QMessageBox, QProgressBar,
+    QTableWidget, QTableWidgetItem, QToolButton
 )
 
 from workers import run_in_threadpool
@@ -89,15 +90,42 @@ class MainWindow(QMainWindow):
 
         box_meta = QGroupBox("自定义字段")
         layout.addWidget(box_meta)
-        form_meta = QFormLayout(box_meta)
+        meta_layout = QVBoxLayout(box_meta)
 
-        self.ed_api_server = QLineEdit()
-        self.ed_api_server.setPlaceholderText("如：设备管理后台服务")
-        form_meta.addRow(QLabel("服务端:"), self.ed_api_server)
+        header = QHBoxLayout()
+        header.addWidget(QLabel("模板字段"))
+        help_btn = QToolButton()
+        help_btn.setText("?")
+        help_btn.setAutoRaise(True)
+        help_btn.setToolTip(
+            "每行填写一个 key 和 value（推荐：英文/下划线）。\n"
+            "生成后可在模板中使用：\n"
+            "  {{ ep.<key> }} 或 {{ api.<key> }}\n"
+            "示例：\n"
+            "  server=设备管理后台服务\n"
+            "  client=设备管理 Web 页面"
+        )
+        header.addWidget(help_btn)
+        header.addStretch(1)
+        meta_layout.addLayout(header)
 
-        self.ed_api_client = QLineEdit()
-        self.ed_api_client.setPlaceholderText("如：设备管理 Web 页面")
-        form_meta.addRow(QLabel("客户端:"), self.ed_api_client)
+        self.tbl_api_kv = QTableWidget(0, 2)
+        self.tbl_api_kv.setHorizontalHeaderLabels(["Key", "Value"])
+        self.tbl_api_kv.horizontalHeaderItem(0).setToolTip("模板字段 key（建议英文/下划线）")
+        self.tbl_api_kv.horizontalHeaderItem(1).setToolTip("模板字段 value（显示在模板中）")
+        self.tbl_api_kv.horizontalHeader().setStretchLastSection(True)
+        self.tbl_api_kv.setMinimumHeight(88)
+        meta_layout.addWidget(self.tbl_api_kv)
+
+        meta_actions = QHBoxLayout()
+        self.btn_api_kv_add = QPushButton("新增一行")
+        self.btn_api_kv_add.clicked.connect(self._add_api_kv_row)
+        self.btn_api_kv_remove = QPushButton("删除选中")
+        self.btn_api_kv_remove.clicked.connect(self._remove_api_kv_row)
+        meta_actions.addWidget(self.btn_api_kv_add)
+        meta_actions.addWidget(self.btn_api_kv_remove)
+        meta_actions.addStretch(1)
+        meta_layout.addLayout(meta_actions)
 
         box_out = QGroupBox("输出设置")
         layout.addWidget(box_out)
@@ -340,8 +368,7 @@ class MainWindow(QMainWindow):
             mode="api",
             openapi_path=self.ed_openapi_path.text().strip(),
             openapi_text=self.ed_openapi_text.toPlainText().strip(),
-            api_server=self.ed_api_server.text().strip(),
-            api_client=self.ed_api_client.text().strip(),
+            api_kv_text=self._api_kv_text_from_table(),
             db_url="",
             ddl_path="",
             ddl_text="",
@@ -361,8 +388,7 @@ class MainWindow(QMainWindow):
             mode="db",
             openapi_path="",
             openapi_text="",
-            api_server="",
-            api_client="",
+            api_kv_text="",
             db_url=db_url,
             ddl_path=ddl_path,
             ddl_text=ddl_text,
@@ -374,6 +400,49 @@ class MainWindow(QMainWindow):
 
     def _log_to(self, log: QTextEdit, s: str):
         log.append(s)
+
+    def _add_api_kv_row(self) -> None:
+        row = self.tbl_api_kv.rowCount()
+        self.tbl_api_kv.insertRow(row)
+        self.tbl_api_kv.setCurrentCell(row, 0)
+
+    def _remove_api_kv_row(self) -> None:
+        row = self.tbl_api_kv.currentRow()
+        if row >= 0:
+            self.tbl_api_kv.removeRow(row)
+
+    def _api_kv_text_from_table(self) -> str:
+        lines = []
+        for row in range(self.tbl_api_kv.rowCount()):
+            key_item = self.tbl_api_kv.item(row, 0)
+            val_item = self.tbl_api_kv.item(row, 1)
+            key = key_item.text().strip() if key_item else ""
+            value = val_item.text().strip() if val_item else ""
+            if not key:
+                continue
+            lines.append(f"{key}={value}")
+        return "\n".join(lines)
+
+    def _set_api_kv_from_text(self, text: str) -> None:
+        self.tbl_api_kv.setRowCount(0)
+        if not text:
+            return
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line:
+                continue
+            if "=" in line:
+                key, value = line.split("=", 1)
+            elif ":" in line:
+                key, value = line.split(":", 1)
+            elif "：" in line:
+                key, value = line.split("：", 1)
+            else:
+                key, value = line, ""
+            row = self.tbl_api_kv.rowCount()
+            self.tbl_api_kv.insertRow(row)
+            self.tbl_api_kv.setItem(row, 0, QTableWidgetItem(key.strip()))
+            self.tbl_api_kv.setItem(row, 1, QTableWidgetItem(value.strip()))
 
     def _open_output_dir(self, out_dir: str) -> None:
         if not out_dir:
@@ -395,8 +464,7 @@ class MainWindow(QMainWindow):
         self.ed_openapi_path.setText(self.settings.value("openapi_path", ""))
         self.ed_dburl.setText(self.settings.value("db_url", ""))
         self.ed_ddl_path.setText(self.settings.value("ddl_path", ""))
-        self.ed_api_server.setText(self.settings.value("api_server", ""))
-        self.ed_api_client.setText(self.settings.value("api_client", ""))
+        self._set_api_kv_from_text(self.settings.value("api_kv_text", ""))
         self.ed_tpl_api.setText(self.settings.value("template_path_api", ""))
         self.ed_outdir_api.setText(self.settings.value("output_dir_api", ""))
         self.ed_tpl_db.setText(self.settings.value("template_path_db", ""))
@@ -406,8 +474,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue("openapi_path", self.ed_openapi_path.text().strip())
         self.settings.setValue("db_url", self.ed_dburl.text().strip())
         self.settings.setValue("ddl_path", self.ed_ddl_path.text().strip())
-        self.settings.setValue("api_server", self.ed_api_server.text().strip())
-        self.settings.setValue("api_client", self.ed_api_client.text().strip())
+        self.settings.setValue("api_kv_text", self._api_kv_text_from_table())
         self.settings.setValue("template_path_api", self.ed_tpl_api.text().strip())
         self.settings.setValue("output_dir_api", self.ed_outdir_api.text().strip())
         self.settings.setValue("template_path_db", self.ed_tpl_db.text().strip())

@@ -6,8 +6,7 @@ class AppInputs:
     mode: str
     openapi_path: str
     openapi_text: str
-    api_server: str
-    api_client: str
+    api_kv_text: str
     db_url: str
     ddl_path: str
     ddl_text: str

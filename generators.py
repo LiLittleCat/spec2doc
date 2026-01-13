@@ -28,11 +28,35 @@ def _build_output_filename(stem: str, used: dict[str, int], fallback: str) -> st
     return f"{base}{suffix}.docx"
 
 
+def _parse_kv_text(text: str) -> dict[str, str]:
+    if not text:
+        return {}
+    result: dict[str, str] = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" in line:
+            key, value = line.split("=", 1)
+        elif ":" in line:
+            key, value = line.split(":", 1)
+        elif "：" in line:
+            key, value = line.split("：", 1)
+        else:
+            continue
+        key = key.strip()
+        value = value.strip()
+        if key:
+            result[key] = value
+    return result
+
+
 def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> dict:
     out_dir = Path(inputs.output_dir).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if inputs.mode == "api":
+        custom_fields = _parse_kv_text(inputs.api_kv_text)
         files = []
         if inputs.openapi_text.strip():
             progress(5, "读取 OpenAPI…")
@@ -42,8 +66,7 @@ def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> di
                 template_path=inputs.template_path or None,
                 output_dir=str(out_dir),
                 log=lambda msg: progress(30, msg),
-                api_server=inputs.api_server,
-                api_client=inputs.api_client,
+                custom_fields=custom_fields,
             )
             progress(100, "完成")
             return {"files": files}
@@ -62,8 +85,7 @@ def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> di
                 output_dir=str(out_dir),
                 log=lambda msg: progress(30, msg),
                 output_filename=output_filename,
-                api_server=inputs.api_server,
-                api_client=inputs.api_client,
+                custom_fields=custom_fields,
             ))
         progress(100, "完成")
         return {"files": files}
