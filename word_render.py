@@ -93,7 +93,8 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
     tables = list(doc.tables)
     t_idx = 0
     
-    tables_to_remove = []  # 记录需要删除的空表
+    # 使用集合避免重复，并记录表格 ID 而不是表格对象
+    tables_to_remove_ids = set()
     
     for ep in endpoints:
         # 处理参数表格
@@ -101,7 +102,7 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
         if param_table is not None:
             param_rows = _build_param_rows(ep)
             if not param_rows:
-                tables_to_remove.append(param_table)
+                tables_to_remove_ids.add(id(param_table))
             else:
                 _fill_table_rows(param_table, "__PARAM_NAME__", param_rows)
         
@@ -110,49 +111,132 @@ def _fill_endpoint_tables(docx_path: str, endpoints: list[dict]) -> None:
         if req_table is not None:
             req_rows = _build_req_rows(ep)
             if not req_rows:
-                tables_to_remove.append(req_table)
+                tables_to_remove_ids.add(id(req_table))
             else:
                 _fill_table_rows(req_table, "__REQ_NAME__", req_rows)
-        
-        # 处理请求体嵌套结构
-        req_nested = ep.get("req_nested", {})
-        for nested_path in sorted(req_nested.keys()):
-            nested_info = req_nested[nested_path]
-            nested_table, t_idx = _find_table_with_token(tables, "__NESTED_NAME__", t_idx)
-            if nested_table is not None:
-                nested_rows = _build_nested_rows(nested_info)
-                if nested_rows:
-                    # 更新表格前的标题（如果有）
-                    _fill_table_rows(nested_table, "__NESTED_NAME__", nested_rows)
-                else:
-                    tables_to_remove.append(nested_table)
         
         # 处理响应表格
         resp_table, t_idx = _find_table_with_token(tables, "__RESP_NAME__", t_idx)
         if resp_table is not None:
             resp_rows = _build_resp_rows(ep)
             if not resp_rows:
-                tables_to_remove.append(resp_table)
+                tables_to_remove_ids.add(id(resp_table))
             else:
                 _fill_table_rows(resp_table, "__RESP_NAME__", resp_rows)
         
-        # 处理响应嵌套结构
+        # 合并请求体和响应体的嵌套结构，统一处理
+        req_nested = ep.get("req_nested", {})
         resp_nested = ep.get("resp_nested", {})
-        for nested_path in sorted(resp_nested.keys()):
-            nested_info = resp_nested[nested_path]
-            nested_table, t_idx = _find_table_with_token(tables, "__NESTED_NAME__", t_idx)
-            if nested_table is not None:
-                nested_rows = _build_nested_rows(nested_info)
-                if nested_rows:
-                    _fill_table_rows(nested_table, "__NESTED_NAME__", nested_rows)
+        
+        # 合并所有嵌套结构（请求在前，响应在后）
+        all_nested = []
+        for path, info in req_nested.items():
+            all_nested.append((f"请求.{path}", info))
+        for path, info in resp_nested.items():
+            all_nested.append((f"响应.{path}", info))
+        
+        # 找到嵌套表格模板（每个接口只有一个）
+        first_nested_table, t_idx = _find_table_with_token(tables, "__NESTED_NAME__", t_idx)
+        
+        if first_nested_table is not None:
+            if all_nested:
+                from copy import deepcopy
+                
+                # 先保存模板副本（在填充数据之前！）
+                template_element = deepcopy(first_nested_table._element)
+                parent = first_nested_table._element.getparent()
+                
+                # 第一个嵌套结构使用原始表格
+                first_path, first_info = all_nested[0]
+                first_rows = _build_nested_rows(first_info)
+                if first_rows:
+                    first_table_idx = list(parent).index(first_nested_table._element)
+                    _insert_nested_label(doc, parent, first_table_idx, first_path, first_info)
+                    _fill_table_rows(first_nested_table, "__NESTED_NAME__", first_rows)
                 else:
-                    tables_to_remove.append(nested_table)
+                    tables_to_remove_ids.add(id(first_nested_table))
+                
+                # 后续嵌套结构：复制表格模板并插入
+                if len(all_nested) > 1:
+                    first_table_idx = list(parent).index(first_nested_table._element)
+                    insert_offset = 1
+                    
+                    for nested_path, nested_info in all_nested[1:]:
+                        # 先插入标题段落
+                        _insert_nested_label(doc, parent, first_table_idx + insert_offset, nested_path, nested_info)
+                        insert_offset += 1
+                        
+                        # 从保存的模板复制
+                        cloned_table_elem = deepcopy(template_element)
+                        parent.insert(first_table_idx + insert_offset, cloned_table_elem)
+                        
+                        # 创建新的 Table 对象并填充
+                        from docx.table import Table
+                        cloned_table = Table(cloned_table_elem, doc)
+                        
+                        nested_rows = _build_nested_rows(nested_info)
+                        if nested_rows:
+                            _fill_table_rows(cloned_table, "__NESTED_NAME__", nested_rows)
+                        else:
+                            cloned_table._element.getparent().remove(cloned_table._element)
+                        
+                        insert_offset += 1
+            else:
+                # 没有任何嵌套数据，删除这个空的嵌套表格
+                tables_to_remove_ids.add(id(first_nested_table))
     
-    # 删除所有空表
-    for table in tables_to_remove:
-        table._element.getparent().remove(table._element)
+    # 删除所有空表 - 根据 ID 去重
+    for table in tables:
+        if id(table) in tables_to_remove_ids:
+            try:
+                table._element.getparent().remove(table._element)
+            except Exception:
+                # 表格可能已经被删除，忽略错误
+                pass
     
     doc.save(docx_path)
+
+
+def _insert_nested_label(doc, parent, insert_idx: int, nested_path: str, nested_info: dict) -> None:
+    """在指定位置插入嵌套结构的标题段落"""
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    
+    # 创建段落元素
+    p = OxmlElement('w:p')
+    
+    # 创建段落属性
+    pPr = OxmlElement('w:pPr')
+    
+    # 设置段前间距
+    spacing = OxmlElement('w:spacing')
+    spacing.set(qn('w:before'), '200')  # 段前间距
+    pPr.append(spacing)
+    p.append(pPr)
+    
+    # 创建文本运行
+    r = OxmlElement('w:r')
+    
+    # 设置加粗
+    rPr = OxmlElement('w:rPr')
+    b = OxmlElement('w:b')
+    rPr.append(b)
+    
+    # 设置字号
+    sz = OxmlElement('w:sz')
+    sz.set(qn('w:val'), '21')  # 10.5磅
+    rPr.append(sz)
+    r.append(rPr)
+    
+    # 添加文本
+    t = OxmlElement('w:t')
+    field_type = "数组项" if nested_info.get("type") == "array" else "对象"
+    t.text = f"▸ {nested_path} ({field_type})"
+    r.append(t)
+    p.append(r)
+    
+    # 插入段落
+    parent.insert(insert_idx, p)
 
 
 def _find_table_with_token(tables: list, token: str, start_idx: int) -> tuple[Optional[object], int]:
