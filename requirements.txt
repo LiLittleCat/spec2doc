@@ -4,3 +4,4 @@ PyYAML
 docxtpl
 python-docx
 openapi-core
+sqlglot

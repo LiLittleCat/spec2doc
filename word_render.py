@@ -33,6 +33,8 @@ def render_word_docs(
         tpl.save(str(out_path))
         if include_api:
             _fill_endpoint_tables(str(out_path), api_model.get("endpoints", []))
+        if include_db:
+            _fill_db_tables(str(out_path), db_model.get("tables", []))
         out_files.append(str(out_path))
         return out_files
 
@@ -350,5 +352,127 @@ def _build_nested_rows(nested_info: dict, prefix: str = "__NESTED") -> list[dict
             f"{prefix}_TYPE__": f.get("type", ""),
             f"{prefix}_REQUIRED__": "Y" if f.get("required") else "N",
             f"{prefix}_DESC__": f.get("description", ""),
+        })
+    return rows
+
+
+def _fill_db_tables(docx_path: str, db_tables: list[dict]) -> None:
+    """填充数据库表格模板
+    
+    模板中使用占位符:
+    - __TABLE_NAME__: 表名
+    - __TABLE_DESC__: 表描述/注释
+    - __COL_NAME__: 列名
+    - __COL_TYPE__: 列类型
+    - __COL_REQUIRED__: 是否必填 (Y/N)
+    - __COL_DESC__: 列描述
+    """
+    from docx import Document
+    
+    if not db_tables:
+        return
+    
+    doc = Document(docx_path)
+    
+    # 找到包含 __TABLE_NAME__ 的段落作为模板
+    template_para_idx = None
+    for i, para in enumerate(doc.paragraphs):
+        if "__TABLE_NAME__" in para.text or "__TABLE_DESC__" in para.text:
+            template_para_idx = i
+            break
+    
+    # 找到包含 __COL_NAME__ 的表格作为模板
+    template_table_idx = None
+    template_table = None
+    for i, table in enumerate(doc.tables):
+        for row in table.rows:
+            for cell in row.cells:
+                if "__COL_NAME__" in cell.text:
+                    template_table_idx = i
+                    template_table = table
+                    break
+            if template_table is not None:
+                break
+        if template_table is not None:
+            break
+    
+    if template_table is None:
+        # 没有找到模板表格，跳过
+        return
+    
+    # 获取模板段落（如果有）
+    template_para = doc.paragraphs[template_para_idx] if template_para_idx is not None else None
+    
+    # 处理第一个表
+    first_table = db_tables[0]
+    
+    # 替换段落中的占位符
+    if template_para:
+        for run in template_para.runs:
+            if "__TABLE_DESC__" in run.text:
+                run.text = run.text.replace("__TABLE_DESC__", first_table.get("comment", "") or first_table.get("name", ""))
+            if "__TABLE_NAME__" in run.text:
+                run.text = run.text.replace("__TABLE_NAME__", first_table.get("name", ""))
+    
+    # 填充列数据
+    col_rows = _build_col_rows(first_table)
+    _fill_table_rows(template_table, "__COL_NAME__", col_rows)
+    
+    # 处理后续的表 - 需要复制模板段落和表格
+    if len(db_tables) > 1:
+        # 获取模板表格在文档中的位置
+        body = doc.element.body
+        template_table_elem = template_table._element
+        table_parent = template_table_elem.getparent()
+        template_table_idx_in_body = list(table_parent).index(template_table_elem)
+        
+        # 如果有模板段落，获取它的元素
+        template_para_elem = template_para._element if template_para else None
+        
+        insert_idx = template_table_idx_in_body + 1
+        
+        for db_table in db_tables[1:]:
+            # 复制段落
+            if template_para_elem is not None:
+                from copy import deepcopy
+                new_para_elem = deepcopy(template_para_elem)
+                table_parent.insert(insert_idx, new_para_elem)
+                
+                # 替换新段落中的占位符
+                from docx.text.paragraph import Paragraph
+                new_para = Paragraph(new_para_elem, doc)
+                for run in new_para.runs:
+                    if "__TABLE_DESC__" in run.text:
+                        run.text = run.text.replace("__TABLE_DESC__", db_table.get("comment", "") or db_table.get("name", ""))
+                    if "__TABLE_NAME__" in run.text:
+                        run.text = run.text.replace("__TABLE_NAME__", db_table.get("name", ""))
+                insert_idx += 1
+            
+            # 复制表格
+            from copy import deepcopy
+            new_table_elem = deepcopy(template_table_elem)
+            table_parent.insert(insert_idx, new_table_elem)
+            
+            # 填充新表格
+            from docx.table import Table
+            new_table = Table(new_table_elem, doc)
+            col_rows = _build_col_rows(db_table)
+            _fill_table_rows(new_table, "__COL_NAME__", col_rows)
+            insert_idx += 1
+    
+    doc.save(docx_path)
+
+
+def _build_col_rows(db_table: dict) -> list[dict]:
+    """构建列表格行数据"""
+    rows = []
+    for col in db_table.get("columns", []):
+        # 确定是否必填：非 nullable 或者是主键
+        required = "Y" if (not col.get("nullable", True) or col.get("is_pk", False)) else "N"
+        rows.append({
+            "__COL_NAME__": col.get("name", ""),
+            "__COL_TYPE__": col.get("type", ""),
+            "__COL_REQUIRED__": required,
+            "__COL_DESC__": col.get("comment", "") or col.get("description", ""),
         })
     return rows
