@@ -16,6 +16,9 @@ Spec2Doc 是一个**规范驱动的文档生成器**：从 **OpenAPI 规范** + 
   - 备选：无模板时使用 **python-docx** 生成简版文档
 - ✅ GUI 桌面应用（PySide6 / Qt，接口转文档 / 数据库转文档两个 Tab）
 - ✅ 每个 Tab 支持上传文件或粘贴内容，带日志与进度条
+- ✅ 支持多文件批量生成（OpenAPI/DDL 可多选）
+- ✅ 输出目录一键打开
+- ✅ 自定义模板字段（key/value，注入到 api / ep）
 - ✅ 生成核心逻辑已剥离为独立模块，便于改 GUI 或做 CLI/服务化
 
 > 说明：目前版本偏 MVP，输出内容可逐步扩展（参数表、响应字段展开、错误码、索引/外键/注释、ER 图等）。
@@ -84,10 +87,15 @@ python app.py
 运行后在 GUI 中：
 
 1. 选择「接口转文档」或「数据库转文档」Tab
-2. 上传文件或粘贴内容（若两者同时存在，**优先使用粘贴内容**）
+2. 上传文件或粘贴内容（可多选文件；若两者同时存在，**优先使用粘贴内容**）
 3. 选择 Word 模板（可选）
 4. 选择输出目录
 5. 点击生成按钮
+6. 可点击「打开输出文件夹」快速打开目录
+
+输出文件名规则：
+- 若选择文件：输出为同名 `.docx`（同名冲突会自动加后缀 `_2`、`_3`）
+- 若粘贴内容：使用默认时间戳命名
 
 数据库 Tab：
 - 支持直接填写 DB URL 连接反射
@@ -139,6 +147,11 @@ Spec2Doc 使用 `docxtpl` 渲染 `.docx` 模板：模板中写 Jinja2 占位符/
 
 * 变量：`{{ api.title }}`、`{{ api.version }}`
 * 循环：`{% for ep in api.endpoints %} ... {% endfor %}`
+* 自定义字段：`{{ api.<key> }}`、`{{ ep.<key> }}`
+
+自定义字段填写方式（GUI「自定义字段」区域）：
+- 每行一条 key/value（如 `server=设备管理后台服务`）
+- 模板里用：`{{ ep.server }}` / `{{ api.server }}`
 
 ### 模板变量清单
 
@@ -165,6 +178,8 @@ Spec2Doc 使用 `docxtpl` 渲染 `.docx` 模板：模板中写 Jinja2 占位符/
 - `ep.request_content_type`：请求体 content-type（取第一个）
 - `ep.req_fields`：请求参数字段（由 schema 推导）
 - `ep.resp_fields`：响应参数字段（由 schema 推导）
+- `ep.param_fields`：parameters 字段（query/path/header/cookie）
+- `ep.req_nested` / `ep.resp_nested`：嵌套结构字段集合（按路径分组）
 
 **字段项（f in ep.req_fields / ep.resp_fields）**
 - `f.name`：字段名
@@ -191,10 +206,15 @@ Spec2Doc 使用 `docxtpl` 渲染 `.docx` 模板：模板中写 Jinja2 占位符/
 > 说明：若 OpenAPI 未提供 requestBody/responses 或 schema 无字段信息，`req_fields`/`resp_fields` 可能为空。
 
 **接口参数表的推荐方式（避免表格错列）：**
+- 在「请求参数（parameters）」表格中保留一行样例，内容为占位符：  
+  `__PARAM_NAME__` / `__PARAM_TYPE__` / `__PARAM_REQUIRED__` / `__PARAM_DESC__`
 - 在「请求参数」表格中保留一行样例，内容为占位符：  
   `__REQ_NAME__` / `__REQ_TYPE__` / `__REQ_REQUIRED__` / `__REQ_DESC__`
 - 在「返回参数」表格中保留一行样例，内容为占位符：  
   `__RESP_NAME__` / `__RESP_TYPE__` / `__RESP_REQUIRED__` / `__RESP_DESC__`
+- 嵌套结构表格占位符：  
+  `__REQ_NESTED_NAME__` / `__REQ_NESTED_TYPE__` / `__REQ_NESTED_REQUIRED__` / `__REQ_NESTED_DESC__`  
+  `__RESP_NESTED_NAME__` / `__RESP_NESTED_TYPE__` / `__RESP_NESTED_REQUIRED__` / `__RESP_NESTED_DESC__`
 - 程序渲染后会自动复制该行并填充字段，不再依赖 docxtpl 的表格行循环。
 
 > 建议：模板可参考 `template.docx`，如需扩展字段，保持占位符一致即可。
