@@ -73,6 +73,7 @@ def parse_ddl_to_model(ddl_text: str) -> dict:
                         default = None
                         comment = ""
                         is_pk = False
+                        null_constraint = getattr(exp, "NullColumnConstraint", None)
                         
                         # 提取列类型
                         if col_def.kind:
@@ -82,6 +83,8 @@ def parse_ddl_to_model(ddl_text: str) -> dict:
                         for constraint in col_def.constraints:
                             if isinstance(constraint.kind, exp.NotNullColumnConstraint):
                                 nullable = False
+                            elif null_constraint and isinstance(constraint.kind, null_constraint):
+                                nullable = True
                             elif isinstance(constraint.kind, exp.PrimaryKeyColumnConstraint):
                                 is_pk = True
                                 pk_columns.append(col_name)
@@ -92,6 +95,16 @@ def parse_ddl_to_model(ddl_text: str) -> dict:
                                 if constraint.kind.this:
                                     comment = constraint.kind.this.this if hasattr(constraint.kind.this, 'this') else str(constraint.kind.this)
                                     comment = comment.strip("'\"")
+
+                        # 以列定义文本中的 NOT NULL 为准，避免解析器误判
+                        try:
+                            col_sql = col_def.sql(dialect="mysql").upper()
+                            if "NOT NULL" in col_sql:
+                                nullable = False
+                            elif " NULL" in col_sql:
+                                nullable = True
+                        except Exception:
+                            pass
                         
                         columns.append({
                             "name": col_name,

@@ -238,8 +238,76 @@ def load_openapi(path: str) -> dict:
     return load_openapi_from_text(text)
 
 
+def _extract_server_prefix(spec: dict) -> str:
+    servers = spec.get("servers", []) or []
+    if not isinstance(servers, list) or not servers:
+        return ""
+    first = servers[0]
+    if not isinstance(first, dict):
+        return ""
+    url = first.get("url")
+    if not isinstance(url, str) or not url:
+        return ""
+    if "://" in url:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            url = parsed.path or ""
+        except Exception:
+            return ""
+    url = "/" + url.lstrip("/")
+    url = url.rstrip("/")
+    return "" if url == "/" else url
+
+
+def _normalize_paths(spec: dict) -> dict:
+    paths = spec.get("paths", {}) or {}
+    if not isinstance(paths, dict) or not paths:
+        return spec
+
+    server_prefix = _extract_server_prefix(spec)
+    normalized = {}
+    changed = False
+    for raw_path, methods in paths.items():
+        if not isinstance(raw_path, str):
+            normalized[raw_path] = methods
+            continue
+
+        key = raw_path
+        if "://" in key:
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(key)
+                key = parsed.path or ""
+            except Exception:
+                pass
+        if key.startswith("//"):
+            key = "/" + key.lstrip("/")
+        if key.startswith("BASEURL"):
+            key = key[len("BASEURL"):]
+        if server_prefix and key.startswith(server_prefix):
+            key = key[len(server_prefix):] or "/"
+        if not (key.startswith("/") or key.startswith("x-")):
+            key = f"/{key}"
+        changed = changed or key != raw_path
+
+        if key in normalized and isinstance(normalized[key], dict) and isinstance(methods, dict):
+            for method, info in methods.items():
+                if method not in normalized[key]:
+                    normalized[key][method] = info
+        else:
+            normalized[key] = methods
+
+    if not changed:
+        return spec
+    spec = dict(spec)
+    spec["paths"] = normalized
+    return spec
+
+
 def build_api_model(spec: dict) -> dict:
     # 这里先做一个非常“够用”的 MVP：提取 endpoints 列表
+    spec = _normalize_paths(spec)
     spec_path = Spec.from_dict(spec)
     paths = spec.get("paths", {}) or {}
     endpoints = []

@@ -42,6 +42,8 @@ def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> di
                 template_path=inputs.template_path or None,
                 output_dir=str(out_dir),
                 log=lambda msg: progress(30, msg),
+                api_server=inputs.api_server,
+                api_client=inputs.api_client,
             )
             progress(100, "完成")
             return {"files": files}
@@ -60,6 +62,8 @@ def generate_docs(inputs: AppInputs, progress: Callable[[int, str], None]) -> di
                 output_dir=str(out_dir),
                 log=lambda msg: progress(30, msg),
                 output_filename=output_filename,
+                api_server=inputs.api_server,
+                api_client=inputs.api_client,
             ))
         progress(100, "完成")
         return {"files": files}

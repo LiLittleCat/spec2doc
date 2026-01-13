@@ -56,6 +56,8 @@ def generate_api_doc(
     output_dir: str,
     log: Optional[Callable[[str], None]] = None,
     output_filename: str | None = None,
+    api_server: str = "",
+    api_client: str = "",
 ) -> list[str]:
     out_dir = Path(output_dir).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -68,7 +70,17 @@ def generate_api_doc(
         raise ValueError("缺少 OpenAPI 文件或内容")
 
     api_model = _sanitize_value(build_api_model(spec))
+    if api_server:
+        api_model["server"] = api_server
+    if api_client:
+        api_model["client"] = api_client
     endpoints = api_model.get("endpoints", []) or []
+    if api_server or api_client:
+        for ep in endpoints:
+            if api_server:
+                ep["server"] = api_server
+            if api_client:
+                ep["client"] = api_client
     _emit(log, f"解析 OpenAPI 完成：{len(endpoints)} 个接口")
     for ep in endpoints:
         method = ep.get("method", "")

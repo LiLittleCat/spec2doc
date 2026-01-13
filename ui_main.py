@@ -87,6 +87,18 @@ class MainWindow(QMainWindow):
         self.ed_openapi_text.setMinimumHeight(140)
         form_input.addRow(QLabel("或粘贴内容:"), self.ed_openapi_text)
 
+        box_meta = QGroupBox("自定义字段")
+        layout.addWidget(box_meta)
+        form_meta = QFormLayout(box_meta)
+
+        self.ed_api_server = QLineEdit()
+        self.ed_api_server.setPlaceholderText("如：设备管理后台服务")
+        form_meta.addRow(QLabel("服务端:"), self.ed_api_server)
+
+        self.ed_api_client = QLineEdit()
+        self.ed_api_client.setPlaceholderText("如：设备管理 Web 页面")
+        form_meta.addRow(QLabel("客户端:"), self.ed_api_client)
+
         box_out = QGroupBox("输出设置")
         layout.addWidget(box_out)
         form_out = QFormLayout(box_out)
@@ -328,6 +340,8 @@ class MainWindow(QMainWindow):
             mode="api",
             openapi_path=self.ed_openapi_path.text().strip(),
             openapi_text=self.ed_openapi_text.toPlainText().strip(),
+            api_server=self.ed_api_server.text().strip(),
+            api_client=self.ed_api_client.text().strip(),
             db_url="",
             ddl_path="",
             ddl_text="",
@@ -347,6 +361,8 @@ class MainWindow(QMainWindow):
             mode="db",
             openapi_path="",
             openapi_text="",
+            api_server="",
+            api_client="",
             db_url=db_url,
             ddl_path=ddl_path,
             ddl_text=ddl_text,
@@ -379,6 +395,8 @@ class MainWindow(QMainWindow):
         self.ed_openapi_path.setText(self.settings.value("openapi_path", ""))
         self.ed_dburl.setText(self.settings.value("db_url", ""))
         self.ed_ddl_path.setText(self.settings.value("ddl_path", ""))
+        self.ed_api_server.setText(self.settings.value("api_server", ""))
+        self.ed_api_client.setText(self.settings.value("api_client", ""))
         self.ed_tpl_api.setText(self.settings.value("template_path_api", ""))
         self.ed_outdir_api.setText(self.settings.value("output_dir_api", ""))
         self.ed_tpl_db.setText(self.settings.value("template_path_db", ""))
@@ -388,6 +406,8 @@ class MainWindow(QMainWindow):
         self.settings.setValue("openapi_path", self.ed_openapi_path.text().strip())
         self.settings.setValue("db_url", self.ed_dburl.text().strip())
         self.settings.setValue("ddl_path", self.ed_ddl_path.text().strip())
+        self.settings.setValue("api_server", self.ed_api_server.text().strip())
+        self.settings.setValue("api_client", self.ed_api_client.text().strip())
         self.settings.setValue("template_path_api", self.ed_tpl_api.text().strip())
         self.settings.setValue("output_dir_api", self.ed_outdir_api.text().strip())
         self.settings.setValue("template_path_db", self.ed_tpl_db.text().strip())

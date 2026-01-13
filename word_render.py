@@ -298,7 +298,10 @@ def _apply_row_values(row, data: dict) -> None:
         text = cell.text
         for key, value in data.items():
             if key in text:
-                cell.text = str(value)
+                value_text = "" if value is None else str(value)
+                if not value_text and key.endswith("_REQUIRED__"):
+                    value_text = "N"
+                cell.text = value_text
 
 
 def _build_req_rows(ep: dict) -> list[dict]:
@@ -464,8 +467,9 @@ def _build_col_rows(db_table: dict) -> list[dict]:
     """构建列表格行数据"""
     rows = []
     for col in db_table.get("columns", []):
-        # 确定是否必填：非 nullable 或者是主键
-        required = "Y" if (not col.get("nullable", True) or col.get("is_pk", False)) else "N"
+        # 确定是否必填：nullable 为 False 或者是主键
+        nullable = col.get("nullable")
+        required = "Y" if (nullable is False or col.get("is_pk", False)) else "N"
         rows.append({
             "__COL_NAME__": col.get("name", ""),
             "__COL_TYPE__": col.get("type", ""),
