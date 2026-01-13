@@ -32,10 +32,44 @@ def _resolve_schema(spec_path: Spec, schema: dict, seen: set[str] | None = None,
     return resolved if isinstance(resolved, dict) else schema
 
 
+def _merge_allof(schema: dict, spec_path: Spec) -> dict:
+    merged: dict = {
+        "type": "object",
+        "properties": {},
+        "required": [],
+    }
+    for part in schema.get("allOf", []) or []:
+        if not isinstance(part, dict):
+            continue
+        resolved = _normalize_schema(spec_path, part)
+        props = resolved.get("properties") or {}
+        if isinstance(props, dict):
+            merged["properties"].update(props)
+        for name in resolved.get("required", []) or []:
+            if name not in merged["required"]:
+                merged["required"].append(name)
+    props = schema.get("properties") or {}
+    if isinstance(props, dict):
+        merged["properties"].update(props)
+    for name in schema.get("required", []) or []:
+        if name not in merged["required"]:
+            merged["required"].append(name)
+    return merged
+
+
+def _normalize_schema(spec_path: Spec, schema: dict) -> dict:
+    if not isinstance(schema, dict):
+        return {}
+    resolved = _resolve_schema(spec_path, schema)
+    if isinstance(resolved, dict) and resolved.get("allOf"):
+        return _merge_allof(resolved, spec_path)
+    return resolved if isinstance(resolved, dict) else {}
+
+
 def _schema_type(schema: dict, spec_path: Spec) -> str:
     if not isinstance(schema, dict):
         return ""
-    resolved = _resolve_schema(spec_path, schema)
+    resolved = _normalize_schema(spec_path, schema)
     t = resolved.get("type", "")
     if t == "array":
         item_type = _schema_type(resolved.get("items", {}), spec_path)
@@ -59,7 +93,7 @@ def _schema_to_fields(schema: dict, spec_path: Spec, parent_path: str = "") -> t
     if not isinstance(schema, dict):
         return [], {}
     
-    resolved = _resolve_schema(spec_path, schema)
+    resolved = _normalize_schema(spec_path, schema)
     
     # 处理数组类型 - 递归处理数组项
     if resolved.get("type") == "array":
@@ -91,7 +125,7 @@ def _schema_to_fields(schema: dict, spec_path: Spec, parent_path: str = "") -> t
         })
         
         # 检查是否有嵌套结构（object 或 array）
-        resolved_prop = _resolve_schema(spec_path, prop)
+        resolved_prop = _normalize_schema(spec_path, prop)
         prop_type = resolved_prop.get("type", "")
         
         if prop_type == "object":
@@ -111,7 +145,7 @@ def _schema_to_fields(schema: dict, spec_path: Spec, parent_path: str = "") -> t
             # 数组类型 - 检查数组项是否是对象
             items_schema = resolved_prop.get("items", {})
             if isinstance(items_schema, dict):
-                items_resolved = _resolve_schema(spec_path, items_schema)
+                items_resolved = _normalize_schema(spec_path, items_schema)
                 if items_resolved.get("type") == "object":
                     child_path = f"{parent_path}.{name}[]" if parent_path else f"{name}[]"
                     child_fields, child_nested = _schema_to_fields(items_schema, spec_path, child_path)
@@ -174,13 +208,13 @@ def _extract_response_fields(op: dict, spec_path: Spec) -> tuple[list[dict], dic
         return [], {}
     _, info = next(iter(content.items()))
     schema = (info or {}).get("schema") or {}
-    resolved_schema = _resolve_schema(spec_path, schema)
+    resolved_schema = _normalize_schema(spec_path, schema)
     
     # 尝试提取 data 字段（常见的响应包装）
     if isinstance(resolved_schema, dict) and resolved_schema.get("type") == "object":
         data_schema = (resolved_schema.get("properties") or {}).get("data")
         if isinstance(data_schema, dict):
-            data_resolved = _resolve_schema(spec_path, data_schema)
+            data_resolved = _normalize_schema(spec_path, data_schema)
             if isinstance(data_resolved, dict) and data_resolved.get("properties"):
                 return _schema_to_fields(data_resolved, spec_path)
     

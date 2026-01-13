@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, Qt, QObject, Signal
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtCore import QSettings, Qt, QObject, Signal, QUrl
+from PySide6.QtGui import QIcon, QPixmap, QDesktopServices
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QTabWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFileDialog, QTextEdit,
@@ -73,7 +73,7 @@ class MainWindow(QMainWindow):
         form_input = QFormLayout(box_input)
 
         self.ed_openapi_path = QLineEdit()
-        self.ed_openapi_path.setPlaceholderText("选择 openapi.yaml / openapi.json")
+        self.ed_openapi_path.setPlaceholderText("选择 openapi.yaml / openapi.json（可多选）")
         btn_pick = QPushButton("浏览…")
         btn_pick.clicked.connect(self.pick_openapi)
         row = QHBoxLayout()
@@ -116,9 +116,14 @@ class MainWindow(QMainWindow):
         self.progress_api = QProgressBar()
         self.progress_api.setRange(0, 100)
         self.progress_api.setValue(0)
+        self.btn_open_outdir_api = QPushButton("打开输出文件夹")
+        self.btn_open_outdir_api.clicked.connect(
+            lambda: self._open_output_dir(self.ed_outdir_api.text().strip())
+        )
         self.btn_generate_api = QPushButton("生成接口文档")
         self.btn_generate_api.clicked.connect(self.on_generate_api)
         bottom.addWidget(self.progress_api, 1)
+        bottom.addWidget(self.btn_open_outdir_api)
         bottom.addWidget(self.btn_generate_api)
         layout.addLayout(bottom)
 
@@ -138,7 +143,7 @@ class MainWindow(QMainWindow):
         form_ddl = QFormLayout(box_ddl)
 
         self.ed_ddl_path = QLineEdit()
-        self.ed_ddl_path.setPlaceholderText("选择 schema.sql / ddl.sql")
+        self.ed_ddl_path.setPlaceholderText("选择 schema.sql / ddl.sql（可多选）")
         btn = QPushButton("浏览…")
         btn.clicked.connect(self.pick_ddl)
         row = QHBoxLayout()
@@ -181,9 +186,14 @@ class MainWindow(QMainWindow):
         self.progress_db = QProgressBar()
         self.progress_db.setRange(0, 100)
         self.progress_db.setValue(0)
+        self.btn_open_outdir_db = QPushButton("打开输出文件夹")
+        self.btn_open_outdir_db.clicked.connect(
+            lambda: self._open_output_dir(self.ed_outdir_db.text().strip())
+        )
         self.btn_generate_db = QPushButton("生成数据库文档")
         self.btn_generate_db.clicked.connect(self.on_generate_db)
         bottom.addWidget(self.progress_db, 1)
+        bottom.addWidget(self.btn_open_outdir_db)
         bottom.addWidget(self.btn_generate_db)
         layout.addLayout(bottom)
 
@@ -210,6 +220,12 @@ class MainWindow(QMainWindow):
             target.setText(p)
             self._set_last_dir(str(Path(p).parent))
 
+    def _pick_files(self, title: str, file_filter: str, target: QLineEdit):
+        files, _ = QFileDialog.getOpenFileNames(self, title, self._last_dir(), file_filter)
+        if files:
+            target.setText(";".join(files))
+            self._set_last_dir(str(Path(files[0]).parent))
+
     def _pick_dir(self, title: str, target: QLineEdit):
         p = QFileDialog.getExistingDirectory(self, title, self._last_dir())
         if p:
@@ -217,10 +233,10 @@ class MainWindow(QMainWindow):
             self._set_last_dir(p)
 
     def pick_openapi(self):
-        self._pick_file("选择 OpenAPI 文件", "OpenAPI (*.yaml *.yml *.json);;All (*.*)", self.ed_openapi_path)
+        self._pick_files("选择 OpenAPI 文件", "OpenAPI (*.yaml *.yml *.json);;All (*.*)", self.ed_openapi_path)
 
     def pick_ddl(self):
-        self._pick_file("选择 DDL 文件", "SQL (*.sql);;All (*.*)", self.ed_ddl_path)
+        self._pick_files("选择 DDL 文件", "SQL (*.sql);;All (*.*)", self.ed_ddl_path)
 
     def pick_template_api(self):
         self._pick_file("选择 Word 模板", "Word (*.docx);;All (*.*)", self.ed_tpl_api)
@@ -342,6 +358,16 @@ class MainWindow(QMainWindow):
 
     def _log_to(self, log: QTextEdit, s: str):
         log.append(s)
+
+    def _open_output_dir(self, out_dir: str) -> None:
+        if not out_dir:
+            QMessageBox.warning(self, "缺少输出目录", "请先选择输出目录。")
+            return
+        p = Path(out_dir).expanduser().resolve()
+        if not p.exists():
+            QMessageBox.warning(self, "目录不存在", f"输出目录不存在：{p}")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(p)))
 
     def _last_dir(self) -> str:
         return self.settings.value("last_dir", str(Path.home()))

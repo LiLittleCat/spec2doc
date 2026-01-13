@@ -55,6 +55,7 @@ def generate_api_doc(
     template_path: str | None,
     output_dir: str,
     log: Optional[Callable[[str], None]] = None,
+    output_filename: str | None = None,
 ) -> list[str]:
     out_dir = Path(output_dir).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -87,8 +88,13 @@ def generate_api_doc(
         _emit(log, f"  返回字段：{'、'.join(resp_fields) if resp_fields else '无'}")
 
     _emit(log, "渲染 Word…")
-    ts = datetime.now().strftime("%Y%m%d%H%M%S")
-    output_filename = f"Spec2Doc_接口设计文档_{ts}.docx"
+    if not output_filename:
+        ts = datetime.now().strftime("%Y%m%d%H%M%S")
+        output_filename = f"Spec2Doc_接口设计文档_{ts}.docx"
+        if openapi_path:
+            stem = Path(openapi_path).stem
+            if stem:
+                output_filename = f"{stem}.docx"
     return render_word_docs(
         api_model=api_model,
         db_model={},

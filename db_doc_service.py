@@ -147,6 +147,7 @@ def generate_db_doc(
     ddl_text: str,
     template_path: str | None,
     output_dir: str,
+    output_filename: str | None = None,
 ) -> list[str]:
     out_dir = Path(output_dir).expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -161,8 +162,13 @@ def generate_db_doc(
             ddl_content = Path(ddl_path).read_text(encoding="utf-8")
         db_model = _sanitize_value(parse_ddl_to_model(ddl_content))
 
-    ts = datetime.now().strftime("%Y%m%d%H%M%S")
-    output_filename = f"Spec2Doc_数据库设计文档_{ts}.docx"
+    if not output_filename:
+        ts = datetime.now().strftime("%Y%m%d%H%M%S")
+        output_filename = f"Spec2Doc_数据库设计文档_{ts}.docx"
+        if ddl_path:
+            stem = Path(ddl_path).stem
+            if stem:
+                output_filename = f"{stem}.docx"
     return render_word_docs(
         api_model={"title": "数据库", "version": "", "endpoints": []},
         db_model=db_model,
