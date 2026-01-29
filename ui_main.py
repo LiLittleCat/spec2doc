@@ -23,7 +23,7 @@ class _ProgressEmitter(QObject):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Spec2Doc - Spec to Word")
+        self.setWindowTitle("Spec2Doc - Spec to word.docx")
         self.resize(980, 680)
 
         self.settings = QSettings("Spec2Doc", "Spec2DocApp")
@@ -99,8 +99,7 @@ class MainWindow(QMainWindow):
         help_btn.setAutoRaise(True)
         help_btn.setToolTip(
             "每行填写一个 key 和 value（推荐：英文/下划线）。\n"
-            "生成后可在模板中使用：\n"
-            "  {{ ep.<key> }} 或 {{ api.<key> }}\n"
+            "生成后将写入文档的“自定义字段/接口自定义字段”区域。\n"
             "示例：\n"
             "  server=设备管理后台服务\n"
             "  client=设备管理 Web 页面"

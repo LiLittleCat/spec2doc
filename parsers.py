@@ -5,30 +5,45 @@ import yaml
 from openapi_core import Spec
 
 
+def _resolve_ref(spec_path: Spec, node: dict, seen: set[str] | None = None, depth: int = 0) -> dict:
+    if not isinstance(node, dict):
+        return {}
+    if depth > 10:
+        return node
+    ref = node.get("$ref")
+    if not ref or not isinstance(ref, str):
+        return node
+    if not ref.startswith("#/"):
+        return node
+    seen = seen or set()
+    if ref in seen:
+        return node
+    seen.add(ref)
+    parts = ref.lstrip("#/").split("/")
+    cur = spec_path
+    try:
+        for part in parts:
+            cur = cur / part
+        resolved = cur.content()
+    except Exception:
+        return node
+    if isinstance(resolved, dict) and "$ref" in resolved:
+        resolved = _resolve_ref(spec_path, resolved, seen, depth + 1)
+    if not isinstance(resolved, dict):
+        return node
+    merged = dict(resolved)
+    for key, value in node.items():
+        if key != "$ref":
+            merged[key] = value
+    return merged
+
+
 def _resolve_schema(spec_path: Spec, schema: dict, seen: set[str] | None = None, depth: int = 0) -> dict:
     if not isinstance(schema, dict):
         return {}
     if depth > 10:
         return schema
-    ref = schema.get("$ref")
-    if not ref:
-        return schema
-    if not ref.startswith("#/"):
-        return schema
-    seen = seen or set()
-    if ref in seen:
-        return schema
-    seen.add(ref)
-    parts = ref.lstrip("#/").split("/")
-    node = spec_path
-    try:
-        for part in parts:
-            node = node / part
-        resolved = node.content()
-    except Exception:
-        return schema
-    if isinstance(resolved, dict) and "$ref" in resolved:
-        return _resolve_schema(spec_path, resolved, seen, depth + 1)
+    resolved = _resolve_ref(spec_path, schema, seen, depth)
     return resolved if isinstance(resolved, dict) else schema
 
 
@@ -161,6 +176,259 @@ def _schema_to_fields(schema: dict, spec_path: Spec, parent_path: str = "") -> t
     return fields, nested_schemas
 
 
+def _extract_examples_from_media(info: dict) -> list[dict]:
+    if not isinstance(info, dict):
+        return []
+    examples = []
+    if "example" in info:
+        examples.append({
+            "name": "example",
+            "summary": "",
+            "description": "",
+            "value": info.get("example"),
+            "externalValue": info.get("externalValue", ""),
+        })
+    examples_obj = info.get("examples") or {}
+    if isinstance(examples_obj, dict):
+        for name, ex in examples_obj.items():
+            if isinstance(ex, dict):
+                examples.append({
+                    "name": str(name),
+                    "summary": ex.get("summary", ""),
+                    "description": ex.get("description", ""),
+                    "value": ex.get("value"),
+                    "externalValue": ex.get("externalValue", ""),
+                })
+            else:
+                examples.append({
+                    "name": str(name),
+                    "summary": "",
+                    "description": "",
+                    "value": ex,
+                    "externalValue": "",
+                })
+    return examples
+
+
+def _extract_content_items(content: dict, spec_path: Spec) -> list[dict]:
+    if not isinstance(content, dict):
+        return []
+    items = []
+    for content_type, info in content.items():
+        if not isinstance(info, dict):
+            continue
+        schema = info.get("schema") or {}
+        fields, nested = _schema_to_fields(schema, spec_path)
+        items.append({
+            "content_type": content_type,
+            "schema": schema if isinstance(schema, dict) else {},
+            "fields": fields,
+            "nested": nested,
+            "examples": _extract_examples_from_media(info),
+        })
+    return items
+
+
+def _extract_request_bodies(op: dict, spec_path: Spec) -> dict:
+    body = op.get("requestBody") or {}
+    if isinstance(body, dict) and "$ref" in body:
+        body = _resolve_ref(spec_path, body)
+    if not isinstance(body, dict):
+        return {"required": False, "description": "", "content": []}
+    content = body.get("content") or {}
+    return {
+        "required": bool(body.get("required", False)),
+        "description": body.get("description", "") if isinstance(body.get("description"), str) else "",
+        "content": _extract_content_items(content, spec_path),
+    }
+
+
+def _extract_responses(op: dict, spec_path: Spec) -> list[dict]:
+    responses = op.get("responses") or {}
+    if not isinstance(responses, dict):
+        return []
+    result = []
+    for status_code, resp in responses.items():
+        resp_obj = resp
+        if isinstance(resp_obj, dict) and "$ref" in resp_obj:
+            resp_obj = _resolve_ref(spec_path, resp_obj)
+        if not isinstance(resp_obj, dict):
+            continue
+        content = resp_obj.get("content") or {}
+        result.append({
+            "status": str(status_code),
+            "description": resp_obj.get("description", ""),
+            "headers": resp_obj.get("headers", {}) if isinstance(resp_obj.get("headers"), dict) else {},
+            "content": _extract_content_items(content, spec_path),
+        })
+    return result
+
+
+def _extract_components(spec: dict, spec_path: Spec) -> dict:
+    components = spec.get("components") or {}
+    if not isinstance(components, dict):
+        return {}
+    result: dict = {}
+
+    schemas = components.get("schemas") or {}
+    schema_list = []
+    if isinstance(schemas, dict):
+        for name, schema in schemas.items():
+            if not isinstance(schema, dict):
+                continue
+            resolved = _normalize_schema(spec_path, schema)
+            fields, nested = _schema_to_fields(schema, spec_path)
+            schema_list.append({
+                "name": name,
+                "type": _schema_type(schema, spec_path),
+                "description": resolved.get("description", ""),
+                "fields": fields,
+                "nested": nested,
+            })
+    result["schemas"] = schema_list
+
+    parameters = components.get("parameters") or {}
+    param_list = []
+    if isinstance(parameters, dict):
+        for name, param in parameters.items():
+            if not isinstance(param, dict):
+                continue
+            resolved = _resolve_ref(spec_path, param) if "$ref" in param else param
+            if not isinstance(resolved, dict):
+                continue
+            schema = resolved.get("schema", {})
+            param_list.append({
+                "name": name,
+                "in": resolved.get("in", ""),
+                "type": _schema_type(schema, spec_path) if isinstance(schema, dict) else "",
+                "description": resolved.get("description", ""),
+                "required": resolved.get("required", False),
+                "schema": schema if isinstance(schema, dict) else {},
+            })
+    result["parameters"] = param_list
+
+    responses = components.get("responses") or {}
+    response_list = []
+    if isinstance(responses, dict):
+        for name, resp in responses.items():
+            if not isinstance(resp, dict):
+                continue
+            resolved = _resolve_ref(spec_path, resp) if "$ref" in resp else resp
+            if not isinstance(resolved, dict):
+                continue
+            response_list.append({
+                "name": name,
+                "description": resolved.get("description", ""),
+                "headers": resolved.get("headers", {}) if isinstance(resolved.get("headers"), dict) else {},
+                "content": _extract_content_items(resolved.get("content", {}), spec_path),
+            })
+    result["responses"] = response_list
+
+    request_bodies = components.get("requestBodies") or {}
+    request_body_list = []
+    if isinstance(request_bodies, dict):
+        for name, body in request_bodies.items():
+            if not isinstance(body, dict):
+                continue
+            resolved = _resolve_ref(spec_path, body) if "$ref" in body else body
+            if not isinstance(resolved, dict):
+                continue
+            request_body_list.append({
+                "name": name,
+                "description": resolved.get("description", ""),
+                "required": bool(resolved.get("required", False)),
+                "content": _extract_content_items(resolved.get("content", {}), spec_path),
+            })
+    result["requestBodies"] = request_body_list
+
+    headers = components.get("headers") or {}
+    header_list = []
+    if isinstance(headers, dict):
+        for name, header in headers.items():
+            if not isinstance(header, dict):
+                continue
+            resolved = _resolve_ref(spec_path, header) if "$ref" in header else header
+            if not isinstance(resolved, dict):
+                continue
+            schema = resolved.get("schema", {})
+            header_list.append({
+                "name": name,
+                "type": _schema_type(schema, spec_path) if isinstance(schema, dict) else "",
+                "description": resolved.get("description", ""),
+                "schema": schema if isinstance(schema, dict) else {},
+            })
+    result["headers"] = header_list
+
+    security_schemes = components.get("securitySchemes") or {}
+    security_list = []
+    if isinstance(security_schemes, dict):
+        for name, scheme in security_schemes.items():
+            if not isinstance(scheme, dict):
+                continue
+            security_list.append({
+                "name": name,
+                "type": scheme.get("type", ""),
+                "description": scheme.get("description", ""),
+                "scheme": scheme.get("scheme", ""),
+                "bearerFormat": scheme.get("bearerFormat", ""),
+                "flows": scheme.get("flows", {}) if isinstance(scheme.get("flows"), dict) else {},
+                "openIdConnectUrl": scheme.get("openIdConnectUrl", ""),
+                "in": scheme.get("in", ""),
+                "paramName": scheme.get("name", ""),
+            })
+    result["securitySchemes"] = security_list
+
+    examples = components.get("examples") or {}
+    example_list = []
+    if isinstance(examples, dict):
+        for name, ex in examples.items():
+            if isinstance(ex, dict):
+                example_list.append({
+                    "name": name,
+                    "summary": ex.get("summary", ""),
+                    "description": ex.get("description", ""),
+                    "value": ex.get("value"),
+                    "externalValue": ex.get("externalValue", ""),
+                })
+            else:
+                example_list.append({
+                    "name": name,
+                    "summary": "",
+                    "description": "",
+                    "value": ex,
+                    "externalValue": "",
+                })
+    result["examples"] = example_list
+
+    links = components.get("links") or {}
+    link_list = []
+    if isinstance(links, dict):
+        for name, link in links.items():
+            if not isinstance(link, dict):
+                continue
+            link_list.append({
+                "name": name,
+                "description": link.get("description", ""),
+                "operationId": link.get("operationId", ""),
+                "operationRef": link.get("operationRef", ""),
+            })
+    result["links"] = link_list
+
+    callbacks = components.get("callbacks") or {}
+    callback_list = []
+    if isinstance(callbacks, dict):
+        for name, cb in callbacks.items():
+            if not isinstance(cb, dict):
+                continue
+            callback_list.append({
+                "name": name,
+                "expressionKeys": list(cb.keys()),
+            })
+    result["callbacks"] = callback_list
+
+    return result
+
+
 def _extract_request_info(op: dict, spec_path: Spec) -> tuple[str, list[dict], dict]:
     body = op.get("requestBody") or {}
     content = body.get("content") or {}
@@ -172,7 +440,34 @@ def _extract_request_info(op: dict, spec_path: Spec) -> tuple[str, list[dict], d
     return content_type, fields, nested
 
 
-def _extract_parameters(params: list) -> list[dict]:
+def _collect_parameters(path_params: list, op_params: list, spec_path: Spec) -> list[dict]:
+    params = []
+    for source in (path_params, op_params):
+        if not source or not isinstance(source, list):
+            continue
+        for p in source:
+            if not isinstance(p, dict):
+                continue
+            resolved = _resolve_ref(spec_path, p) if "$ref" in p else p
+            if not isinstance(resolved, dict):
+                continue
+            params.append(resolved)
+    # 去重：按 name + in
+    seen = set()
+    deduped = []
+    for p in params:
+        name = p.get("name", "")
+        param_in = p.get("in", "")
+        key = (name, param_in)
+        if name and param_in and key in seen:
+            continue
+        if name and param_in:
+            seen.add(key)
+        deduped.append(p)
+    return deduped
+
+
+def _extract_parameter_fields(params: list, spec_path: Spec) -> list[dict]:
     """将 OpenAPI parameters 数组转换为结构化字段列表"""
     if not params or not isinstance(params, list):
         return []
@@ -181,19 +476,36 @@ def _extract_parameters(params: list) -> list[dict]:
         if not isinstance(p, dict):
             continue
         name = p.get("name", "")
+        param_in = p.get("in", "")
         if not name:
             continue
-        param_in = p.get("in", "")
         schema = p.get("schema", {})
-        param_type = ""
-        if isinstance(schema, dict):
-            param_type = schema.get("type", "")
+        param_type = _schema_type(schema, spec_path) if isinstance(schema, dict) else ""
+        examples = []
+        if "example" in p:
+            examples.append({"name": "example", "value": p.get("example")})
+        examples_obj = p.get("examples") or {}
+        if isinstance(examples_obj, dict):
+            for ex_name, ex in examples_obj.items():
+                if isinstance(ex, dict):
+                    examples.append({"name": str(ex_name), "value": ex.get("value")})
+                else:
+                    examples.append({"name": str(ex_name), "value": ex})
         fields.append({
             "name": name,
-            "type": param_type,
             "in": param_in,
+            "type": param_type,
+            "format": schema.get("format", "") if isinstance(schema, dict) else "",
             "required": p.get("required", False),
             "description": p.get("description", ""),
+            "deprecated": p.get("deprecated", False),
+            "style": p.get("style", ""),
+            "explode": p.get("explode", ""),
+            "allowEmptyValue": p.get("allowEmptyValue", ""),
+            "example": p.get("example", ""),
+            "examples": examples,
+            "schema": schema if isinstance(schema, dict) else {},
+            "content": p.get("content", {}) if isinstance(p.get("content"), dict) else {},
         })
     return fields
 
@@ -219,6 +531,12 @@ def _extract_response_fields(op: dict, spec_path: Spec) -> tuple[list[dict], dic
                 return _schema_to_fields(data_resolved, spec_path)
     
     return _schema_to_fields(schema, spec_path)
+
+
+def _extract_extensions(obj: dict) -> dict:
+    if not isinstance(obj, dict):
+        return {}
+    return {k: v for k, v in obj.items() if isinstance(k, str) and k.startswith("x-")}
 
 def load_openapi_from_text(text: str) -> dict:
     if not text.strip():
@@ -312,16 +630,39 @@ def build_api_model(spec: dict) -> dict:
     paths = spec.get("paths", {}) or {}
     endpoints = []
 
-    for url, methods in paths.items():
-        if not isinstance(methods, dict):
+    for url, path_item in paths.items():
+        if not isinstance(path_item, dict):
             continue
-        for method, op in methods.items():
+        path_item_params = path_item.get("parameters", []) if isinstance(path_item.get("parameters", []), list) else []
+        path_item_servers = path_item.get("servers", []) if isinstance(path_item.get("servers", []), list) else []
+        path_item_summary = path_item.get("summary", "")
+        path_item_description = path_item.get("description", "")
+        path_item_extensions = _extract_extensions(path_item)
+
+        for method, op in path_item.items():
             if method.lower() not in ("get", "post", "put", "patch", "delete", "head", "options"):
                 continue
             op = op or {}
-            request_content_type, req_fields, req_nested = _extract_request_info(op, spec_path)
+            parameters = _collect_parameters(path_item_params, op.get("parameters", []), spec_path)
+            param_fields = _extract_parameter_fields(parameters, spec_path)
+            request_body = _extract_request_bodies(op, spec_path)
+            responses_info = _extract_responses(op, spec_path)
+
+            request_content_type = ""
+            req_fields = []
+            req_nested = {}
+            if request_body.get("content"):
+                first = request_body["content"][0]
+                request_content_type = first.get("content_type", "")
+                req_fields = first.get("fields", []) or []
+                req_nested = first.get("nested", {}) or {}
+
             resp_fields, resp_nested = _extract_response_fields(op, spec_path)
-            param_fields = _extract_parameters(op.get("parameters", []))
+            op_servers = op.get("servers", []) if isinstance(op.get("servers", []), list) else []
+            op_security = op.get("security", []) if isinstance(op.get("security", []), list) else []
+            effective_servers = op_servers or path_item_servers or (spec.get("servers", []) if isinstance(spec.get("servers", []), list) else [])
+            effective_security = op_security or (spec.get("security", []) if isinstance(spec.get("security", []), list) else [])
+
             endpoints.append({
                 "method": method.upper(),
                 "path": url,
@@ -329,21 +670,40 @@ def build_api_model(spec: dict) -> dict:
                 "description": op.get("description", ""),
                 "operationId": op.get("operationId", ""),
                 "tags": op.get("tags", []),
-                "parameters": op.get("parameters", []),
+                "parameters": parameters,
                 "requestBody": op.get("requestBody", {}),
                 "responses": op.get("responses", {}),
-                "security": op.get("security", []),
+                "security": effective_security,
                 "request_content_type": request_content_type,
                 "req_fields": req_fields,
                 "req_nested": req_nested,
                 "resp_fields": resp_fields,
                 "resp_nested": resp_nested,
                 "param_fields": param_fields,
+                "request_body": request_body,
+                "responses_info": responses_info,
+                "servers": effective_servers,
+                "deprecated": op.get("deprecated", False),
+                "callbacks": op.get("callbacks", {}),
+                "externalDocs": op.get("externalDocs", {}),
+                "path_item_summary": path_item_summary,
+                "path_item_description": path_item_description,
+                "path_item_extensions": path_item_extensions,
+                "extensions": _extract_extensions(op),
             })
 
     info = spec.get("info", {}) or {}
     return {
+        "openapi": spec.get("openapi", ""),
+        "info": info,
         "title": info.get("title", "API"),
         "version": info.get("version", ""),
+        "description": info.get("description", ""),
+        "servers": spec.get("servers", []) if isinstance(spec.get("servers", []), list) else [],
+        "tags": spec.get("tags", []) if isinstance(spec.get("tags", []), list) else [],
+        "externalDocs": spec.get("externalDocs", {}) if isinstance(spec.get("externalDocs"), dict) else {},
+        "security": spec.get("security", []) if isinstance(spec.get("security", []), list) else [],
+        "components": _extract_components(spec, spec_path),
+        "extensions": _extract_extensions(spec),
         "endpoints": endpoints,
     }

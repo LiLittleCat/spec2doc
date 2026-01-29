@@ -12,8 +12,9 @@ Spec2Doc 是一个**规范驱动的文档生成器**：从 **OpenAPI 规范** + 
 - ✅ 导入 OpenAPI（YAML/JSON）
 - ✅ 连接数据库并反射表结构（SQLAlchemy Inspector）
 - ✅ 生成 Word 文档
-  - 推荐：使用 **docxtpl 模板**渲染（排版/样式由模板控制，更像“人工写的”）
-  - 备选：无模板时使用 **python-docx** 生成简版文档
+  - 接口文档统一使用 **python-docx** 生成通用模板（无需 Jinja）
+  - 可选加载 `.docx` 模板继承样式/页眉页脚
+  - 数据库文档暂保留 **docxtpl** 模板渲染能力
 - ✅ GUI 桌面应用（PySide6 / Qt，接口转文档 / 数据库转文档两个 Tab）
 - ✅ 每个 Tab 支持上传文件或粘贴内容，带日志与进度条
 - ✅ 支持多文件批量生成（OpenAPI/DDL 可多选）
@@ -103,121 +104,27 @@ python app.py
 
 ---
 
-## Word 模板（docxtpl）如何对接
+## 接口文档模板（python-docx）
 
-Spec2Doc 使用 `docxtpl` 渲染 `.docx` 模板：模板中写 Jinja2 占位符/循环语句，程序传入 `context` 数据字典。
+Spec2Doc 使用 `python-docx` 生成接口文档，不依赖 Jinja。  
+模板文件（`.docx`）用于继承样式/页眉页脚，文档内容会由程序按结构生成并追加。
 
-程序会向模板提供（示例）：
+覆盖范围包括：
+- OpenAPI `info`（title/version/description 等）
+- `servers`、`tags`、`security`、`paths`
+- 路径/接口描述、路径参数、query 参数、body 参数
+- 响应与响应字段、请求示例、响应示例
+- `components`（schemas/parameters/responses/requestBodies/headers/securitySchemes/examples/links/callbacks）
+- `x-` 扩展字段与自定义字段
 
-```json
-{
-  "api": {
-    "title": "API",
-    "version": "1.0.0",
-    "endpoints": [
-      {
-        "method": "GET",
-        "path": "/users",
-        "summary": "list users",
-        "operationId": "listUsers",
-        "parameters": [],
-        "requestBody": {},
-        "responses": {},
-        "security": []
-      }
-    ]
-  },
-  "db": {
-    "tables": [
-      {
-        "name": "user",
-        "columns": [
-          {"name": "id", "type": "BIGINT", "nullable": false, "default": null}
-        ],
-        "pk": ["id"],
-        "indexes": [],
-        "foreign_keys": []
-      }
-    ]
-  }
-}
-```
+### 自定义字段
 
-模板里可以使用：
+GUI「自定义字段」区域每行一条 key/value（如 `server=设备管理后台服务`），  
+生成后会写入文档的“自定义字段/接口自定义字段”区域。
 
-* 变量：`{{ api.title }}`、`{{ api.version }}`
-* 循环：`{% for ep in api.endpoints %} ... {% endfor %}`
-* 自定义字段：`{{ api.<key> }}`、`{{ ep.<key> }}`
+### 数据库模板（docxtpl）
 
-自定义字段填写方式（GUI「自定义字段」区域）：
-- 每行一条 key/value（如 `server=设备管理后台服务`）
-- 模板里用：`{{ ep.server }}` / `{{ api.server }}`
-
-### 模板变量清单
-
-**顶层变量**
-- `api`：接口模型
-- `db`：数据库模型
-
-**接口模型（api）**
-- `api.title`：接口文档标题
-- `api.version`：版本号（来自 OpenAPI info.version）
-- `api.endpoints`：接口列表
-
-**接口项（ep）**
-- `ep.method`：HTTP 方法（GET/POST/PUT/...）
-- `ep.path`：接口路径
-- `ep.summary`：摘要
-- `ep.description`：描述
-- `ep.operationId`：操作 ID
-- `ep.tags`：标签数组
-- `ep.parameters`：原始 OpenAPI parameters（未展开）
-- `ep.requestBody`：原始 OpenAPI requestBody
-- `ep.responses`：原始 OpenAPI responses
-- `ep.security`：原始 OpenAPI security
-- `ep.request_content_type`：请求体 content-type（取第一个）
-- `ep.req_fields`：请求参数字段（由 schema 推导）
-- `ep.resp_fields`：响应参数字段（由 schema 推导）
-- `ep.param_fields`：parameters 字段（query/path/header/cookie）
-- `ep.req_nested` / `ep.resp_nested`：嵌套结构字段集合（按路径分组）
-
-**字段项（f in ep.req_fields / ep.resp_fields）**
-- `f.name`：字段名
-- `f.type`：字段类型（$ref 会简化为类型名）
-- `f.required`：是否必填
-- `f.description`：字段描述
-
-**数据库模型（db）**
-- `db.tables`：表列表
-
-**表项（t in db.tables）**
-- `t.name`：表名
-- `t.columns`：字段列表
-- `t.pk`：主键字段名数组
-- `t.indexes`：索引列表（SQLAlchemy inspector 原始结构）
-- `t.foreign_keys`：外键列表（SQLAlchemy inspector 原始结构）
-
-**字段项（c in t.columns）**
-- `c.name`：字段名
-- `c.type`：字段类型（字符串）
-- `c.nullable`：是否可空
-- `c.default`：默认值
-
-> 说明：若 OpenAPI 未提供 requestBody/responses 或 schema 无字段信息，`req_fields`/`resp_fields` 可能为空。
-
-**接口参数表的推荐方式（避免表格错列）：**
-- 在「请求参数（parameters）」表格中保留一行样例，内容为占位符：  
-  `__PARAM_NAME__` / `__PARAM_TYPE__` / `__PARAM_REQUIRED__` / `__PARAM_DESC__`
-- 在「请求参数」表格中保留一行样例，内容为占位符：  
-  `__REQ_NAME__` / `__REQ_TYPE__` / `__REQ_REQUIRED__` / `__REQ_DESC__`
-- 在「返回参数」表格中保留一行样例，内容为占位符：  
-  `__RESP_NAME__` / `__RESP_TYPE__` / `__RESP_REQUIRED__` / `__RESP_DESC__`
-- 嵌套结构表格占位符：  
-  `__REQ_NESTED_NAME__` / `__REQ_NESTED_TYPE__` / `__REQ_NESTED_REQUIRED__` / `__REQ_NESTED_DESC__`  
-  `__RESP_NESTED_NAME__` / `__RESP_NESTED_TYPE__` / `__RESP_NESTED_REQUIRED__` / `__RESP_NESTED_DESC__`
-- 程序渲染后会自动复制该行并填充字段，不再依赖 docxtpl 的表格行循环。
-
-> 建议：模板可参考 `template.docx`，如需扩展字段，保持占位符一致即可。
+数据库文档仍保留 docxtpl 渲染能力，若后续也迁移为 python-docx，可再调整。
 
 ---
 
@@ -232,7 +139,7 @@ spec2doc/
   generators.py        # 主流程：解析 -> 反射 -> 渲染
   parsers.py           # OpenAPI 读取与中间模型
   db_introspect.py     # DB 结构反射
-  word_render.py       # docxtpl/python-docx 输出
+  word_render.py       # API: python-docx / DB: docxtpl
   api_doc_service.py   # 接口文档核心逻辑（可独立调用）
   db_doc_service.py    # 数据库文档核心逻辑（可独立调用）
   requirements.txt

@@ -91,3 +91,5 @@ test/
 # docx templates
 # =========================
 !assets/*.docx
+
+assets/_local_
