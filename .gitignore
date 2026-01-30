@@ -1,90 +1,29 @@
-# =========================
-# Python
-# =========================
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-coverage.xml
-htmlcov/
-pip-wheel-metadata/
-*.egg-info/
-.eggs/
-build/
-dist/
-
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
-.conda/
-conda-env/
-
-# =========================
-# IDE / Editor
-# =========================
-.vscode/
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# =========================
-# OS files
-# =========================
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# =========================
-# Logs & temp files
-# =========================
+# Logs
+logs
 *.log
-*.tmp
-*.bak
-*.swp
-*.swo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# =========================
-# Qt / PySide6
-# =========================
-*.qrc
-*.qm
-*.pro.user
-*.qmlc
-*.jsc
-
-# =========================
-# PyInstaller
-# =========================
-*.spec
-
-# =========================
-# App generated artifacts
-# =========================
-output/
-out/
-generated/
-exports/
-*.docx
-*.pdf
-context.debug.json
-
-# If you keep templates in repo, DON'T ignore templates/
-# templates/
-
-# =========================
-# Local config
-# =========================
-*.ini
+node_modules
+dist
+dist-ssr
 *.local
-*.env
-.env.*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+output
 test/
 
 # =========================
