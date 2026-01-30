@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "spec2doc-tauri",
+  "version": "0.1.0",
+  "identifier": "com.yiliu.spec2doc-tauri",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Spec2Doc",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {
+    "dialog": {
+      "all": true,
+      "open": true,
+      "save": true
+    },
+    "fs": {
+      "all": false,
+      "readFile": true,
+      "writeFile": true,
+      "scope": ["$HOME/**", "$DESKTOP/**", "$DOCUMENT/**", "$DOWNLOAD/**"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
