@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FileJson, Check, Trash2, FolderOpen, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +24,19 @@ export function OpenAPIPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [templatePath, setTemplatePath] = useState("");
   const [outputPath, setOutputPath] = useState("");
+  const [generatedFilePath, setGeneratedFilePath] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateProgress, setGenerateProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
   const [isDone, setIsDone] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // 当生成完成时，自动滚动到底部
+  useEffect(() => {
+    if (isDone && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [isDone]);
 
   // 使用 Tauri dialog 选择 OpenAPI 文件
   const handleSelectOpenApiFile = async () => {
@@ -157,10 +166,14 @@ export function OpenAPIPanel() {
       const fileName = `${parsedSpec?.title || '接口文档'}_${new Date().getTime()}.docx`;
       const fullOutputPath = `${outputPath}\\${fileName}`;
 
+      // 保存生成的文件路径
+      setGeneratedFilePath(fullOutputPath);
+
       // 生成文档
       await documentService.generateApiDocument(
         fullSpec,
         fullOutputPath,
+        templatePath || undefined,  // 传递用户选择的模板，或使用默认模板
         (message, percent) => {
           setProgressMessage(message);
           setGenerateProgress(percent);
@@ -174,6 +187,21 @@ export function OpenAPIPanel() {
       console.error('生成失败:', error);
       toast.error('文档生成失败: ' + error.message);
       setIsGenerating(false);
+    }
+  };
+
+  // 打开文件所在文件夹
+  const handleOpenFolder = async () => {
+    if (!generatedFilePath) return;
+
+    try {
+      // 导入 opener 插件的 revealItemInDir 函数
+      const { revealItemInDir } = await import('@tauri-apps/plugin-opener');
+
+      // 在资源管理器中高亮文件
+      await revealItemInDir(generatedFilePath);
+    } catch (error) {
+      toast.error("打开文件夹失败: " + error);
     }
   };
 
@@ -351,11 +379,20 @@ export function OpenAPIPanel() {
             </div>
             <div>
               <p className="font-medium text-foreground">文档生成完成！</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mt-1">
                 已生成接口设计文档
               </p>
+              {generatedFilePath && (
+                <p className="text-xs text-muted-foreground mt-2 break-all px-4">
+                  {generatedFilePath}
+                </p>
+              )}
             </div>
             <div className="flex items-center justify-center gap-3">
+              <Button variant="outline" size="sm" onClick={handleOpenFolder}>
+                <FolderOpen className="w-4 h-4" />
+                打开文件夹
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setIsDone(false)}>
                 重新生成
               </Button>
@@ -396,6 +433,9 @@ export function OpenAPIPanel() {
           </div>
         )}
       </section>
+
+      {/* 底部锚点，用于自动滚动 */}
+      <div ref={bottomRef} />
     </div>
   );
 }

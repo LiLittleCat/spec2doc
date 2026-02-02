@@ -1,7 +1,9 @@
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell } from 'docx';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+import { readFile } from '@tauri-apps/plugin-fs';
 
 /**
- * OpenAPI 文档生成器
+ * 基于模板的 OpenAPI 文档生成器
  */
 export class OpenAPIDocGenerator {
   private openApiSpec: any;
@@ -12,726 +14,152 @@ export class OpenAPIDocGenerator {
 
   /**
    * 从模板生成文档
-   * @param templateBuffer 模板文件的 ArrayBuffer
-   * @returns 生成的文档 Buffer
+   * @param templatePath 模板文件路径
+   * @returns 生成的文档 Blob
    */
-  async generateFromTemplate(templateBuffer: ArrayBuffer): Promise<Blob> {
-    // TODO: 实现从模板读取并替换占位符的逻辑
-    // 目前 docx 库不支持直接读取和修改现有文档
-    // 我们需要从头构建文档，但复用模板的样式
+  async generateFromTemplate(templatePath: string): Promise<Blob> {
+    try {
+      // 读取模板文件
+      const templateContent = await readFile(templatePath);
+      const templateBuffer = templateContent.buffer;
 
-    return this.generateDocument();
-  }
+      // 加载模板
+      const zip = new PizZip(templateBuffer);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+      });
 
-  /**
-   * 生成完整文档
-   */
-  async generateDocument(): Promise<Blob> {
-    const doc = this.buildDocument();
-    return await Packer.toBlob(doc);
-  }
+      // 准备模板数据
+      const templateData = this.prepareTemplateData();
 
-  /**
-   * 构建文档对象
-   */
-  private buildDocument(): Document {
-    const sections = [{
-      properties: {
-        page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
-      },
-      children: this.buildDocumentContent()
-    }];
+      // 渲染模板
+      doc.render(templateData);
 
-    return new Document({
-      styles: this.getDocumentStyles(),
-      numbering: this.getNumberingConfig(),
-      sections
-    });
-  }
+      // 生成文档
+      const output = doc.getZip().generate({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
 
-  /**
-   * 获取文档样式
-   */
-  private getDocumentStyles() {
-    return {
-      default: { document: { run: { font: "微软雅黑", size: 22 } } },
-      paragraphStyles: [
-        {
-          id: "Title",
-          name: "Title",
-          basedOn: "Normal",
-          run: { size: 56, bold: true, color: "000000", font: "微软雅黑" },
-          paragraph: { spacing: { before: 240, after: 240 }, alignment: 'center' as const }
-        },
-        {
-          id: "Heading1",
-          name: "Heading 1",
-          basedOn: "Normal",
-          next: "Normal",
-          quickFormat: true,
-          run: { size: 32, bold: true, color: "2F5496", font: "微软雅黑" },
-          paragraph: { spacing: { before: 240, after: 120 }, outlineLevel: 0 }
-        },
-        {
-          id: "Heading2",
-          name: "Heading 2",
-          basedOn: "Normal",
-          next: "Normal",
-          quickFormat: true,
-          run: { size: 28, bold: true, color: "2F5496", font: "微软雅黑" },
-          paragraph: { spacing: { before: 180, after: 120 }, outlineLevel: 1 }
-        },
-        {
-          id: "Heading3",
-          name: "Heading 3",
-          basedOn: "Normal",
-          next: "Normal",
-          quickFormat: true,
-          run: { size: 24, bold: true, color: "1F4E78", font: "微软雅黑" },
-          paragraph: { spacing: { before: 120, after: 100 }, outlineLevel: 2 }
-        }
-      ]
-    };
-  }
-
-  /**
-   * 获取编号配置
-   */
-  private getNumberingConfig() {
-    return {
-      config: [
-        {
-          reference: "bullet-list",
-          levels: [
-            {
-              level: 0,
-              format: 'bullet' as const,
-              text: "•",
-              alignment: 'left' as const,
-              style: {
-                paragraph: {
-                  indent: { left: 720, hanging: 360 }
-                }
-              }
-            }
-          ]
-        }
-      ]
-    };
-  }
-
-  /**
-   * 构建文档内容
-   */
-  private buildDocumentContent(): any[] {
-    const content: any[] = [];
-
-    // 标题
-    content.push(
-      new Paragraph({
-        heading: 'Title' as any,
-        children: [new TextRun(this.openApiSpec.info?.title || "接口文档")]
-      })
-    );
-
-    // 版本信息
-    content.push(
-      new Paragraph({
-        spacing: { before: 120, after: 240 },
-        alignment: 'center' as const,
-        children: [
-          new TextRun({
-            text: `版本：${this.openApiSpec.info?.version || "1.0.0"}`,
-            size: 24,
-            color: "666666"
-          })
-        ]
-      })
-    );
-
-    // 1. 文档说明
-    content.push(
-      new Paragraph({
-        heading: 'Heading1' as any,
-        children: [new TextRun("1. 文档说明")]
-      })
-    );
-
-    content.push(
-      new Paragraph({
-        spacing: { after: 120 },
-        children: [
-          new TextRun(this.openApiSpec.info?.description || "本文档描述系统提供的API接口规范。")
-        ]
-      })
-    );
-
-    // 1.1 基本信息
-    content.push(
-      new Paragraph({
-        heading: 'Heading2' as any,
-        children: [new TextRun("1.1 基本信息")]
-      })
-    );
-
-    content.push(this.createBasicInfoTable());
-
-    // 2. 接口列表
-    content.push(
-      new Paragraph({
-        spacing: { before: 240 },
-        heading: 'Heading1' as any,
-        children: [new TextRun("2. 接口列表")]
-      })
-    );
-
-    // 按 tag 分组生成接口文档
-    const apisByTag = this.groupApisByTag();
-    let sectionIndex = 1;
-
-    for (const [tag, apis] of Object.entries(apisByTag)) {
-      content.push(
-        new Paragraph({
-          heading: 'Heading2' as any,
-          children: [new TextRun(`2.${sectionIndex} ${tag}`)]
-        })
-      );
-
-      let apiIndex = 1;
-      for (const api of apis as any[]) {
-        content.push(...this.buildApiSection(api, sectionIndex, apiIndex));
-        apiIndex++;
-      }
-
-      sectionIndex++;
+      return output;
+    } catch (error) {
+      console.error('模板生成失败:', error);
+      throw new Error(`模板生成失败: ${error}`);
     }
-
-    return content;
   }
 
   /**
-   * 创建基本信息表格
+   * 准备模板数据
    */
-  private createBasicInfoTable(): Table {
-    const border = { style: 'single' as const, size: 1, color: "CCCCCC" };
-    const cellBorders = { top: border, bottom: border, left: border, right: border };
+  private prepareTemplateData(): any {
+    const spec = this.openApiSpec;
 
-    return new Table({
-      columnWidths: [2340, 7020],
-      margins: { top: 100, bottom: 100, left: 180, right: 180 },
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              verticalAlign: 'center' as const,
-              children: [new Paragraph({ children: [new TextRun({ text: "项目名称", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(this.openApiSpec.info?.title || "N/A")] })]
-            })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "服务地址", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(this.openApiSpec.servers?.[0]?.url || "N/A")] })]
-            })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "文档版本", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(this.openApiSpec.info?.version || "1.0.0")] })]
-            })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "更新日期", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(new Date().toLocaleDateString('zh-CN'))] })]
-            })
-          ]
-        })
-      ]
-    });
+    // 基本信息
+    const info = {
+      title: spec.info?.title || '未命名 API',
+      version: spec.info?.version || '1.0.0',
+      description: spec.info?.description || '',
+      baseUrl: spec.servers?.[0]?.url || 'N/A',
+      updateDate: new Date().toLocaleDateString('zh-CN'),
+    };
+
+    // 按 tag 分组接口
+    const apiGroups = this.groupApisByTag();
+
+    return {
+      ...info,
+      apiGroups,
+    };
   }
 
   /**
    * 按 tag 分组 API
    */
-  private groupApisByTag(): Record<string, any[]> {
-    const apisByTag: Record<string, any[]> = {};
+  private groupApisByTag(): any[] {
+    const groups: Record<string, any> = {};
 
     for (const [path, methods] of Object.entries(this.openApiSpec.paths || {})) {
       for (const [method, operation] of Object.entries(methods as any)) {
         const tag = (operation as any).tags?.[0] || '未分类';
-        if (!apisByTag[tag]) {
-          apisByTag[tag] = [];
+
+        if (!groups[tag]) {
+          groups[tag] = {
+            tagName: tag,
+            apis: [],
+          };
         }
-        apisByTag[tag].push({
-          path,
-          method: method.toUpperCase(),
-          operation
-        });
+
+        groups[tag].apis.push(this.parseApiOperation(path, method.toUpperCase(), operation));
       }
     }
 
-    return apisByTag;
+    return Object.values(groups);
   }
 
   /**
-   * 构建单个 API 的文档部分
+   * 解析单个 API 操作
    */
-  private buildApiSection(api: any, sectionIndex: number, apiIndex: number): any[] {
-    const content: any[] = [];
-    const { path, method, operation } = api;
-
-    // API 标题
-    content.push(
-      new Paragraph({
-        heading: 'Heading3' as any,
-        children: [new TextRun(`2.${sectionIndex}.${apiIndex} ${operation.summary || path}`)]
-      })
-    );
-
-    // 接口概述
-    content.push(
-      new Paragraph({
-        spacing: { before: 60, after: 60 },
-        children: [new TextRun({ text: "接口概述", bold: true })]
-      })
-    );
-
-    content.push(this.createApiOverviewTable(path, method, operation));
-
-    // 请求参数
-    const paramTables = this.createParameterTables(operation);
-    if (paramTables.length > 0) {
-      content.push(
-        new Paragraph({
-          spacing: { before: 180 },
-          children: [new TextRun({ text: "请求参数", bold: true, size: 24 })]
-        })
-      );
-      content.push(...paramTables);
-    }
-
-    // 响应结果
-    const responseTables = this.createResponseTables(operation);
-    if (responseTables.length > 0) {
-      content.push(
-        new Paragraph({
-          spacing: { before: 180 },
-          children: [new TextRun({ text: "响应结果", bold: true, size: 24 })]
-        })
-      );
-      content.push(...responseTables);
-    }
-
-    return content;
-  }
-
-  /**
-   * 创建 API 概述表格
-   */
-  private createApiOverviewTable(path: string, method: string, operation: any): Table {
-    const border = { style: 'single' as const, size: 1, color: "CCCCCC" };
-    const cellBorders = { top: border, bottom: border, left: border, right: border };
-
+  private parseApiOperation(path: string, method: string, operation: any): any {
     const contentType = operation.requestBody?.content
       ? Object.keys(operation.requestBody.content)[0]
       : 'application/json';
 
-    return new Table({
-      columnWidths: [2340, 7020],
-      margins: { top: 100, bottom: 100, left: 180, right: 180 },
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "接口名称", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(operation.summary || path)] })]
-            })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "请求方法", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(method)] })]
-            })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "接口路径", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(path)] })]
-            })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "Content-Type", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(contentType)] })]
-            })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 2340, type: 'dxa' as const },
-              shading: { fill: "F2F2F2", type: 'clear' as const },
-              children: [new Paragraph({ children: [new TextRun({ text: "功能描述", bold: true })] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 7020, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(operation.description || operation.summary || "")] })]
-            })
-          ]
-        })
-      ]
-    });
+    return {
+      summary: operation.summary || path,
+      method,
+      path,
+      contentType,
+      description: operation.description || operation.summary || '',
+      pathParams: this.extractParameters(operation.parameters, 'path'),
+      queryParams: this.extractParameters(operation.parameters, 'query'),
+      headerParams: this.extractParameters(operation.parameters, 'header'),
+      bodyParams: this.extractBodyParameters(operation.requestBody),
+      responses: this.extractResponses(operation.responses),
+    };
   }
 
   /**
-   * 创建参数表格
+   * 提取参数
    */
-  private createParameterTables(operation: any): any[] {
-    const tables: any[] = [];
+  private extractParameters(parameters: any[] | undefined, paramType: string): any[] {
+    if (!parameters) return [];
 
-    // Path 参数
-    const pathParams = operation.parameters?.filter((p: any) => p.in === 'path') || [];
-    if (pathParams.length > 0) {
-      tables.push(
-        new Paragraph({
-          spacing: { before: 60, after: 60 },
-          children: [new TextRun({ text: "Path 参数", bold: true })]
-        })
-      );
-      tables.push(this.createParameterTable(pathParams));
-    }
-
-    // Query 参数
-    const queryParams = operation.parameters?.filter((p: any) => p.in === 'query') || [];
-    if (queryParams.length > 0) {
-      tables.push(
-        new Paragraph({
-          spacing: { before: 120, after: 60 },
-          children: [new TextRun({ text: "Query 参数", bold: true })]
-        })
-      );
-      tables.push(this.createParameterTable(queryParams));
-    }
-
-    // Body 参数
-    if (operation.requestBody?.content) {
-      const bodyContent = Object.values(operation.requestBody.content)[0] as any;
-      const bodySchema = bodyContent.schema;
-
-      if (bodySchema?.properties) {
-        tables.push(
-          new Paragraph({
-            spacing: { before: 120, after: 60 },
-            children: [new TextRun({ text: "Body 参数", bold: true })]
-          })
-        );
-        tables.push(this.createBodyParameterTable(bodySchema));
-      }
-    }
-
-    return tables;
+    return parameters
+      .filter((p: any) => p.in === paramType)
+      .map((p: any) => ({
+        name: p.name,
+        type: this.getSchemaType(p.schema),
+        required: p.required ? '是' : '否',
+        description: p.description || '',
+        example: p.example || p.schema?.example || '',
+      }));
   }
 
   /**
-   * 创建参数表格（Path/Query）
+   * 提取 Body 参数
    */
-  private createParameterTable(params: any[]): Table {
-    const border = { style: 'single' as const, size: 1, color: "CCCCCC" };
-    const cellBorders = { top: border, bottom: border, left: border, right: border };
-    const headerShading = { fill: "4472C4", type: 'clear' as const };
+  private extractBodyParameters(requestBody: any): any[] {
+    if (!requestBody?.content) return [];
 
-    const rows = [
-      new TableRow({
-        tableHeader: true,
-        children: [
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1872, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "参数名", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1404, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "类型", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1170, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "必填", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1404, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "示例值", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 3510, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "说明", bold: true, color: "FFFFFF" })]
-            })]
-          })
-        ]
-      })
-    ];
+    const bodyContent = Object.values(requestBody.content)[0] as any;
+    const bodySchema = bodyContent.schema;
 
-    for (const param of params) {
-      rows.push(
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1872, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(param.name)] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1404, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(this.getSchemaType(param.schema))] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1170, type: 'dxa' as const },
-              children: [new Paragraph({
-                alignment: 'center' as const,
-                children: [new TextRun(param.required ? '是' : '否')]
-              })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1404, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(param.example || param.schema?.example || '')] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 3510, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(param.description || '')] })]
-            })
-          ]
-        })
-      );
-    }
+    if (!bodySchema?.properties) return [];
 
-    return new Table({
-      columnWidths: [1872, 1404, 1170, 1404, 3510],
-      margins: { top: 80, bottom: 80, left: 120, right: 120 },
-      rows
-    });
+    return this.flattenProperties(bodySchema);
   }
 
   /**
-   * 创建 Body 参数表格
+   * 提取响应信息
    */
-  private createBodyParameterTable(schema: any): Table {
-    const border = { style: 'single' as const, size: 1, color: "CCCCCC" };
-    const cellBorders = { top: border, bottom: border, left: border, right: border };
-    const headerShading = { fill: "4472C4", type: 'clear' as const };
+  private extractResponses(responses: any): any[] {
+    if (!responses) return [];
 
-    const fields = this.flattenProperties(schema);
+    const result: any[] = [];
 
-    const rows = [
-      new TableRow({
-        tableHeader: true,
-        children: [
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1872, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "字段名", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1404, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "类型", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1170, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "必填", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1404, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "示例值", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 3510, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "说明", bold: true, color: "FFFFFF" })]
-            })]
-          })
-        ]
-      })
-    ];
-
-    for (const field of fields) {
-      rows.push(
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1872, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(field.fieldName)] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1404, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(field.type)] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1170, type: 'dxa' as const },
-              children: [new Paragraph({
-                alignment: 'center' as const,
-                children: [new TextRun(field.isRequired)]
-              })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1404, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(String(field.example || ''))] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 3510, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(field.description)] })]
-            })
-          ]
-        })
-      );
-    }
-
-    return new Table({
-      columnWidths: [1872, 1404, 1170, 1404, 3510],
-      margins: { top: 80, bottom: 80, left: 120, right: 120 },
-      rows
-    });
-  }
-
-  /**
-   * 创建响应表格
-   */
-  private createResponseTables(operation: any): any[] {
-    const tables: any[] = [];
-
-    const response200 = operation.responses?.['200'];
+    // 成功响应
+    const response200 = responses['200'];
     if (response200?.content) {
       const responseContent = Object.values(response200.content)[0] as any;
       let responseSchema = responseContent.schema;
@@ -741,111 +169,49 @@ export class OpenAPIDocGenerator {
       }
 
       if (responseSchema) {
-        tables.push(
-          new Paragraph({
-            spacing: { before: 60, after: 60 },
-            children: [new TextRun({ text: "成功响应（200）", bold: true })]
-          })
-        );
-        tables.push(this.createResponseTable(responseSchema));
+        const fields = this.flattenProperties(responseSchema);
+        result.push({
+          statusCode: '200',
+          description: response200.description || '成功',
+          fields,
+        });
       }
     }
 
-    return tables;
+    // 错误响应
+    const errorCodes = ['400', '401', '403', '404', '500'];
+    const errors: any[] = [];
+    errorCodes.forEach((code) => {
+      if (responses[code]) {
+        errors.push({
+          code,
+          description: responses[code].description || this.getDefaultErrorMessage(code),
+        });
+      }
+    });
+
+    if (errors.length > 0) {
+      result.push({
+        statusCode: 'errors',
+        errors,
+      });
+    }
+
+    return result;
   }
 
   /**
-   * 创建响应表格
+   * 获取默认错误消息
    */
-  private createResponseTable(schema: any): Table {
-    const border = { style: 'single' as const, size: 1, color: "CCCCCC" };
-    const cellBorders = { top: border, bottom: border, left: border, right: border };
-    const headerShading = { fill: "4472C4", type: 'clear' as const };
-
-    const fields = this.flattenProperties(schema);
-
-    const rows = [
-      new TableRow({
-        tableHeader: true,
-        children: [
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1872, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "字段名", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1404, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "类型", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 1404, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "示例值", bold: true, color: "FFFFFF" })]
-            })]
-          }),
-          new TableCell({
-            borders: cellBorders,
-            width: { size: 4680, type: 'dxa' as const },
-            shading: headerShading,
-            verticalAlign: 'center' as const,
-            children: [new Paragraph({
-              alignment: 'center' as const,
-              children: [new TextRun({ text: "说明", bold: true, color: "FFFFFF" })]
-            })]
-          })
-        ]
-      })
-    ];
-
-    for (const field of fields) {
-      rows.push(
-        new TableRow({
-          children: [
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1872, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(field.fieldName)] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1404, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(field.type)] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 1404, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(String(field.example || ''))] })]
-            }),
-            new TableCell({
-              borders: cellBorders,
-              width: { size: 4680, type: 'dxa' as const },
-              children: [new Paragraph({ children: [new TextRun(field.description)] })]
-            })
-          ]
-        })
-      );
-    }
-
-    return new Table({
-      columnWidths: [1872, 1404, 1404, 4680],
-      margins: { top: 80, bottom: 80, left: 120, right: 120 },
-      rows
-    });
+  private getDefaultErrorMessage(code: string): string {
+    const messages: Record<string, string> = {
+      '400': '请求参数错误',
+      '401': '未授权，Token无效或已过期',
+      '403': '无权限访问该资源',
+      '404': '请求的资源不存在',
+      '500': '服务器内部错误',
+    };
+    return messages[code] || '未知错误';
   }
 
   /**
@@ -865,6 +231,9 @@ export class OpenAPIDocGenerator {
     if (schema.format) {
       return `${schema.type}(${schema.format})`;
     }
+    if (schema.enum) {
+      return schema.enum.join(' | ');
+    }
     return schema.type || 'any';
   }
 
@@ -880,14 +249,8 @@ export class OpenAPIDocGenerator {
   /**
    * 扁平化对象属性
    */
-  private flattenProperties(schema: any, prefix = ''): Array<{
-    fieldName: string;
-    type: string;
-    isRequired: string;
-    description: string;
-    example: string;
-  }> {
-    const results: Array<any> = [];
+  private flattenProperties(schema: any, prefix = ''): any[] {
+    const results: any[] = [];
     if (!schema || !schema.properties) return results;
 
     for (const [key, prop] of Object.entries(schema.properties)) {
@@ -897,7 +260,7 @@ export class OpenAPIDocGenerator {
       const description = (prop as any).description || '';
       const example = (prop as any).example || ((prop as any).enum ? (prop as any).enum.join(' | ') : '');
 
-      results.push({ fieldName, type, isRequired, description, example });
+      results.push({ name: fieldName, type, required: isRequired, description, example });
 
       // 如果是嵌套对象，递归展开
       if ((prop as any).type === 'object' && (prop as any).properties) {

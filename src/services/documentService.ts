@@ -112,18 +112,24 @@ export class DocumentService {
   async generateApiDocument(
     openApiSpec: any,
     outputPath: string,
+    templatePath?: string,
     onProgress?: (message: string, percent: number) => void
   ): Promise<void> {
     try {
       onProgress?.('正在解析 OpenAPI 规范...', 10);
+
+      // 如果没有指定模板，抛出错误
+      if (!templatePath) {
+        throw new Error('请先选择模板文件');
+      }
 
       // 创建文档生成器
       const generator = new OpenAPIDocGenerator(openApiSpec);
 
       onProgress?.('正在生成文档内容...', 50);
 
-      // 生成文档
-      const blob = await generator.generateDocument();
+      // 从模板生成文档
+      const blob = await generator.generateFromTemplate(templatePath);
 
       onProgress?.('正在保存文档...', 80);
 
