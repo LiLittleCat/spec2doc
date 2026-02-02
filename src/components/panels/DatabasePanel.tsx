@@ -18,6 +18,12 @@ interface TableInfo {
   selected: boolean;
 }
 
+type Notification = {
+  type: "success" | "error";
+  message: string;
+  step: 1 | 2 | 3 | 4;
+};
+
 export function DatabasePanel() {
   const [connectionStatus, setConnectionStatus] = useState<"idle" | "connecting" | "connected" | "error">("idle");
   const [isLoadingTables, setIsLoadingTables] = useState(false);
@@ -51,7 +57,45 @@ export function DatabasePanel() {
   });
 
   // 通知状态
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [notification, setNotification] = useState<Notification | null>(null);
+
+  const renderNotification = (step: Notification["step"]) => {
+    if (!notification || notification.step !== step) return null;
+
+    return (
+      <div
+        className={cn(
+          "card-elevated p-4 border-2",
+          notification.type === "success"
+            ? "border-success/20 bg-success/5"
+            : "border-destructive/20 bg-destructive/5",
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center",
+              notification.type === "success" ? "bg-success/20" : "bg-destructive/20",
+            )}
+          >
+            {notification.type === "success" ? (
+              <Check className={cn("w-5 h-5", "text-success")} />
+            ) : (
+              <AlertCircle className={cn("w-5 h-5", "text-destructive")} />
+            )}
+          </div>
+          <p
+            className={cn(
+              "text-sm font-medium",
+              notification.type === "success" ? "text-success" : "text-destructive",
+            )}
+          >
+            {notification.message}
+          </p>
+        </div>
+      </div>
+    );
+  };
 
   const handleConnect = async () => {
     setConnectionStatus("connecting");
@@ -433,32 +477,7 @@ export function DatabasePanel() {
           </TabsContent>
         </Tabs>
 
-        {/* 通知卡片 */}
-        {notification && (
-          <div className={cn(
-            "card-elevated p-4 border-2",
-            notification.type === 'success' ? "border-success/20 bg-success/5" : "border-destructive/20 bg-destructive/5"
-          )}>
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center",
-                notification.type === 'success' ? "bg-success/20" : "bg-destructive/20"
-              )}>
-                {notification.type === 'success' ? (
-                  <Check className={cn("w-5 h-5", "text-success")} />
-                ) : (
-                  <AlertCircle className={cn("w-5 h-5", "text-destructive")} />
-                )}
-              </div>
-              <p className={cn(
-                "text-sm font-medium",
-                notification.type === 'success' ? "text-success" : "text-destructive"
-              )}>
-                {notification.message}
-              </p>
-            </div>
-          </div>
-        )}
+        {renderNotification(1)}
 
         {/* Tables List */}
         {tables.length > 0 && (
@@ -518,7 +537,7 @@ export function DatabasePanel() {
         )}
         <StepHeader step={2} title="模板文件选择" />
 
-        <div className="card-elevated p-6">
+        <div className="p-6">
           <div className="flex gap-3">
             <Input
               placeholder="选择模板文件..."
@@ -532,6 +551,8 @@ export function DatabasePanel() {
             </Button>
           </div>
         </div>
+
+        {renderNotification(2)}
       </section>
 
       {/* Step 3: Output Path */}
@@ -541,7 +562,7 @@ export function DatabasePanel() {
         )}
         <StepHeader step={3} title="选择输出路径" />
 
-        <div className="card-elevated p-6">
+        <div className="p-6">
           <div className="flex gap-3">
             <Input
               placeholder="选择保存路径..."
@@ -555,6 +576,8 @@ export function DatabasePanel() {
             </Button>
           </div>
         </div>
+
+        {renderNotification(3)}
       </section>
 
       {/* Step 4: Generate */}
@@ -586,7 +609,7 @@ export function DatabasePanel() {
             </div>
           </div>
         ) : (
-          <div className="card-elevated p-6 space-y-4">
+          <div className="p-6 space-y-4">
             {isGenerating && (
               <div className="space-y-3">
                 <div className="w-full bg-secondary rounded-full h-2.5">
@@ -617,6 +640,8 @@ export function DatabasePanel() {
             </Button>
           </div>
         )}
+
+        {renderNotification(4)}
       </section>
 
     </div>

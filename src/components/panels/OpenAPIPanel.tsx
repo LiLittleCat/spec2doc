@@ -17,6 +17,12 @@ interface ParsedSpec {
   schemaCount: number;
 }
 
+type Notification = {
+  type: "success" | "error";
+  message: string;
+  step: 1 | 2 | 3 | 4;
+};
+
 export function OpenAPIPanel() {
   const [specContent, setSpecContent] = useState("");
   const [parsedSpec, setParsedSpec] = useState<ParsedSpec | null>(null);
@@ -33,7 +39,45 @@ export function OpenAPIPanel() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // 通知状态
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [notification, setNotification] = useState<Notification | null>(null);
+
+  const renderNotification = (step: Notification["step"]) => {
+    if (!notification || notification.step !== step) return null;
+
+    return (
+      <div
+        className={cn(
+          "card-elevated p-4 border-2",
+          notification.type === "success"
+            ? "border-success/20 bg-success/5"
+            : "border-destructive/20 bg-destructive/5",
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center",
+              notification.type === "success" ? "bg-success/20" : "bg-destructive/20",
+            )}
+          >
+            {notification.type === "success" ? (
+              <Check className={cn("w-5 h-5", "text-success")} />
+            ) : (
+              <AlertCircle className={cn("w-5 h-5", "text-destructive")} />
+            )}
+          </div>
+          <p
+            className={cn(
+              "text-sm font-medium",
+              notification.type === "success" ? "text-success" : "text-destructive",
+            )}
+          >
+            {notification.message}
+          </p>
+        </div>
+      </div>
+    );
+  };
 
   // 当生成完成时，自动滚动到底部
   useEffect(() => {
@@ -64,7 +108,7 @@ export function OpenAPIPanel() {
         setFullSpec(null);
       }
     } catch (error) {
-      setNotification({ type: 'error', message: '文件选择失败: ' + error });
+      setNotification({ type: "error", message: "文件选择失败: " + error, step: 1 });
       setTimeout(() => setNotification(null), 5000);
     }
   };
@@ -82,7 +126,11 @@ export function OpenAPIPanel() {
       // 验证 OpenAPI 规范
       const validation = await documentService.validateOpenApiSpec(spec);
       if (!validation.valid) {
-        setNotification({ type: 'error', message: 'OpenAPI 规范验证失败: ' + validation.errors.join(", ") });
+        setNotification({
+          type: "error",
+          message: "OpenAPI 规范验证失败: " + validation.errors.join(", "),
+          step: 1,
+        });
         setIsLoading(false);
         return;
       }
@@ -100,7 +148,7 @@ export function OpenAPIPanel() {
       });
       setFullSpec(spec);
     } catch (error: any) {
-      setNotification({ type: 'error', message: '解析失败: ' + error.message });
+      setNotification({ type: "error", message: "解析失败: " + error.message, step: 1 });
     } finally {
       setIsLoading(false);
     }
@@ -129,7 +177,7 @@ export function OpenAPIPanel() {
         setTemplatePath(selected as string);
       }
     } catch (error) {
-      setNotification({ type: 'error', message: '文件选择失败: ' + error });
+      setNotification({ type: "error", message: "文件选择失败: " + error, step: 2 });
       setTimeout(() => setNotification(null), 5000);
     }
   };
@@ -145,20 +193,20 @@ export function OpenAPIPanel() {
         setOutputPath(selected as string);
       }
     } catch (error) {
-      setNotification({ type: 'error', message: '路径选择失败: ' + error });
+      setNotification({ type: "error", message: "路径选择失败: " + error, step: 3 });
       setTimeout(() => setNotification(null), 5000);
     }
   };
 
   const handleGenerate = async () => {
     if (!fullSpec) {
-      setNotification({ type: 'error', message: '请先解析 OpenAPI 规范' });
+      setNotification({ type: "error", message: "请先解析 OpenAPI 规范", step: 4 });
       setTimeout(() => setNotification(null), 5000);
       return;
     }
 
     if (!outputPath) {
-      setNotification({ type: 'error', message: '请先选择输出路径' });
+      setNotification({ type: "error", message: "请先选择输出路径", step: 4 });
       setTimeout(() => setNotification(null), 5000);
       return;
     }
@@ -190,8 +238,8 @@ export function OpenAPIPanel() {
       setIsGenerating(false);
       setIsDone(true);
     } catch (error: any) {
-      console.error('生成失败:', error);
-      setNotification({ type: 'error', message: '文档生成失败: ' + error.message });
+      console.error("生成失败:", error);
+      setNotification({ type: "error", message: "文档生成失败: " + error.message, step: 4 });
       setIsGenerating(false);
     }
   };
@@ -203,7 +251,7 @@ export function OpenAPIPanel() {
     try {
       await invoke("reveal_in_file_manager", { path: generatedFilePath });
     } catch (error) {
-      setNotification({ type: 'error', message: '打开文件夹失败: ' + error });
+      setNotification({ type: "error", message: "打开文件夹失败: " + error, step: 4 });
       setTimeout(() => setNotification(null), 5000);
     }
   };
@@ -294,33 +342,6 @@ export function OpenAPIPanel() {
           </div>
         </div>
 
-        {/* 通知卡片 */}
-        {notification && (
-          <div className={cn(
-            "card-elevated p-4 border-2",
-            notification.type === 'success' ? "border-success/20 bg-success/5" : "border-destructive/20 bg-destructive/5"
-          )}>
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center",
-                notification.type === 'success' ? "bg-success/20" : "bg-destructive/20"
-              )}>
-                {notification.type === 'success' ? (
-                  <Check className={cn("w-5 h-5", "text-success")} />
-                ) : (
-                  <AlertCircle className={cn("w-5 h-5", "text-destructive")} />
-                )}
-              </div>
-              <p className={cn(
-                "text-sm font-medium",
-                notification.type === 'success' ? "text-success" : "text-destructive"
-              )}>
-                {notification.message}
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Parsed Result */}
         {parsedSpec && (
           <div className="card-elevated p-6 space-y-3 border-2 border-success/20">
@@ -347,6 +368,8 @@ export function OpenAPIPanel() {
             </div>
           </div>
         )}
+
+        {renderNotification(1)}
       </section>
 
       {/* Step 2: Template Path (Optional) */}
@@ -356,7 +379,7 @@ export function OpenAPIPanel() {
         )}
         <StepHeader step={2} title="模板文件选择（可选）" />
 
-        <div className="card-elevated p-6 space-y-3">
+        <div className="p-6 space-y-3">
           <div className="flex gap-3">
             <Input
               placeholder="使用默认模板或选择自定义模板..."
@@ -374,6 +397,8 @@ export function OpenAPIPanel() {
             当前使用内置模板。如需自定义样式，请选择 .docx 模板文件。
           </p>
         </div>
+
+        {renderNotification(2)}
       </section>
 
       {/* Step 3: Output Path */}
@@ -383,7 +408,7 @@ export function OpenAPIPanel() {
         )}
         <StepHeader step={3} title="选择输出路径" />
 
-        <div className="card-elevated p-6">
+        <div className="p-6">
           <div className="flex gap-3">
             <Input
               placeholder="选择保存文件夹..."
@@ -398,6 +423,8 @@ export function OpenAPIPanel() {
             </Button>
           </div>
         </div>
+
+        {renderNotification(3)}
       </section>
 
       {/* Step 4: Generate */}
@@ -434,7 +461,7 @@ export function OpenAPIPanel() {
             </div>
           </div>
         ) : (
-          <div className="card-elevated p-6 space-y-4">
+          <div className="p-6 space-y-4">
             {isGenerating && (
               <div className="space-y-3">
                 <div className="w-full bg-secondary rounded-full h-2.5">
@@ -467,6 +494,8 @@ export function OpenAPIPanel() {
             </Button>
           </div>
         )}
+
+        {renderNotification(4)}
       </section>
 
       {/* 底部锚点，用于自动滚动 */}

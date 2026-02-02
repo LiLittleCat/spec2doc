@@ -143,7 +143,10 @@ export class DocumentService {
       onProgress?.('文档生成完成！', 100);
     } catch (error) {
       console.error('文档生成失败:', error);
-      throw new Error(`文档生成失败: ${error}`);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error(String(error));
     }
   }
 
