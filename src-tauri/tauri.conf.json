@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "spec2doc-tauri",
+  "productName": "spec2doc",
   "version": "0.1.0",
-  "identifier": "com.yiliu.spec2doc-tauri",
+  "identifier": "do.yl.spec2doc",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -23,19 +23,7 @@
       "csp": null
     }
   },
-  "plugins": {
-    "dialog": {
-      "all": true,
-      "open": true,
-      "save": true
-    },
-    "fs": {
-      "all": false,
-      "readFile": true,
-      "writeFile": true,
-      "scope": ["$HOME/**", "$DESKTOP/**", "$DOCUMENT/**", "$DOWNLOAD/**"]
-    }
-  },
+  "plugins": {},
   "bundle": {
     "active": true,
     "targets": "all",

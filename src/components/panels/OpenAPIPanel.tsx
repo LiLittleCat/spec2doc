@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { FileJson, FileCode, Check, Trash2, FolderOpen, FileText, Loader2 } from "lucide-react";
+import { FileJson, Check, Trash2, FolderOpen, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { documentService } from "@/services/documentService";
+import { toast } from "sonner";
+import { open } from '@tauri-apps/plugin-dialog';
+import { readTextFile } from '@tauri-apps/plugin-fs';
 
 interface ParsedSpec {
   title: string;
@@ -15,22 +19,41 @@ interface ParsedSpec {
 export function OpenAPIPanel() {
   const [specContent, setSpecContent] = useState("");
   const [parsedSpec, setParsedSpec] = useState<ParsedSpec | null>(null);
+  const [fullSpec, setFullSpec] = useState<any>(null);
+  const [selectedFilePath, setSelectedFilePath] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [templatePath, setTemplatePath] = useState("");
   const [outputPath, setOutputPath] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateProgress, setGenerateProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState("");
   const [isDone, setIsDone] = useState(false);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSpecContent(event.target?.result as string || "");
+  // 使用 Tauri dialog 选择 OpenAPI 文件
+  const handleSelectOpenApiFile = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{
+          name: 'OpenAPI 规范',
+          extensions: ['json', 'yaml', 'yml']
+        }]
+      });
+
+      if (selected) {
+        const filePath = selected as string;
+        setSelectedFilePath(filePath);
+
+        // 读取文件内容
+        const content = await readTextFile(filePath);
+        setSpecContent(content);
         setParsedSpec(null);
-      };
-      reader.readAsText(files[0]);
+        setFullSpec(null);
+
+        toast.success("文件已加载");
+      }
+    } catch (error) {
+      toast.error("文件选择失败: " + error);
     }
   };
 
@@ -38,41 +61,123 @@ export function OpenAPIPanel() {
     if (!specContent.trim()) return;
     setIsLoading(true);
     setIsDone(false);
-    
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    setParsedSpec({
-      title: "Example API",
-      version: "1.0.0",
-      description: "这是一个示例 API 规范，包含用户管理和订单处理接口。",
-      pathCount: 24,
-      schemaCount: 18,
-    });
-    setIsLoading(false);
+
+    try {
+      // 使用 documentService 解析（支持 JSON 和 YAML）
+      const spec = documentService.parseOpenApiFromText(specContent);
+
+      // 验证 OpenAPI 规范
+      const validation = await documentService.validateOpenApiSpec(spec);
+      if (!validation.valid) {
+        toast.error("OpenAPI 规范验证失败: " + validation.errors.join(", "));
+        setIsLoading(false);
+        return;
+      }
+
+      // 提取基本信息
+      const pathCount = Object.keys(spec.paths || {}).length;
+      const schemaCount = Object.keys(spec.components?.schemas || {}).length;
+
+      setParsedSpec({
+        title: spec.info?.title || "未命名 API",
+        version: spec.info?.version || "1.0.0",
+        description: spec.info?.description || "",
+        pathCount,
+        schemaCount,
+      });
+      setFullSpec(spec);
+      toast.success("OpenAPI 规范解析成功！");
+    } catch (error: any) {
+      toast.error("解析失败: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const clearContent = () => {
     setSpecContent("");
     setParsedSpec(null);
+    setFullSpec(null);
+    setSelectedFilePath("");
     setIsDone(false);
   };
 
+  const handleSelectTemplate = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{
+          name: 'Word 模板',
+          extensions: ['docx']
+        }]
+      });
+
+      if (selected) {
+        setTemplatePath(selected as string);
+        toast.success("模板文件已选择");
+      }
+    } catch (error) {
+      toast.error("文件选择失败: " + error);
+    }
+  };
+
+  const handleSelectOutput = async () => {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false
+      });
+
+      if (selected) {
+        setOutputPath(selected as string);
+        toast.success("输出路径已选择");
+      }
+    } catch (error) {
+      toast.error("路径选择失败: " + error);
+    }
+  };
 
   const handleGenerate = async () => {
+    if (!fullSpec) {
+      toast.error("请先解析 OpenAPI 规范");
+      return;
+    }
+
+    if (!outputPath) {
+      toast.error("请先选择输出路径");
+      return;
+    }
+
     setIsGenerating(true);
     setGenerateProgress(0);
     setIsDone(false);
-    
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setGenerateProgress(i);
+
+    try {
+      // 构建输出文件路径
+      const fileName = `${parsedSpec?.title || '接口文档'}_${new Date().getTime()}.docx`;
+      const fullOutputPath = `${outputPath}\\${fileName}`;
+
+      // 生成文档
+      await documentService.generateApiDocument(
+        fullSpec,
+        fullOutputPath,
+        (message, percent) => {
+          setProgressMessage(message);
+          setGenerateProgress(percent);
+        }
+      );
+
+      setIsGenerating(false);
+      setIsDone(true);
+      toast.success("文档生成成功！");
+    } catch (error: any) {
+      console.error('生成失败:', error);
+      toast.error('文档生成失败: ' + error.message);
+      setIsGenerating(false);
     }
-    
-    setIsGenerating(false);
-    setIsDone(true);
   };
 
-  const canGenerate = parsedSpec !== null;
+  const canGenerate = parsedSpec !== null && outputPath !== "";
 
   return (
     <div className="p-6 space-y-6">
@@ -87,35 +192,51 @@ export function OpenAPIPanel() {
         </p>
       </div>
 
-      {/* Step 1: Upload */}
+      {/* Step 1: Select or Paste */}
       <section className="space-y-4">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          1. 上传或粘贴规范
+          1. 选择或粘贴规范
         </h3>
-        
+
         <div className="card-elevated p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept=".json,.yaml,.yml"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="openapi-upload"
-            />
-            <label
-              htmlFor="openapi-upload"
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors text-sm"
-            >
-              <FileCode className="w-4 h-4" />
-              选择文件
-            </label>
-            <span className="text-sm text-muted-foreground">或直接粘贴</span>
+          {/* 文件选择 */}
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <Input
+                placeholder="选择 OpenAPI 规范文件..."
+                value={selectedFilePath}
+                readOnly
+                className="flex-1"
+              />
+              <Button variant="outline" onClick={handleSelectOpenApiFile}>
+                <FolderOpen className="w-4 h-4" />
+                选择文件
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              支持 JSON、YAML、YML 格式
+            </p>
           </div>
 
+          {/* 分隔线 */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">或直接粘贴内容</span>
+            </div>
+          </div>
+
+          {/* 文本区域 */}
           <textarea
             placeholder={`{\n  "openapi": "3.0.0",\n  "info": { "title": "My API", "version": "1.0.0" }\n}`}
             value={specContent}
-            onChange={(e) => { setSpecContent(e.target.value); setParsedSpec(null); }}
+            onChange={(e) => {
+              setSpecContent(e.target.value);
+              setParsedSpec(null);
+              setSelectedFilePath(""); // 清除文件路径，表示手动输入
+            }}
             className="w-full h-32 p-3 rounded-lg bg-background border border-border font-mono text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring"
           />
 
@@ -123,6 +244,7 @@ export function OpenAPIPanel() {
             {specContent && (
               <Button variant="ghost" size="sm" onClick={clearContent}>
                 <Trash2 className="w-4 h-4" />
+                清空
               </Button>
             )}
             <Button onClick={handleParseSpec} disabled={!specContent.trim() || isLoading} size="sm">
@@ -155,7 +277,7 @@ export function OpenAPIPanel() {
                 </span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3 p-2 rounded-lg bg-secondary/50">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <FileJson className="w-4 h-4 text-primary" />
@@ -171,24 +293,28 @@ export function OpenAPIPanel() {
         )}
       </section>
 
-      {/* Step 2: Template Path */}
+      {/* Step 2: Template Path (Optional) */}
       <section className={cn("space-y-4 transition-opacity", !parsedSpec && "opacity-50 pointer-events-none")}>
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          2. 模板文件选择
+          2. 模板文件选择（可选）
         </h3>
-        
+
         <div className="flex gap-3">
           <Input
-            placeholder="选择模板文件..."
+            placeholder="使用默认模板或选择自定义模板..."
             value={templatePath}
             onChange={(e) => setTemplatePath(e.target.value)}
             className="flex-1"
+            readOnly
           />
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleSelectTemplate}>
             <FolderOpen className="w-4 h-4" />
             浏览
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          当前使用内置模板。如需自定义样式，请选择 .docx 模板文件。
+        </p>
       </section>
 
       {/* Step 3: Output Path */}
@@ -196,15 +322,16 @@ export function OpenAPIPanel() {
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
           3. 选择输出路径
         </h3>
-        
+
         <div className="flex gap-3">
           <Input
-            placeholder="选择保存路径..."
+            placeholder="选择保存文件夹..."
             value={outputPath}
             onChange={(e) => setOutputPath(e.target.value)}
             className="flex-1"
+            readOnly
           />
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleSelectOutput}>
             <FolderOpen className="w-4 h-4" />
             浏览
           </Button>
@@ -216,7 +343,7 @@ export function OpenAPIPanel() {
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
           4. 生成文档
         </h3>
-        
+
         {isDone ? (
           <div className="card-elevated p-6 text-center space-y-4">
             <div className="w-12 h-12 mx-auto rounded-xl bg-success/10 flex items-center justify-center">
@@ -229,10 +356,6 @@ export function OpenAPIPanel() {
               </p>
             </div>
             <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" size="sm">
-                <FolderOpen className="w-4 h-4" />
-                打开文件夹
-              </Button>
               <Button variant="outline" size="sm" onClick={() => setIsDone(false)}>
                 重新生成
               </Button>
@@ -243,16 +366,18 @@ export function OpenAPIPanel() {
             {isGenerating && (
               <div className="space-y-2">
                 <div className="w-full bg-secondary rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-foreground h-2 rounded-full transition-all duration-300"
                     style={{ width: `${generateProgress}%` }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground text-center">{generateProgress}%</p>
+                <p className="text-sm text-muted-foreground text-center">
+                  {progressMessage} ({generateProgress}%)
+                </p>
               </div>
             )}
-            <Button 
-              onClick={handleGenerate} 
+            <Button
+              onClick={handleGenerate}
               disabled={!canGenerate || isGenerating}
               className="w-full"
             >
