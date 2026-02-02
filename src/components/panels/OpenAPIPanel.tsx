@@ -7,6 +7,7 @@ import { documentService } from "@/services/documentService";
 import { toast } from "sonner";
 import { open } from '@tauri-apps/plugin-dialog';
 import { readTextFile } from '@tauri-apps/plugin-fs';
+import { invoke } from "@tauri-apps/api/core";
 
 interface ParsedSpec {
   title: string;
@@ -195,11 +196,7 @@ export function OpenAPIPanel() {
     if (!generatedFilePath) return;
 
     try {
-      // 导入 opener 插件的 revealItemInDir 函数
-      const { revealItemInDir } = await import('@tauri-apps/plugin-opener');
-
-      // 在资源管理器中高亮文件
-      await revealItemInDir(generatedFilePath);
+      await invoke("reveal_in_file_manager", { path: generatedFilePath });
     } catch (error) {
       toast.error("打开文件夹失败: " + error);
     }
