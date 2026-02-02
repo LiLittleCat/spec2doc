@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { FileJson, Check, Trash2, FolderOpen, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { StepHeader } from "@/components/ui/StepHeader";
 import { cn } from "@/lib/utils";
 import { documentService } from "@/services/documentService";
 import { toast } from "sonner";
@@ -205,25 +206,23 @@ export function OpenAPIPanel() {
   const canGenerate = parsedSpec !== null && outputPath !== "";
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
           <FileJson className="w-7 h-7 text-primary" />
           OpenAPI 规范
         </h2>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-2">
           导入 OpenAPI 规范文件，生成接口设计文档
         </p>
       </div>
 
       {/* Step 1: Select or Paste */}
       <section className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          1. 选择或粘贴规范
-        </h3>
+        <StepHeader step={1} title="选择或粘贴规范" />
 
-        <div className="card-elevated p-4 space-y-4">
+        <div className="card-elevated p-6 space-y-4">
           {/* 文件选择 */}
           <div className="space-y-3">
             <div className="flex gap-3">
@@ -233,7 +232,7 @@ export function OpenAPIPanel() {
                 readOnly
                 className="flex-1"
               />
-              <Button variant="outline" onClick={handleSelectOpenApiFile}>
+              <Button variant="outline" onClick={handleSelectOpenApiFile} className="gap-2">
                 <FolderOpen className="w-4 h-4" />
                 选择文件
               </Button>
@@ -265,14 +264,14 @@ export function OpenAPIPanel() {
             className="w-full h-32 p-3 rounded-lg bg-background border border-border font-mono text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring"
           />
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-3">
             {specContent && (
-              <Button variant="ghost" size="sm" onClick={clearContent}>
+              <Button variant="ghost" size="sm" onClick={clearContent} className="gap-2">
                 <Trash2 className="w-4 h-4" />
                 清空
               </Button>
             )}
-            <Button onClick={handleParseSpec} disabled={!specContent.trim() || isLoading} size="sm">
+            <Button onClick={handleParseSpec} disabled={!specContent.trim() || isLoading} size="sm" className="gap-2">
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -292,24 +291,24 @@ export function OpenAPIPanel() {
 
         {/* Parsed Result */}
         {parsedSpec && (
-          <div className="card-elevated p-4 space-y-3">
+          <div className="card-elevated p-6 space-y-3 border-2 border-success/20">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-foreground">已解析 API 规范</span>
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 text-xs text-success">
-                  <Check className="w-3 h-3" />
+                <span className="flex items-center gap-1.5 text-xs text-success font-medium">
+                  <Check className="w-3.5 h-3.5" />
                   成功
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-2 rounded-lg bg-secondary/50">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <FileJson className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FileJson className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1">
                 <p className="font-medium text-sm text-foreground">{parsedSpec.title}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   v{parsedSpec.version} · {parsedSpec.pathCount} 接口 · {parsedSpec.schemaCount} 模型
                 </p>
               </div>
@@ -319,89 +318,96 @@ export function OpenAPIPanel() {
       </section>
 
       {/* Step 2: Template Path (Optional) */}
-      <section className={cn("space-y-4 transition-opacity", !parsedSpec && "opacity-50 pointer-events-none")}>
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          2. 模板文件选择（可选）
-        </h3>
+      <section className={cn("space-y-4 relative transition-opacity", !parsedSpec && "opacity-60")}>
+        {!parsedSpec && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg z-10 pointer-events-none" />
+        )}
+        <StepHeader step={2} title="模板文件选择（可选）" />
 
-        <div className="flex gap-3">
-          <Input
-            placeholder="使用默认模板或选择自定义模板..."
-            value={templatePath}
-            onChange={(e) => setTemplatePath(e.target.value)}
-            className="flex-1"
-            readOnly
-          />
-          <Button variant="outline" onClick={handleSelectTemplate}>
-            <FolderOpen className="w-4 h-4" />
-            浏览
-          </Button>
+        <div className="card-elevated p-6 space-y-3">
+          <div className="flex gap-3">
+            <Input
+              placeholder="使用默认模板或选择自定义模板..."
+              value={templatePath}
+              onChange={(e) => setTemplatePath(e.target.value)}
+              className="flex-1"
+              readOnly
+            />
+            <Button variant="outline" onClick={handleSelectTemplate} className="gap-2">
+              <FolderOpen className="w-4 h-4" />
+              浏览
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            当前使用内置模板。如需自定义样式，请选择 .docx 模板文件。
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          当前使用内置模板。如需自定义样式，请选择 .docx 模板文件。
-        </p>
       </section>
 
       {/* Step 3: Output Path */}
-      <section className={cn("space-y-4 transition-opacity", !parsedSpec && "opacity-50 pointer-events-none")}>
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          3. 选择输出路径
-        </h3>
+      <section className={cn("space-y-4 relative transition-opacity", !parsedSpec && "opacity-60")}>
+        {!parsedSpec && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg z-10 pointer-events-none" />
+        )}
+        <StepHeader step={3} title="选择输出路径" />
 
-        <div className="flex gap-3">
-          <Input
-            placeholder="选择保存文件夹..."
-            value={outputPath}
-            onChange={(e) => setOutputPath(e.target.value)}
-            className="flex-1"
-            readOnly
-          />
-          <Button variant="outline" onClick={handleSelectOutput}>
-            <FolderOpen className="w-4 h-4" />
-            浏览
-          </Button>
+        <div className="card-elevated p-6">
+          <div className="flex gap-3">
+            <Input
+              placeholder="选择保存文件夹..."
+              value={outputPath}
+              onChange={(e) => setOutputPath(e.target.value)}
+              className="flex-1"
+              readOnly
+            />
+            <Button variant="outline" onClick={handleSelectOutput} className="gap-2">
+              <FolderOpen className="w-4 h-4" />
+              浏览
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Step 4: Generate */}
-      <section className={cn("space-y-4 transition-opacity", !canGenerate && "opacity-50 pointer-events-none")}>
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          4. 生成文档
-        </h3>
+      <section className={cn("space-y-4 relative transition-opacity", !canGenerate && "opacity-60")}>
+        {!canGenerate && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg z-10 pointer-events-none" />
+        )}
+        <StepHeader step={4} title="生成文档" />
 
         {isDone ? (
-          <div className="card-elevated p-6 text-center space-y-4">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-success/10 flex items-center justify-center">
-              <Check className="w-6 h-6 text-success" />
+          <div className="card-elevated p-8 text-center space-y-5 border-2 border-success/20">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-success/20 flex items-center justify-center ring-4 ring-success/10">
+              <Check className="w-8 h-8 text-success" />
             </div>
             <div>
-              <p className="font-medium text-foreground">文档生成完成！</p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="font-semibold text-lg text-foreground">文档生成完成！</p>
+              <p className="text-sm text-muted-foreground mt-2">
                 已生成接口设计文档
               </p>
               {generatedFilePath && (
-                <p className="text-xs text-muted-foreground mt-2 break-all px-4">
+                <p className="text-xs text-muted-foreground mt-3 font-mono bg-secondary/50 p-3 rounded-md break-words max-w-lg mx-auto">
                   {generatedFilePath}
                 </p>
               )}
             </div>
             <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" size="sm" onClick={handleOpenFolder}>
+              <Button variant="outline" size="sm" onClick={handleOpenFolder} className="gap-2">
                 <FolderOpen className="w-4 h-4" />
                 打开文件夹
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsDone(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsDone(false)} className="gap-2">
                 重新生成
               </Button>
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="card-elevated p-6 space-y-4">
             {isGenerating && (
-              <div className="space-y-2">
-                <div className="w-full bg-secondary rounded-full h-2">
+              <div className="space-y-3">
+                <div className="w-full bg-secondary rounded-full h-2.5">
                   <div
-                    className="bg-foreground h-2 rounded-full transition-all duration-300"
+                    className="bg-primary h-2.5 rounded-full transition-all duration-300"
                     style={{ width: `${generateProgress}%` }}
                   />
                 </div>
@@ -413,7 +419,7 @@ export function OpenAPIPanel() {
             <Button
               onClick={handleGenerate}
               disabled={!canGenerate || isGenerating}
-              className="w-full"
+              className="w-full gap-2"
             >
               {isGenerating ? (
                 <>

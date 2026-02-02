@@ -33,7 +33,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto py-8">
+        <div className="max-w-3xl mx-auto py-8 px-6">
           {renderPanel()}
         </div>
       </main>

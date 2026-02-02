@@ -3,6 +3,7 @@ import { Database, Server, FileCode, Check, Loader2, TestTube, FolderOpen, FileT
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StepHeader } from "@/components/ui/StepHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -142,38 +143,36 @@ export function DatabasePanel() {
   const canGenerate = hasData && selectedTableCount > 0;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
           <Database className="w-7 h-7 text-primary" />
           数据库结构
         </h2>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-2">
           连接数据库或导入 DDL，生成数据库设计文档
         </p>
       </div>
 
       {/* Step 1: Import Data */}
       <section className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          1. 导入数据
-        </h3>
+        <StepHeader step={1} title="导入数据" />
 
         <Tabs defaultValue="connect" className="space-y-4">
-          <TabsList className="bg-secondary/50 p-1">
-            <TabsTrigger value="connect" className="data-[state=active]:bg-card">
+          <TabsList className="bg-secondary/50 p-1 w-full">
+            <TabsTrigger value="connect" className="flex-1 data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <Server className="w-4 h-4 mr-2" />
               连接数据库
             </TabsTrigger>
-            <TabsTrigger value="ddl" className="data-[state=active]:bg-card">
+            <TabsTrigger value="ddl" className="flex-1 data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <FileCode className="w-4 h-4 mr-2" />
               导入 DDL
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="connect" className="space-y-4">
-            <div className="card-elevated p-4 space-y-4">
+            <div className="card-elevated p-6 space-y-4">
               {/* Database Type Selector */}
               <div className="space-y-1.5">
                 <Label className="text-xs">数据库类型</Label>
@@ -328,11 +327,12 @@ export function DatabasePanel() {
                     {connectionStatus === "error" && "连接失败"}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Button
                     onClick={handleConnect}
                     disabled={connectionStatus === "connecting"}
                     size="sm"
+                    className="gap-2"
                   >
                     {connectionStatus === "connecting" ? (
                       <>
@@ -356,6 +356,7 @@ export function DatabasePanel() {
                     disabled={connectionStatus !== "connected" || isLoadingTables}
                     size="sm"
                     variant={tablesLoaded ? "outline" : "default"}
+                    className="gap-2"
                   >
                     {isLoadingTables ? (
                       <>
@@ -380,7 +381,7 @@ export function DatabasePanel() {
           </TabsContent>
 
           <TabsContent value="ddl" className="space-y-4">
-            <div className="card-elevated p-4 space-y-4">
+            <div className="card-elevated p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <input
                   type="file"
@@ -406,13 +407,14 @@ export function DatabasePanel() {
                 className="w-full h-32 p-3 rounded-lg bg-background border border-border font-mono text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring"
               />
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3">
                 {ddlContent && (
-                  <Button variant="ghost" size="sm" onClick={() => { setDdlContent(""); setDdlParsed(false); setTables([]); }}>
+                  <Button variant="ghost" size="sm" onClick={() => { setDdlContent(""); setDdlParsed(false); setTables([]); }} className="gap-2">
                     <Trash2 className="w-4 h-4" />
+                    清空
                   </Button>
                 )}
-                <Button onClick={handleParseDDL} disabled={!ddlContent.trim()} size="sm">
+                <Button onClick={handleParseDDL} disabled={!ddlContent.trim()} size="sm" className="gap-2">
                   {ddlParsed ? (
                     <>
                       <Check className="w-4 h-4" />
@@ -429,7 +431,7 @@ export function DatabasePanel() {
 
         {/* Tables List */}
         {tables.length > 0 && (
-          <div className="card-elevated p-4 space-y-3">
+          <div className="card-elevated p-6 space-y-4 border-2 border-success/20">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-foreground">已发现 {tables.length} 张表</span>
               <div className="flex items-center gap-2">
@@ -479,89 +481,96 @@ export function DatabasePanel() {
       </section>
 
       {/* Step 2: Template Path */}
-      <section className={cn("space-y-4 transition-opacity", !hasData && "opacity-50 pointer-events-none")}>
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          2. 模板文件选择
-        </h3>
-        
-        <div className="flex gap-3">
-          <Input
-            placeholder="选择模板文件..."
-            value={templatePath}
-            onChange={(e) => setTemplatePath(e.target.value)}
-            className="flex-1"
-          />
-          <Button variant="outline">
-            <FolderOpen className="w-4 h-4" />
-            浏览
-          </Button>
+      <section className={cn("space-y-4 relative transition-opacity", !hasData && "opacity-60")}>
+        {!hasData && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg z-10 pointer-events-none" />
+        )}
+        <StepHeader step={2} title="模板文件选择" />
+
+        <div className="card-elevated p-6">
+          <div className="flex gap-3">
+            <Input
+              placeholder="选择模板文件..."
+              value={templatePath}
+              onChange={(e) => setTemplatePath(e.target.value)}
+              className="flex-1"
+            />
+            <Button variant="outline" className="gap-2">
+              <FolderOpen className="w-4 h-4" />
+              浏览
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Step 3: Output Path */}
-      <section className={cn("space-y-4 transition-opacity", !hasData && "opacity-50 pointer-events-none")}>
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          3. 选择输出路径
-        </h3>
-        
-        <div className="flex gap-3">
-          <Input
-            placeholder="选择保存路径..."
-            value={outputPath}
-            onChange={(e) => setOutputPath(e.target.value)}
-            className="flex-1"
-          />
-          <Button variant="outline">
-            <FolderOpen className="w-4 h-4" />
-            浏览
-          </Button>
+      <section className={cn("space-y-4 relative transition-opacity", !hasData && "opacity-60")}>
+        {!hasData && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg z-10 pointer-events-none" />
+        )}
+        <StepHeader step={3} title="选择输出路径" />
+
+        <div className="card-elevated p-6">
+          <div className="flex gap-3">
+            <Input
+              placeholder="选择保存路径..."
+              value={outputPath}
+              onChange={(e) => setOutputPath(e.target.value)}
+              className="flex-1"
+            />
+            <Button variant="outline" className="gap-2">
+              <FolderOpen className="w-4 h-4" />
+              浏览
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Step 4: Generate */}
-      <section className={cn("space-y-4 transition-opacity", !canGenerate && "opacity-50 pointer-events-none")}>
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          4. 生成文档
-        </h3>
-        
+      <section className={cn("space-y-4 relative transition-opacity", !canGenerate && "opacity-60")}>
+        {!canGenerate && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg z-10 pointer-events-none" />
+        )}
+        <StepHeader step={4} title="生成文档" />
+
         {isDone ? (
-          <div className="card-elevated p-6 text-center space-y-4">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-success/10 flex items-center justify-center">
-              <Check className="w-6 h-6 text-success" />
+          <div className="card-elevated p-8 text-center space-y-5 border-2 border-success/20">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-success/20 flex items-center justify-center ring-4 ring-success/10">
+              <Check className="w-8 h-8 text-success" />
             </div>
             <div>
-              <p className="font-medium text-foreground">文档生成完成！</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="font-semibold text-lg text-foreground">文档生成完成！</p>
+              <p className="text-sm text-muted-foreground mt-2">
                 已生成数据库设计文档，共 {selectedTableCount} 张表
               </p>
             </div>
             <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="gap-2">
                 <FolderOpen className="w-4 h-4" />
                 打开文件夹
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsDone(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsDone(false)} className="gap-2">
                 重新生成
               </Button>
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="card-elevated p-6 space-y-4">
             {isGenerating && (
-              <div className="space-y-2">
-                <div className="w-full bg-secondary rounded-full h-2">
-                  <div 
-                    className="bg-foreground h-2 rounded-full transition-all duration-300"
+              <div className="space-y-3">
+                <div className="w-full bg-secondary rounded-full h-2.5">
+                  <div
+                    className="bg-primary h-2.5 rounded-full transition-all duration-300"
                     style={{ width: `${generateProgress}%` }}
                   />
                 </div>
                 <p className="text-sm text-muted-foreground text-center">{generateProgress}%</p>
               </div>
             )}
-            <Button 
-              onClick={handleGenerate} 
+            <Button
+              onClick={handleGenerate}
               disabled={!canGenerate || isGenerating}
-              className="w-full"
+              className="w-full gap-2"
             >
               {isGenerating ? (
                 <>
