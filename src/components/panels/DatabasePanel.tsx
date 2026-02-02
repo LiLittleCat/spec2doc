@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Database, Server, FileCode, Check, Loader2, TestTube, FolderOpen, FileText, Trash2, List, ChevronDown } from "lucide-react";
+import { Database, Server, FileCode, Check, Loader2, TestTube, FolderOpen, FileText, Trash2, List, ChevronDown, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,9 @@ export function DatabasePanel() {
     username: "",
     password: "",
   });
+
+  // 通知状态
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleConnect = async () => {
     setConnectionStatus("connecting");
@@ -122,6 +125,7 @@ export function DatabasePanel() {
     setDdlContent("");
     setDdlParsed(false);
     setIsDone(false);
+    setNotification(null);
   };
 
   const handleGenerate = async () => {
@@ -428,6 +432,33 @@ export function DatabasePanel() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* 通知卡片 */}
+        {notification && (
+          <div className={cn(
+            "card-elevated p-4 border-2",
+            notification.type === 'success' ? "border-success/20 bg-success/5" : "border-destructive/20 bg-destructive/5"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center",
+                notification.type === 'success' ? "bg-success/20" : "bg-destructive/20"
+              )}>
+                {notification.type === 'success' ? (
+                  <Check className={cn("w-5 h-5", "text-success")} />
+                ) : (
+                  <AlertCircle className={cn("w-5 h-5", "text-destructive")} />
+                )}
+              </div>
+              <p className={cn(
+                "text-sm font-medium",
+                notification.type === 'success' ? "text-success" : "text-destructive"
+              )}>
+                {notification.message}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Tables List */}
         {tables.length > 0 && (

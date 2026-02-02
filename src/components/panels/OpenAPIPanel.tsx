@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { FileJson, Check, Trash2, FolderOpen, FileText, Loader2 } from "lucide-react";
+import { FileJson, Check, Trash2, FolderOpen, FileText, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StepHeader } from "@/components/ui/StepHeader";
 import { cn } from "@/lib/utils";
 import { documentService } from "@/services/documentService";
-import { toast } from "sonner";
 import { open } from '@tauri-apps/plugin-dialog';
 import { readTextFile } from '@tauri-apps/plugin-fs';
 import { invoke } from "@tauri-apps/api/core";
@@ -32,6 +31,9 @@ export function OpenAPIPanel() {
   const [progressMessage, setProgressMessage] = useState("");
   const [isDone, setIsDone] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // 通知状态
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // 当生成完成时，自动滚动到底部
   useEffect(() => {
@@ -60,11 +62,10 @@ export function OpenAPIPanel() {
         setSpecContent(content);
         setParsedSpec(null);
         setFullSpec(null);
-
-        toast.success("文件已加载");
       }
     } catch (error) {
-      toast.error("文件选择失败: " + error);
+      setNotification({ type: 'error', message: '文件选择失败: ' + error });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -72,6 +73,7 @@ export function OpenAPIPanel() {
     if (!specContent.trim()) return;
     setIsLoading(true);
     setIsDone(false);
+    setNotification(null);
 
     try {
       // 使用 documentService 解析（支持 JSON 和 YAML）
@@ -80,7 +82,7 @@ export function OpenAPIPanel() {
       // 验证 OpenAPI 规范
       const validation = await documentService.validateOpenApiSpec(spec);
       if (!validation.valid) {
-        toast.error("OpenAPI 规范验证失败: " + validation.errors.join(", "));
+        setNotification({ type: 'error', message: 'OpenAPI 规范验证失败: ' + validation.errors.join(", ") });
         setIsLoading(false);
         return;
       }
@@ -97,9 +99,8 @@ export function OpenAPIPanel() {
         schemaCount,
       });
       setFullSpec(spec);
-      toast.success("OpenAPI 规范解析成功！");
     } catch (error: any) {
-      toast.error("解析失败: " + error.message);
+      setNotification({ type: 'error', message: '解析失败: ' + error.message });
     } finally {
       setIsLoading(false);
     }
@@ -111,6 +112,7 @@ export function OpenAPIPanel() {
     setFullSpec(null);
     setSelectedFilePath("");
     setIsDone(false);
+    setNotification(null);
   };
 
   const handleSelectTemplate = async () => {
@@ -125,10 +127,10 @@ export function OpenAPIPanel() {
 
       if (selected) {
         setTemplatePath(selected as string);
-        toast.success("模板文件已选择");
       }
     } catch (error) {
-      toast.error("文件选择失败: " + error);
+      setNotification({ type: 'error', message: '文件选择失败: ' + error });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -141,27 +143,30 @@ export function OpenAPIPanel() {
 
       if (selected) {
         setOutputPath(selected as string);
-        toast.success("输出路径已选择");
       }
     } catch (error) {
-      toast.error("路径选择失败: " + error);
+      setNotification({ type: 'error', message: '路径选择失败: ' + error });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
   const handleGenerate = async () => {
     if (!fullSpec) {
-      toast.error("请先解析 OpenAPI 规范");
+      setNotification({ type: 'error', message: '请先解析 OpenAPI 规范' });
+      setTimeout(() => setNotification(null), 5000);
       return;
     }
 
     if (!outputPath) {
-      toast.error("请先选择输出路径");
+      setNotification({ type: 'error', message: '请先选择输出路径' });
+      setTimeout(() => setNotification(null), 5000);
       return;
     }
 
     setIsGenerating(true);
     setGenerateProgress(0);
     setIsDone(false);
+    setNotification(null);
 
     try {
       // 构建输出文件路径
@@ -184,10 +189,9 @@ export function OpenAPIPanel() {
 
       setIsGenerating(false);
       setIsDone(true);
-      toast.success("文档生成成功！");
     } catch (error: any) {
       console.error('生成失败:', error);
-      toast.error('文档生成失败: ' + error.message);
+      setNotification({ type: 'error', message: '文档生成失败: ' + error.message });
       setIsGenerating(false);
     }
   };
@@ -199,7 +203,8 @@ export function OpenAPIPanel() {
     try {
       await invoke("reveal_in_file_manager", { path: generatedFilePath });
     } catch (error) {
-      toast.error("打开文件夹失败: " + error);
+      setNotification({ type: 'error', message: '打开文件夹失败: ' + error });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -288,6 +293,33 @@ export function OpenAPIPanel() {
             </Button>
           </div>
         </div>
+
+        {/* 通知卡片 */}
+        {notification && (
+          <div className={cn(
+            "card-elevated p-4 border-2",
+            notification.type === 'success' ? "border-success/20 bg-success/5" : "border-destructive/20 bg-destructive/5"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center",
+                notification.type === 'success' ? "bg-success/20" : "bg-destructive/20"
+              )}>
+                {notification.type === 'success' ? (
+                  <Check className={cn("w-5 h-5", "text-success")} />
+                ) : (
+                  <AlertCircle className={cn("w-5 h-5", "text-destructive")} />
+                )}
+              </div>
+              <p className={cn(
+                "text-sm font-medium",
+                notification.type === 'success' ? "text-success" : "text-destructive"
+              )}>
+                {notification.message}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Parsed Result */}
         {parsedSpec && (
