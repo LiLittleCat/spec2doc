@@ -1,34 +1,25 @@
-<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@700&amp;display=swap');
-    </style>
-    <!-- OpenAPI 绿色渐变 (上亮下暗) -->
-    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#85EA2D"/>
-      <stop offset="50%" style="stop-color:#6BA539"/>
-      <stop offset="100%" style="stop-color:#4A7C23"/>
-    </linearGradient>
-    <!-- 蓝色渐变 (上亮下暗) -->
-    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#4A7DC4"/>
-      <stop offset="50%" style="stop-color:#2B5797"/>
-      <stop offset="100%" style="stop-color:#1E3A5F"/>
-    </linearGradient>
-  </defs>
-  
-  <!-- 左半边绿色 (带圆角) -->
-  <path d="M23 14 L60 14 L60 106 L23 106 Q15 106 15 98 L15 22 Q15 14 23 14 Z" fill="url(#greenGrad)"/>
-  
-  <!-- 右半边蓝色 (带圆角和折角) -->
-  <path d="M60 14 L85 14 L105 34 L105 98 Q105 106 97 106 L60 106 Z" fill="url(#blueGrad)"/>
-  
-  <!-- 折角 -->
-  <path d="M85 14 L105 34 L85 34 Z" fill="#1E3A5F"/>
-  
-  <!-- 左边的 { 符号 -->
-  <text x="37" y="70" text-anchor="middle" font-family="'Fira Code', monospace" font-size="38" font-weight="700" fill="white">{</text>
-  
-  <!-- 右边的 W 字母 -->
-  <text x="80" y="70" text-anchor="middle" font-family="'Fira Code', monospace" font-size="32" font-weight="700" fill="white">W</text>
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120.000000" height="120.000000" fill="none" customFrame="#000000">
+	<defs>
+		<linearGradient id="paint_linear_4" x1="60" x2="60" y1="0" y2="120" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(74,125,196)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(43,87,151)" offset="0.5" stop-opacity="1" />
+			<stop stop-color="rgb(30,58,95)" offset="1" stop-opacity="1" />
+		</linearGradient>
+		<clipPath id="clipPath_1">
+			<rect width="120.000000" height="120.000000" x="0.000000" y="0.000000" fill="rgb(255,255,255)" />
+		</clipPath>
+		<linearGradient id="paint_linear_5" x1="0" x2="0" y1="0" y2="120" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(133,234,45)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(107,165,57)" offset="0.5" stop-opacity="1" />
+			<stop stop-color="rgb(74,124,35)" offset="1" stop-opacity="1" />
+		</linearGradient>
+	</defs>
+	<path id="矢量 2" d="M60 0L95 0L120 25L120 110C120 116.667 116.667 120 110 120L60 120L60 0Z" fill="url(#paint_linear_4)" fill-rule="nonzero" />
+	<g id="spec2doc-logo 1" clip-path="url(#clipPath_1)" customFrame="url(#clipPath_1)">
+		<rect id="spec2doc-logo 1" width="120.000000" height="120.000000" x="0.000000" y="0.000000" />
+		<path id="矢量 1" d="M10.6667 0L60 0L60 120L10.6667 120C3.55556 120 0 116.522 0 109.565L0 10.4348C0 3.47826 3.55556 0 10.6667 0Z" fill="url(#paint_linear_5)" fill-rule="nonzero" />
+		<path id="矢量 3" d="M95 0L120 25L95 25L95 0Z" fill="rgb(30,58,95)" fill-rule="nonzero" />
+		<path id="" d="M34.7188 77.1797Q32.6094 77.1797 30.9492 76.3203Q29.2891 75.4609 28.4688 73.8496Q27.6484 72.2383 28.0391 69.9531Q28.1953 69.0156 28.5859 68.0977Q28.9766 67.1797 29.3086 66.2324Q29.6406 65.2852 29.6406 64.3086Q29.6406 63.625 29.2012 63.127Q28.7617 62.6289 27.9316 62.3066Q27.1016 61.9844 25.9199 61.8281Q24.7383 61.6719 23.2539 61.6719L23.2539 56.75Q24.7383 56.75 25.9199 56.5645Q27.1016 56.3789 27.9316 56.0078Q28.7617 55.6367 29.2012 55.0703Q29.6406 54.5039 29.6406 53.7617Q29.6406 52.7266 29.3086 51.7891Q28.9766 50.8516 28.5957 49.9434Q28.2148 49.0352 28.0391 48.1172Q27.6484 45.9102 28.4688 44.377Q29.2891 42.8438 30.9492 42.043Q32.6094 41.2422 34.7188 41.2422Q35.9883 41.2422 36.8281 41.3496Q37.668 41.457 38.3711 41.6328L37.9023 46.3398Q37.3555 46.2422 36.8379 46.1934Q36.3203 46.1445 35.8906 46.1445Q34.6992 46.1445 33.8691 47.0039Q33.0391 47.8633 33.4492 49.5039Q33.6641 50.3242 34.0156 51.1641Q34.3672 52.0039 34.6504 52.8535Q34.9336 53.7031 34.9336 54.6016Q34.9336 56.5742 33.3809 57.668Q31.8281 58.7617 29.0352 58.8008L29.0352 59.6211Q31.8281 59.6602 33.3809 60.6855Q34.9336 61.7109 34.9336 63.4688Q34.9336 64.3867 34.6309 65.2559Q34.3281 66.125 33.9766 66.9355Q33.625 67.7461 33.4492 68.5664Q33.0781 70.3828 33.8887 71.3301Q34.6992 72.2773 35.8906 72.2773Q36.3203 72.2773 36.8379 72.2188Q37.3555 72.1602 37.9023 72.082L38.3711 76.7891Q37.668 76.9648 36.8281 77.0723Q35.9883 77.1797 34.7188 77.1797Z" fill="rgb(255,255,255)" fill-rule="nonzero" />
+		<path id="" d="M90.9113 50.9575Q91.3181 52.3521 91.8078 54.1035Q92.3059 55.8467 92.862 57.7227Q93.4265 59.5903 94.0075 61.4663Q94.5886 63.334 95.1281 64.9277Q95.5681 63.1929 96.0246 61.1592Q96.4895 59.1172 96.8962 56.9424Q97.3029 54.7593 97.6931 52.6011Q98.0915 50.4429 98.4319 48.4341L103.935 48.4341Q102.748 54.3525 101.196 60.4453Q99.6521 66.5298 97.8508 72L92.9865 72Q91.7995 68.7378 90.6706 65.1519Q89.55 61.5659 88.4626 57.9551Q87.3752 61.5659 86.2878 65.1519Q85.2004 68.7378 84.0134 72L79.1491 72Q77.3479 66.5298 75.7956 60.4453Q74.2517 54.3525 73.0647 48.4341L78.8088 48.4341Q79.1491 50.4429 79.5559 52.6011Q79.9626 54.7593 80.4026 56.9424Q80.8508 59.1172 81.3073 61.1592Q81.7639 63.1929 82.2453 64.9277Q82.8596 63.2593 83.4323 61.3916Q84.0134 59.5239 84.5529 57.6562Q85.1008 55.7803 85.5573 54.0454Q86.0139 52.3105 86.3957 50.9575L90.9113 50.9575Z" fill="rgb(255,255,255)" fill-rule="nonzero" />
+	</g>
 </svg>

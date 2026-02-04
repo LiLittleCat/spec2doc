@@ -20,7 +20,7 @@ const bottomItems = [
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   return (
-    <aside className="w-64 flex flex-col m-4 card-elevated" style={{ height: 'calc(100vh - 2rem)' }}>
+    <aside className="w-64 flex h-screen flex-col bg-sidebar border-r border-sidebar-border">
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="space-y-2">
@@ -37,7 +37,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               activeTab === item.id
-                ? "bg-primary/10 text-primary shadow-sm"
+                ? "bg-primary/10 text-primary"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground cursor-pointer"
             )}
           >
@@ -56,7 +56,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               activeTab === item.id
-                ? "bg-primary/10 text-primary shadow-sm"
+                ? "bg-primary/10 text-primary"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground cursor-pointer"
             )}
           >

@@ -32,3 +32,4 @@ test/
 !assets/*.docx
 
 assets/_local_
+src/spec2-doc-application-v4
