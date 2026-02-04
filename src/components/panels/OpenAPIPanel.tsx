@@ -368,26 +368,26 @@ export function OpenAPIPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto">
-      <div className="space-y-2">
+    <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
+      <div className="space-y-1.5">
         <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           <FileJson className="w-7 h-7" />
           <span>OpenAPI 规范</span>
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground leading-relaxed">
           导入 OpenAPI/Swagger 规范文件，生成接口设计文档
         </p>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               1
             </div>
             导入数据
           </CardTitle>
-          <CardDescription>支持 JSON、YAML、YML 格式</CardDescription>
+          <CardDescription className="leading-relaxed">支持 JSON、YAML、YML 格式</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-3">
@@ -397,18 +397,18 @@ export function OpenAPIPanel() {
               className="flex-1"
               readOnly
             />
-            <Button variant="outline" onClick={handleFileSelect}>
+            <Button variant="outline" onClick={handleFileSelect} className="gap-2">
               <File className="h-4 w-4" />
               选择文件
             </Button>
           </div>
 
-          <div className="relative">
+          <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
+              <span className="bg-card px-3 text-muted-foreground">
                 或直接粘贴内容
               </span>
             </div>
@@ -416,7 +416,7 @@ export function OpenAPIPanel() {
 
           <Textarea
             placeholder={`{\n  "openapi": "3.0.0",\n  "info": { "title": "My API", "version": "1.0.0" }\n}`}
-            className="min-h-[160px] font-mono text-sm"
+            className="min-h-[160px] font-mono text-sm leading-relaxed"
             value={specContent}
             onChange={(e) => {
               setSpecContent(e.target.value);
@@ -434,6 +434,7 @@ export function OpenAPIPanel() {
           <Button
             onClick={handleParseSpec}
             disabled={parseStatus === "parsing"}
+            className="gap-2"
           >
             {parseStatus === "parsing" ? (
               <>
@@ -449,16 +450,16 @@ export function OpenAPIPanel() {
           </Button>
 
           {(parsedSpec || (error && parseStatus === "error")) && (
-            <div className="space-y-5 pt-5 border-t">
+            <div className="space-y-4 pt-4 border-t">
               {error && parseStatus === "error" && (
-                <div className="flex items-center gap-2 text-destructive text-sm">
-                  <AlertCircle className="h-4 w-4" />
-                  {error}
+                <div className="flex items-center gap-2 text-destructive text-sm leading-relaxed">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
               {parsedSpec && (
                 <>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Badge
                       variant="outline"
                       className="bg-green-500/10 text-green-600 border-green-500/30"
@@ -466,7 +467,7 @@ export function OpenAPIPanel() {
                       <Check className="mr-1 h-3 w-3" />
                       解析成功
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground leading-relaxed">
                       {parsedSpec.title} v{parsedSpec.version} ·{" "}
                       {parsedSpec.pathCount} 接口 · {parsedSpec.schemaCount}{" "}
                       模型
@@ -605,14 +606,14 @@ export function OpenAPIPanel() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               2
             </div>
             模版选择
           </CardTitle>
-          <CardDescription>选择内置模版或使用自定义模版</CardDescription>
+          <CardDescription className="leading-relaxed">选择内置模版或使用自定义模版</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <RadioGroup
@@ -662,14 +663,14 @@ export function OpenAPIPanel() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               3
             </div>
             输出目录
           </CardTitle>
-          <CardDescription>设置生成文档的保存位置</CardDescription>
+          <CardDescription className="leading-relaxed">设置生成文档的保存位置</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-3">
@@ -703,14 +704,14 @@ export function OpenAPIPanel() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               4
             </div>
             生成文档
           </CardTitle>
-          <CardDescription>确认配置并生成 Word 文档</CardDescription>
+          <CardDescription className="leading-relaxed">确认配置并生成 Word 文档</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {parsedSpec && (

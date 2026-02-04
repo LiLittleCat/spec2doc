@@ -14,7 +14,8 @@
       "Bash(npm:*)",
       "Bash(npx tailwindcss:*)",
       "Bash(pnpm:*)",
-      "Bash(playwright install:*)"
+      "Bash(playwright install:*)",
+      "Bash(python3:*)"
     ]
   }
 }

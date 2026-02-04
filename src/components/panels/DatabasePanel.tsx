@@ -269,23 +269,23 @@ export function DatabasePanel() {
     (templateType === "builtin" || customTemplatePath !== "");
 
   return (
-    <div className="flex flex-col gap-8 p-6 max-w-4xl mx-auto">
-      <div className="space-y-2">
+    <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
+      <div className="space-y-1.5">
         <h2 className="text-2xl font-bold tracking-tight">数据库文档生成</h2>
-        <p className="text-muted-foreground">将数据库结构转换为标准数据字典文档</p>
+        <p className="text-muted-foreground leading-relaxed">将数据库结构转换为标准数据字典文档</p>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               1
             </div>
             导入数据
           </CardTitle>
-          <CardDescription>通过 DDL 语句或直接连接数据库导入表结构</CardDescription>
+          <CardDescription className="leading-relaxed">通过 DDL 语句或直接连接数据库导入表结构</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <Tabs defaultValue="ddl">
             <TabsList>
               <TabsTrigger value="ddl">
@@ -298,7 +298,7 @@ export function DatabasePanel() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="ddl" className="mt-5 space-y-5">
+            <TabsContent value="ddl" className="mt-4 space-y-4">
               <div className="flex gap-3">
                 <Input
                   value={filePath}
@@ -312,18 +312,18 @@ export function DatabasePanel() {
                 </Button>
               </div>
 
-              <div className="relative">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">或直接粘贴内容</span>
+                  <span className="bg-card px-3 text-muted-foreground">或直接粘贴内容</span>
                 </div>
               </div>
 
               <Textarea
                 placeholder={`CREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR(255) NOT NULL COMMENT '用户邮箱',\n  name VARCHAR(100) COMMENT '用户名',\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n) COMMENT='用户表';`}
-                className="min-h-[160px] font-mono text-sm"
+                className="min-h-[160px] font-mono text-sm leading-relaxed"
                 value={ddlContent}
                 onChange={(e) => {
                   setDdlContent(e.target.value);
@@ -332,7 +332,7 @@ export function DatabasePanel() {
                 }}
               />
 
-              <Button onClick={handleParseDDL} disabled={parseStatus === "parsing"}>
+              <Button onClick={handleParseDDL} disabled={parseStatus === "parsing"} className="gap-2">
                 {parseStatus === "parsing" ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -347,7 +347,7 @@ export function DatabasePanel() {
               </Button>
             </TabsContent>
 
-            <TabsContent value="connection" className="mt-5 space-y-5">
+            <TabsContent value="connection" className="mt-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="db-type">数据库类型</Label>
@@ -431,7 +431,7 @@ export function DatabasePanel() {
                 </div>
               </div>
 
-              <Button onClick={handleConnect} disabled={parseStatus === "parsing"}>
+              <Button onClick={handleConnect} disabled={parseStatus === "parsing"} className="gap-2">
                 {parseStatus === "parsing" ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -448,17 +448,17 @@ export function DatabasePanel() {
           </Tabs>
 
           {(parsedSchema || (error && parseStatus === "error")) && (
-            <div className="space-y-5 pt-5 border-t">
+            <div className="space-y-4 pt-4 border-t">
               {error && parseStatus === "error" && (
-                <div className="flex items-center gap-2 text-destructive text-sm">
-                  <AlertCircle className="h-4 w-4" />
-                  {error}
+                <div className="flex items-center gap-2 text-destructive text-sm leading-relaxed">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
 
               {parsedSchema && (
                 <>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Badge
                       variant="outline"
                       className="bg-green-500/10 text-green-600 border-green-500/30"
@@ -466,7 +466,7 @@ export function DatabasePanel() {
                       <Check className="mr-1 h-3 w-3" />
                       解析成功
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground leading-relaxed">
                       {parsedSchema.database} - {parsedSchema.tables.length} 张表
                     </span>
                   </div>
@@ -484,7 +484,7 @@ export function DatabasePanel() {
                           取消全选
                         </Button>
                       </div>
-                      </div>
+                    </div>
                     <div className="border rounded-lg divide-y max-h-[400px] overflow-y-auto">
                       {parsedSchema.tables.map((table) => (
                         <Collapsible
@@ -590,16 +590,16 @@ export function DatabasePanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-4 space-y-1">
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               2
             </div>
             模版选择
           </CardTitle>
-          <CardDescription>选择内置模版或使用自定义模版</CardDescription>
+          <CardDescription className="leading-relaxed">选择内置模版或使用自定义模版</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <RadioGroup
             value={templateType}
             onValueChange={(value) => setTemplateType(value as "builtin" | "custom")}
@@ -643,16 +643,16 @@ export function DatabasePanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-4 space-y-1">
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               3
             </div>
             输出目录
           </CardTitle>
-          <CardDescription>设置生成文档的保存位置</CardDescription>
+          <CardDescription className="leading-relaxed">设置生成文档的保存位置</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div className="flex gap-3">
             <Input
               value={outputPath}
@@ -684,16 +684,16 @@ export function DatabasePanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-4 space-y-1">
+        <CardHeader className="pb-3 space-y-1.5">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               4
             </div>
             生成文档
           </CardTitle>
-          <CardDescription>确认配置并生成数据字典文档</CardDescription>
+          <CardDescription className="leading-relaxed">确认配置并生成数据字典文档</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {parsedSchema && (
             <div className="p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
               <div className="flex justify-between">
