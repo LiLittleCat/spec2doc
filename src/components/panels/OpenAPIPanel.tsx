@@ -186,7 +186,7 @@ export function OpenAPIPanel() {
 
   const handleParseSpec = async () => {
     if (!specContent.trim() && !filePath.trim()) {
-      setError("请输入文件路径、粘贴内容或上传文件");
+      setError("请选择文件或粘贴内容");
       setParseStatus("error");
       return;
     }
@@ -363,8 +363,9 @@ export function OpenAPIPanel() {
   return (
     <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          <FileJson className="w-7 h-7 text-primary" />OpenAPI 规范
+        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <FileJson className="w-7 h-7" />
+          <span>OpenAPI 规范</span>
         </h2>
         <p className="text-muted-foreground">导入 OpenAPI/Swagger 规范文件，生成接口设计文档
         </p>
@@ -422,13 +423,6 @@ export function OpenAPIPanel() {
             }}
           />
 
-          {error && parseStatus === "error" && (
-            <div className="flex items-center gap-2 text-destructive text-sm">
-              <AlertCircle className="h-4 w-4" />
-              {error}
-            </div>
-          )}
-
           <Button onClick={handleParseSpec} disabled={parseStatus === "parsing"}>
             {parseStatus === "parsing" ? (
               <>
@@ -443,114 +437,124 @@ export function OpenAPIPanel() {
             )}
           </Button>
 
-          {parsedSpec && (
+          {(parsedSpec || (error && parseStatus === "error")) && (
             <div className="space-y-4 pt-4 border-t">
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="bg-green-500/10 text-green-600 border-green-500/30"
-                >
-                  <Check className="mr-1 h-3 w-3" />
-                  解析成功
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {parsedSpec.title} v{parsedSpec.version} · {parsedSpec.pathCount} 接口 ·{" "}
-                  {parsedSpec.schemaCount} 模型
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">
-                    接口 ({selectedEndpoints.size}/{parsedSpec.endpoints.length})
-                  </Label>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={selectAllEndpoints}>
-                      全选
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={deselectAllEndpoints}>
-                      取消全选
-                    </Button>
-                  </div>
+              {error && parseStatus === "error" && (
+                <div className="flex items-center gap-2 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  {error}
                 </div>
-                <div className="border rounded-lg divide-y max-h-[300px] overflow-y-auto">
-                  {parsedSpec.endpoints.length === 0 && (
-                    <div className="p-4 text-sm text-muted-foreground">
-                      未发现可解析的接口路径
-                    </div>
-                  )}
-                  {parsedSpec.endpoints.map((endpoint) => (
-                    <Collapsible
-                      key={endpoint.id}
-                      open={expandedEndpoints.has(endpoint.id)}
-                      onOpenChange={() => toggleExpandEndpoint(endpoint.id)}
+              )}
+              {parsedSpec && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="bg-green-500/10 text-green-600 border-green-500/30"
                     >
-                      <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
-                        <Checkbox
-                          checked={selectedEndpoints.has(endpoint.id)}
-                          onCheckedChange={() => toggleEndpoint(endpoint.id)}
-                        />
-                        <CollapsibleTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 flex-1 text-left"
-                          >
-                            {expandedEndpoints.has(endpoint.id) ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <Badge
-                              variant="outline"
-                              className={cn("text-xs font-mono", methodColors[endpoint.method])}
-                            >
-                              {endpoint.method}
-                            </Badge>
-                            <span className="font-mono text-sm">{endpoint.path}</span>
-                            <span className="text-sm text-muted-foreground ml-auto">
-                              {endpoint.summary}
-                            </span>
-                          </button>
-                        </CollapsibleTrigger>
+                      <Check className="mr-1 h-3 w-3" />
+                      解析成功
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {parsedSpec.title} v{parsedSpec.version} · {parsedSpec.pathCount} 接口 ·{" "}
+                      {parsedSpec.schemaCount} 模型
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">
+                        接口 ({selectedEndpoints.size}/{parsedSpec.endpoints.length})
+                      </Label>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={selectAllEndpoints}>
+                          全选
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={deselectAllEndpoints}>
+                          取消全选
+                        </Button>
                       </div>
-                      <CollapsibleContent>
-                        <div className="px-10 py-3 bg-muted/30 text-sm space-y-2">
-                          {endpoint.description && (
-                            <p className="text-muted-foreground">{endpoint.description}</p>
-                          )}
-                          {endpoint.parameters && endpoint.parameters.length > 0 && (
-                            <div>
-                              <p className="font-medium mb-1">参数:</p>
-                              <ul className="list-disc list-inside text-muted-foreground">
-                                {endpoint.parameters.map((param) => (
-                                  <li key={`${endpoint.id}-${param.name}-${param.in}`}>
-                                    <span className="font-mono">{param.name}</span>
-                                    <span className="text-xs ml-1">({param.in})</span>
-                                    <span className="text-xs ml-1">- {param.type}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {endpoint.responses && endpoint.responses.length > 0 && (
-                            <div>
-                              <p className="font-medium mb-1">响应:</p>
-                              <ul className="list-disc list-inside text-muted-foreground">
-                                {endpoint.responses.map((resp) => (
-                                  <li key={`${endpoint.id}-${resp.code}`}>
-                                    <span className="font-mono">{resp.code}</span>
-                                    <span className="ml-1">- {resp.description}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                    </div>
+                    <div className="border rounded-lg divide-y max-h-[300px] overflow-y-auto">
+                      {parsedSpec.endpoints.length === 0 && (
+                        <div className="p-4 text-sm text-muted-foreground">
+                          未发现可解析的接口路径
                         </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
-                </div>
-              </div>
+                      )}
+                      {parsedSpec.endpoints.map((endpoint) => (
+                        <Collapsible
+                          key={endpoint.id}
+                          open={expandedEndpoints.has(endpoint.id)}
+                          onOpenChange={() => toggleExpandEndpoint(endpoint.id)}
+                        >
+                          <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
+                            <Checkbox
+                              checked={selectedEndpoints.has(endpoint.id)}
+                              onCheckedChange={() => toggleEndpoint(endpoint.id)}
+                            />
+                            <CollapsibleTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex items-center gap-2 flex-1 text-left"
+                              >
+                                {expandedEndpoints.has(endpoint.id) ? (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <Badge
+                                  variant="outline"
+                                  className={cn("text-xs font-mono", methodColors[endpoint.method])}
+                                >
+                                  {endpoint.method}
+                                </Badge>
+                                <span className="font-mono text-sm">{endpoint.path}</span>
+                                <span className="text-sm text-muted-foreground ml-auto">
+                                  {endpoint.summary}
+                                </span>
+                              </button>
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent>
+                            <div className="px-10 py-3 bg-muted/30 text-sm space-y-2">
+                              {endpoint.description && (
+                                <p className="text-muted-foreground">{endpoint.description}</p>
+                              )}
+                              {endpoint.parameters && endpoint.parameters.length > 0 && (
+                                <div>
+                                  <p className="font-medium mb-1">参数:</p>
+                                  <ul className="list-disc list-inside text-muted-foreground">
+                                    {endpoint.parameters.map((param) => (
+                                      <li key={`${endpoint.id}-${param.name}-${param.in}`}>
+                                        <span className="font-mono">{param.name}</span>
+                                        <span className="text-xs ml-1">({param.in})</span>
+                                        <span className="text-xs ml-1">- {param.type}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {endpoint.responses && endpoint.responses.length > 0 && (
+                                <div>
+                                  <p className="font-medium mb-1">响应:</p>
+                                  <ul className="list-disc list-inside text-muted-foreground">
+                                    {endpoint.responses.map((resp) => (
+                                      <li key={`${endpoint.id}-${resp.code}`}>
+                                        <span className="font-mono">{resp.code}</span>
+                                        <span className="ml-1">- {resp.description}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </CardContent>

@@ -447,139 +447,143 @@ export function DatabasePanel() {
             </TabsContent>
           </Tabs>
 
-          {error && (
-            <div className="flex items-center gap-2 text-destructive text-sm">
-              <AlertCircle className="h-4 w-4" />
-              {error}
-            </div>
-          )}
-
-          {parsedSchema && (
+          {(parsedSchema || (error && parseStatus === "error")) && (
             <div className="space-y-4 pt-4 border-t">
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="bg-green-500/10 text-green-600 border-green-500/30"
-                >
-                  <Check className="mr-1 h-3 w-3" />
-                  解析成功
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {parsedSchema.database} - {parsedSchema.tables.length} 张表
-                </span>
-              </div>
+              {error && parseStatus === "error" && (
+                <div className="flex items-center gap-2 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  {error}
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">
-                    数据表 ({selectedTables.size}/{parsedSchema.tables.length})
-                  </Label>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={selectAllTables}>
-                      全选
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={deselectAllTables}>
-                      取消全选
-                    </Button>
-                  </div>
-                </div>
-                <div className="border rounded-lg divide-y max-h-[400px] overflow-y-auto">
-                  {parsedSchema.tables.map((table) => (
-                    <Collapsible
-                      key={table.id}
-                      open={expandedTables.has(table.id)}
-                      onOpenChange={() => toggleExpandTable(table.id)}
+              {parsedSchema && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="bg-green-500/10 text-green-600 border-green-500/30"
                     >
-                      <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
-                        <Checkbox
-                          checked={selectedTables.has(table.id)}
-                          onCheckedChange={() => toggleTable(table.id)}
-                        />
-                        <CollapsibleTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 flex-1 text-left"
-                          >
-                            {expandedTables.has(table.id) ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <Table2 className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-mono font-medium">{table.name}</span>
-                            {table.comment && (
-                              <span className="text-sm text-muted-foreground ml-auto">
-                                {table.comment}
-                              </span>
-                            )}
-                            <Badge variant="secondary" className="text-xs">
-                              {table.columns.length} 字段
-                            </Badge>
-                          </button>
-                        </CollapsibleTrigger>
+                      <Check className="mr-1 h-3 w-3" />
+                      解析成功
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {parsedSchema.database} - {parsedSchema.tables.length} 张表
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">
+                        数据表 ({selectedTables.size}/{parsedSchema.tables.length})
+                      </Label>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={selectAllTables}>
+                          全选
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={deselectAllTables}>
+                          取消全选
+                        </Button>
                       </div>
-                      <CollapsibleContent>
-                        <div className="px-4 py-3 bg-muted/30">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-left text-muted-foreground border-b">
-                                <th className="pb-2 font-medium w-8"></th>
-                                <th className="pb-2 font-medium">字段名</th>
-                                <th className="pb-2 font-medium">类型</th>
-                                <th className="pb-2 font-medium">可空</th>
-                                <th className="pb-2 font-medium">默认值</th>
-                                <th className="pb-2 font-medium">注释</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {table.columns.map((col) => (
-                                <tr key={col.name} className="border-b last:border-0">
-                                  <td className="py-2">
-                                    {col.isPrimary && (
-                                      <Key className="h-3 w-3 text-amber-500" />
-                                    )}
-                                    {col.isForeign && !col.isPrimary && (
-                                      <Key className="h-3 w-3 text-blue-500" />
-                                    )}
-                                  </td>
-                                  <td className="py-2 font-mono">{col.name}</td>
-                                  <td className="py-2 text-muted-foreground font-mono text-xs">
-                                    {col.type}
-                                  </td>
-                                  <td className="py-2 text-muted-foreground">
-                                    {col.nullable ? "YES" : "NO"}
-                                  </td>
-                                  <td className="py-2 text-muted-foreground font-mono text-xs">
-                                    {col.default || "-"}
-                                  </td>
-                                  <td className="py-2 text-muted-foreground">
-                                    {col.comment || "-"}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                          {table.indexes && table.indexes.length > 0 && (
-                            <div className="mt-3 pt-3 border-t">
-                              <p className="text-xs font-medium text-muted-foreground mb-2">
-                                索引:
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {table.indexes.map((idx) => (
-                                  <Badge key={idx.name} variant="outline" className="text-xs">
-                                    {idx.name}
-                                    {idx.unique && " (唯一)"}
-                                  </Badge>
-                                ))}
-                              </div>
+                    </div>
+                    <div className="border rounded-lg divide-y max-h-[400px] overflow-y-auto">
+                      {parsedSchema.tables.map((table) => (
+                        <Collapsible
+                          key={table.id}
+                          open={expandedTables.has(table.id)}
+                          onOpenChange={() => toggleExpandTable(table.id)}
+                        >
+                          <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
+                            <Checkbox
+                              checked={selectedTables.has(table.id)}
+                              onCheckedChange={() => toggleTable(table.id)}
+                            />
+                            <CollapsibleTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex items-center gap-2 flex-1 text-left"
+                              >
+                                {expandedTables.has(table.id) ? (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <Table2 className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-mono font-medium">{table.name}</span>
+                                {table.comment && (
+                                  <span className="text-sm text-muted-foreground ml-auto">
+                                    {table.comment}
+                                  </span>
+                                )}
+                                <Badge variant="secondary" className="text-xs">
+                                  {table.columns.length} 字段
+                                </Badge>
+                              </button>
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent>
+                            <div className="px-4 py-3 bg-muted/30">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="text-left text-muted-foreground border-b">
+                                    <th className="pb-2 font-medium w-8"></th>
+                                    <th className="pb-2 font-medium">字段名</th>
+                                    <th className="pb-2 font-medium">类型</th>
+                                    <th className="pb-2 font-medium">可空</th>
+                                    <th className="pb-2 font-medium">默认值</th>
+                                    <th className="pb-2 font-medium">注释</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {table.columns.map((col) => (
+                                    <tr key={col.name} className="border-b last:border-0">
+                                      <td className="py-2">
+                                        {col.isPrimary && (
+                                          <Key className="h-3 w-3 text-amber-500" />
+                                        )}
+                                        {col.isForeign && !col.isPrimary && (
+                                          <Key className="h-3 w-3 text-blue-500" />
+                                        )}
+                                      </td>
+                                      <td className="py-2 font-mono">{col.name}</td>
+                                      <td className="py-2 text-muted-foreground font-mono text-xs">
+                                        {col.type}
+                                      </td>
+                                      <td className="py-2 text-muted-foreground">
+                                        {col.nullable ? "YES" : "NO"}
+                                      </td>
+                                      <td className="py-2 text-muted-foreground font-mono text-xs">
+                                        {col.default || "-"}
+                                      </td>
+                                      <td className="py-2 text-muted-foreground">
+                                        {col.comment || "-"}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                              {table.indexes && table.indexes.length > 0 && (
+                                <div className="mt-3 pt-3 border-t">
+                                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                                    索引:
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {table.indexes.map((idx) => (
+                                      <Badge key={idx.name} variant="outline" className="text-xs">
+                                        {idx.name}
+                                        {idx.unique && " (唯一)"}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
-                </div>
-              </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </CardContent>
