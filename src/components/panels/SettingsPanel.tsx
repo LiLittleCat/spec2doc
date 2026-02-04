@@ -29,25 +29,25 @@ export function SettingsPanel() {
   const handleSaveSettings = () => {};
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
+    <div className="flex flex-col gap-8 p-6 max-w-4xl mx-auto">
+      <div className="space-y-1">
         <h2 className="text-2xl font-bold tracking-tight">设置</h2>
         <p className="text-muted-foreground">配置应用程序偏好设置和默认值</p>
       </div>
 
       <div className="grid gap-6">
         <Card>
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-4 space-y-1">
             <CardTitle className="text-lg">外观</CardTitle>
             <CardDescription>自定义应用程序的外观和主题</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-5">
             <div className="flex flex-col gap-3">
               <Label>主题</Label>
               <RadioGroup
                 value={theme}
                 onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}
-                className="flex gap-4"
+                className="flex gap-3"
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="light" id="light" />
@@ -91,11 +91,11 @@ export function SettingsPanel() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-4 space-y-1">
             <CardTitle className="text-lg">默认设置</CardTitle>
             <CardDescription>设置文档生成的默认值</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <div className="flex flex-col gap-2">
               <Label htmlFor="default-output">默认输出目录</Label>
               <div className="flex gap-2">
@@ -130,11 +130,11 @@ export function SettingsPanel() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-4 space-y-1">
             <CardTitle className="text-lg">行为</CardTitle>
             <CardDescription>配置应用程序行为</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="auto-save">自动保存草稿</Label>
@@ -162,7 +162,7 @@ export function SettingsPanel() {
 
       <div className="flex gap-3">
         <Button onClick={handleSaveSettings}>
-          <Save className="mr-2 h-4 w-4" />
+          <Save className="h-4 w-4" />
           保存设置
         </Button>
         <Button variant="outline">恢复默认</Button>

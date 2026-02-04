@@ -269,14 +269,14 @@ export function DatabasePanel() {
     (templateType === "builtin" || customTemplatePath !== "");
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-4xl mx-auto">
-      <div>
+    <div className="flex flex-col gap-8 p-6 max-w-4xl mx-auto">
+      <div className="space-y-2">
         <h2 className="text-2xl font-bold tracking-tight">数据库文档生成</h2>
         <p className="text-muted-foreground">将数据库结构转换为标准数据字典文档</p>
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               1
@@ -285,21 +285,21 @@ export function DatabasePanel() {
           </CardTitle>
           <CardDescription>通过 DDL 语句或直接连接数据库导入表结构</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <Tabs defaultValue="ddl">
             <TabsList>
               <TabsTrigger value="ddl">
-                <FileText className="mr-2 h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 DDL 语句
               </TabsTrigger>
               <TabsTrigger value="connection">
-                <Server className="mr-2 h-4 w-4" />
+                <Server className="h-4 w-4" />
                 数据库连接
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="ddl" className="mt-4 space-y-4">
-              <div className="flex gap-2">
+            <TabsContent value="ddl" className="mt-5 space-y-5">
+              <div className="flex gap-3">
                 <Input
                   value={filePath}
                   placeholder="选择 DDL 文件..."
@@ -307,7 +307,7 @@ export function DatabasePanel() {
                   readOnly
                 />
                 <Button variant="outline" onClick={handleFileSelect}>
-                  <File className="mr-2 h-4 w-4" />
+                  <File className="h-4 w-4" />
                   选择文件
                 </Button>
               </div>
@@ -335,19 +335,19 @@ export function DatabasePanel() {
               <Button onClick={handleParseDDL} disabled={parseStatus === "parsing"}>
                 {parseStatus === "parsing" ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     解析中...
                   </>
                 ) : (
                   <>
-                    <Database className="mr-2 h-4 w-4" />
+                    <Database className="h-4 w-4" />
                     解析 DDL
                   </>
                 )}
               </Button>
             </TabsContent>
 
-            <TabsContent value="connection" className="mt-4 space-y-4">
+            <TabsContent value="connection" className="mt-5 space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="db-type">数据库类型</Label>
@@ -434,12 +434,12 @@ export function DatabasePanel() {
               <Button onClick={handleConnect} disabled={parseStatus === "parsing"}>
                 {parseStatus === "parsing" ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     连接中...
                   </>
                 ) : (
                   <>
-                    <Server className="mr-2 h-4 w-4" />
+                    <Server className="h-4 w-4" />
                     连接并提取结构
                   </>
                 )}
@@ -448,7 +448,7 @@ export function DatabasePanel() {
           </Tabs>
 
           {(parsedSchema || (error && parseStatus === "error")) && (
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-5 pt-5 border-t">
               {error && parseStatus === "error" && (
                 <div className="flex items-center gap-2 text-destructive text-sm">
                   <AlertCircle className="h-4 w-4" />
@@ -471,7 +471,7 @@ export function DatabasePanel() {
                     </span>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium">
                         数据表 ({selectedTables.size}/{parsedSchema.tables.length})
@@ -484,7 +484,7 @@ export function DatabasePanel() {
                           取消全选
                         </Button>
                       </div>
-                    </div>
+                      </div>
                     <div className="border rounded-lg divide-y max-h-[400px] overflow-y-auto">
                       {parsedSchema.tables.map((table) => (
                         <Collapsible
@@ -590,7 +590,7 @@ export function DatabasePanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4 space-y-1">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               2
@@ -599,7 +599,7 @@ export function DatabasePanel() {
           </CardTitle>
           <CardDescription>选择内置模版或使用自定义模版</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <RadioGroup
             value={templateType}
             onValueChange={(value) => setTemplateType(value as "builtin" | "custom")}
@@ -621,8 +621,8 @@ export function DatabasePanel() {
           </RadioGroup>
 
           {templateType === "custom" && (
-            <div className="space-y-4 pl-6 border-l-2 border-muted">
-              <div className="flex gap-2">
+            <div className="space-y-3 pl-6 border-l-2 border-muted">
+              <div className="flex gap-3">
                 <Input
                   value={customTemplatePath}
                   onChange={(e) => setCustomTemplatePath(e.target.value)}
@@ -630,7 +630,7 @@ export function DatabasePanel() {
                   className="flex-1"
                 />
                 <Button variant="outline" onClick={handleTemplateFileSelect}>
-                  <File className="mr-2 h-4 w-4" />
+                  <File className="h-4 w-4" />
                   选择文件
                 </Button>
               </div>
@@ -643,7 +643,7 @@ export function DatabasePanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4 space-y-1">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               3
@@ -652,8 +652,8 @@ export function DatabasePanel() {
           </CardTitle>
           <CardDescription>设置生成文档的保存位置</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
+        <CardContent className="space-y-6">
+          <div className="flex gap-3">
             <Input
               value={outputPath}
               onChange={(e) => setOutputPath(e.target.value)}
@@ -661,7 +661,7 @@ export function DatabasePanel() {
               className="flex-1"
             />
             <Button variant="outline" onClick={handleSelectOutputDir}>
-              <FolderOpen className="mr-2 h-4 w-4" />
+              <FolderOpen className="h-4 w-4" />
               浏览
             </Button>
           </div>
@@ -684,7 +684,7 @@ export function DatabasePanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4 space-y-1">
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
               4
@@ -693,7 +693,7 @@ export function DatabasePanel() {
           </CardTitle>
           <CardDescription>确认配置并生成数据字典文档</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {parsedSchema && (
             <div className="p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
               <div className="flex justify-between">
@@ -748,21 +748,21 @@ export function DatabasePanel() {
             >
               {generateStatus === "generating" ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   生成中...
                 </>
               ) : generateStatus === "success" ? (
                 "重新生成"
               ) : (
                 <>
-                  <Play className="mr-2 h-4 w-4" />
+                  <Play className="h-4 w-4" />
                   开始生成
                 </>
               )}
             </Button>
             {generateStatus === "success" && (
               <Button variant="outline">
-                <FolderOpen className="mr-2 h-4 w-4" />
+                <FolderOpen className="h-4 w-4" />
                 打开目录
               </Button>
             )}

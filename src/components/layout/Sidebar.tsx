@@ -2,6 +2,7 @@ import { FileJson, Database, Settings, HelpCircle, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.svg";
 
 interface SidebarProps {
   activeTab: string;
@@ -24,18 +25,24 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-foreground">Spec2Doc</h1>
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Spec2Doc" className="h-7 w-7" />
+            <h1 className="text-2xl font-bold text-foreground">Spec2Doc</h1>
+          </div>
           <p className="text-sm text-muted-foreground">规范驱动的文档生成器</p>
         </div>
       </div>
 
       <nav className="flex-1 p-4 space-y-1.5">
         {navItems.map((item) => (
-          <button
+          <Button
             key={item.id}
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => onTabChange(item.id)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+              "w-full flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               activeTab === item.id
                 ? "bg-primary/10 text-primary"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground cursor-pointer"
@@ -43,18 +50,21 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           >
             <item.icon className="w-5 h-5" />
             {item.label}
-          </button>
+          </Button>
         ))}
       </nav>
 
       {/* Bottom Items */}
       <div className="p-4 border-t border-sidebar-border space-y-1.5">
         {bottomItems.map((item) => (
-          <button
+          <Button
             key={item.id}
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => onTabChange(item.id)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+              "w-full flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               activeTab === item.id
                 ? "bg-primary/10 text-primary"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground cursor-pointer"
@@ -62,7 +72,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           >
             <item.icon className="w-5 h-5" />
             {item.label}
-          </button>
+          </Button>
         ))}
       </div>
 

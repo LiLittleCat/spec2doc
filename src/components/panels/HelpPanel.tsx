@@ -84,21 +84,21 @@ export function HelpPanel() {
           <CardContent className="space-y-2">
             <Button variant="ghost" className="w-full justify-start" asChild>
               <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-4 w-4" />
+                <Github className="h-4 w-4" />
                 GitHub 仓库
                 <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground" />
               </a>
             </Button>
             <Button variant="ghost" className="w-full justify-start" asChild>
               <a href="https://swagger.io/specification/" target="_blank" rel="noopener noreferrer">
-                <FileText className="mr-2 h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 OpenAPI 规范文档
                 <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground" />
               </a>
             </Button>
             <Button variant="ghost" className="w-full justify-start" asChild>
               <a href="https://github.com/issues" target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="mr-2 h-4 w-4" />
+                <MessageCircle className="h-4 w-4" />
                 报告问题
                 <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground" />
               </a>
