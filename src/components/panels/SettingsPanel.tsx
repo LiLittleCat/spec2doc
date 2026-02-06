@@ -1,11 +1,20 @@
-import { useState } from "react";
-import { Moon, Sun, Monitor, FolderOpen, Save } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Moon, Sun, Monitor, FolderOpen, Save, RotateCcw, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import { getDefaultDocumentsPath } from "@/lib/defaultPath";
+import { documentService } from "@/services/documentService";
+import {
+  DEFAULT_API_TEMPLATE_PLACEHOLDER,
+  DEFAULT_DB_TEMPLATE_PLACEHOLDER,
+  readTemplateSettings,
+  saveTemplateSettings,
+} from "@/lib/templateSettings";
+import { open } from "@tauri-apps/plugin-dialog";
 import {
   Select,
   SelectContent,
@@ -20,13 +29,171 @@ export function SettingsPanel() {
   const [defaultOutputPath, setDefaultOutputPath] = useState("");
   const [autoSave, setAutoSave] = useState(true);
   const [showNotifications, setShowNotifications] = useState(true);
-  const [defaultTemplate, setDefaultTemplate] = useState("standard");
+  const [apiTemplatePath, setApiTemplatePath] = useState(
+    DEFAULT_API_TEMPLATE_PLACEHOLDER,
+  );
+  const [dbTemplatePath, setDbTemplatePath] = useState(
+    DEFAULT_DB_TEMPLATE_PLACEHOLDER,
+  );
+  const [defaultApiTemplatePath, setDefaultApiTemplatePath] = useState(
+    DEFAULT_API_TEMPLATE_PLACEHOLDER,
+  );
+  const [defaultDbTemplatePath, setDefaultDbTemplatePath] = useState(
+    DEFAULT_DB_TEMPLATE_PLACEHOLDER,
+  );
 
-  const handleSelectDefaultPath = () => {
-    setDefaultOutputPath("/Users/user/Documents/Spec2Doc");
+  useEffect(() => {
+    let isCancelled = false;
+
+    const initializeSettings = async () => {
+      const storedSettings = readTemplateSettings();
+      const [documentsPath, apiResult, dbResult] = await Promise.allSettled([
+        getDefaultDocumentsPath(),
+        documentService.getBuiltInApiTemplatePath(),
+        documentService.getBuiltInDbTemplatePath(),
+      ]);
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (documentsPath.status === "fulfilled" && documentsPath.value) {
+        setDefaultOutputPath(documentsPath.value);
+      }
+
+      const resolvedDefaultApiTemplatePath =
+        apiResult.status === "fulfilled"
+          ? apiResult.value
+          : DEFAULT_API_TEMPLATE_PLACEHOLDER;
+      const resolvedDefaultDbTemplatePath =
+        dbResult.status === "fulfilled"
+          ? dbResult.value
+          : DEFAULT_DB_TEMPLATE_PLACEHOLDER;
+
+      setDefaultApiTemplatePath(resolvedDefaultApiTemplatePath);
+      setDefaultDbTemplatePath(resolvedDefaultDbTemplatePath);
+
+      const normalizedApiTemplatePath =
+        storedSettings.apiTemplatePath === DEFAULT_API_TEMPLATE_PLACEHOLDER
+          ? resolvedDefaultApiTemplatePath
+          : storedSettings.apiTemplatePath.trim() || resolvedDefaultApiTemplatePath;
+      const normalizedDbTemplatePath =
+        storedSettings.dbTemplatePath === DEFAULT_DB_TEMPLATE_PLACEHOLDER
+          ? resolvedDefaultDbTemplatePath
+          : storedSettings.dbTemplatePath.trim() || resolvedDefaultDbTemplatePath;
+
+      setApiTemplatePath(normalizedApiTemplatePath);
+      setDbTemplatePath(normalizedDbTemplatePath);
+      saveTemplateSettings({
+        apiTemplatePath: normalizedApiTemplatePath,
+        dbTemplatePath: normalizedDbTemplatePath,
+      });
+    };
+
+    void initializeSettings();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const normalizeRequiredPath = (value: string, fallback: string) => {
+    const trimmed = value.trim();
+    return trimmed || fallback;
   };
 
-  const handleSaveSettings = () => {};
+  const applyTemplateSettings = (nextApiTemplatePath: string, nextDbTemplatePath: string) => {
+    setApiTemplatePath(nextApiTemplatePath);
+    setDbTemplatePath(nextDbTemplatePath);
+    saveTemplateSettings({
+      apiTemplatePath: nextApiTemplatePath,
+      dbTemplatePath: nextDbTemplatePath,
+    });
+  };
+
+  const handleSelectDefaultPath = async () => {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        defaultPath: defaultOutputPath || undefined,
+      });
+
+      if (selected) {
+        setDefaultOutputPath(selected as string);
+      }
+    } catch {
+      // 保留静默失败，避免阻断设置页面
+    }
+  };
+
+  const handleSelectTemplateFile = async (type: "api" | "db") => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [
+          {
+            name: "Word 模板",
+            extensions: ["docx"],
+          },
+        ],
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      const selectedPath = selected as string;
+      if (type === "api") {
+        applyTemplateSettings(selectedPath, dbTemplatePath);
+      } else {
+        applyTemplateSettings(apiTemplatePath, selectedPath);
+      }
+    } catch {
+      // 保留静默失败，避免阻断设置页面
+    }
+  };
+
+  const handleTemplatePathBlur = (type: "api" | "db") => {
+    if (type === "api") {
+      const normalizedApiTemplatePath = normalizeRequiredPath(
+        apiTemplatePath,
+        defaultApiTemplatePath,
+      );
+      applyTemplateSettings(normalizedApiTemplatePath, dbTemplatePath);
+      return;
+    }
+
+    const normalizedDbTemplatePath = normalizeRequiredPath(
+      dbTemplatePath,
+      defaultDbTemplatePath,
+    );
+    applyTemplateSettings(apiTemplatePath, normalizedDbTemplatePath);
+  };
+
+  const handleUseDefaultTemplate = (type: "api" | "db") => {
+    if (type === "api") {
+      applyTemplateSettings(defaultApiTemplatePath, dbTemplatePath);
+      return;
+    }
+    applyTemplateSettings(apiTemplatePath, defaultDbTemplatePath);
+  };
+
+  const handleSaveSettings = () => {
+    const normalizedApiTemplatePath = normalizeRequiredPath(
+      apiTemplatePath,
+      defaultApiTemplatePath,
+    );
+    const normalizedDbTemplatePath = normalizeRequiredPath(
+      dbTemplatePath,
+      defaultDbTemplatePath,
+    );
+    applyTemplateSettings(normalizedApiTemplatePath, normalizedDbTemplatePath);
+  };
+
+  const handleRestoreDefaults = () => {
+    applyTemplateSettings(defaultApiTemplatePath, defaultDbTemplatePath);
+  };
 
   return (
     <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
@@ -113,18 +280,61 @@ export function SettingsPanel() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="default-template">默认模版</Label>
-              <Select value={defaultTemplate} onValueChange={setDefaultTemplate}>
-                <SelectTrigger id="default-template" className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">标准模版</SelectItem>
-                  <SelectItem value="minimal">简洁模版</SelectItem>
-                  <SelectItem value="detailed">详细模版</SelectItem>
-                  <SelectItem value="corporate">企业模版</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="default-api-template">OpenAPI 默认模版</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="default-api-template"
+                  value={apiTemplatePath}
+                  onChange={(e) => setApiTemplatePath(e.target.value)}
+                  onBlur={() => handleTemplatePathBlur("api")}
+                  placeholder="选择接口文档默认模版..."
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void handleSelectTemplateFile("api");
+                  }}
+                >
+                  <File className="h-4 w-4" />
+                  选择文件
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleUseDefaultTemplate("api")}
+                >
+                  恢复默认
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="default-db-template">数据库默认模版</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="default-db-template"
+                  value={dbTemplatePath}
+                  onChange={(e) => setDbTemplatePath(e.target.value)}
+                  onBlur={() => handleTemplatePathBlur("db")}
+                  placeholder="选择数据库文档默认模版..."
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void handleSelectTemplateFile("db");
+                  }}
+                >
+                  <File className="h-4 w-4" />
+                  选择文件
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleUseDefaultTemplate("db")}
+                >
+                  恢复默认
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -165,7 +375,10 @@ export function SettingsPanel() {
           <Save className="h-4 w-4" />
           保存设置
         </Button>
-        <Button variant="outline">恢复默认</Button>
+        <Button variant="outline" onClick={handleRestoreDefaults}>
+          <RotateCcw className="h-4 w-4" />
+          恢复默认
+        </Button>
       </div>
     </div>
   );

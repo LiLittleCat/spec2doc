@@ -31,7 +31,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               <img src={logo} alt="Spec2Doc" className="h-6 w-6" />
               <h1 className="text-xl font-bold text-foreground">Spec2Doc</h1>
             </div>
-            <p className="text-xs text-muted-foreground">规范驱动的文档生成器</p>
+            <p className="text-xs text-muted-foreground">根据规范生成 word 设计文档</p>
           </div>
         </div>
 

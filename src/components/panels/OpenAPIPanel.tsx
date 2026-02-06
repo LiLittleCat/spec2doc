@@ -10,6 +10,7 @@ import {
   FileJson,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,9 +32,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import { documentService } from "@/services/documentService";
+import {
+  DEFAULT_API_TEMPLATE_PLACEHOLDER,
+  readTemplateSettings,
+  subscribeTemplateSettings,
+} from "@/lib/templateSettings";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/plugin-fs";
 import { invoke } from "@tauri-apps/api/core";
@@ -53,7 +64,6 @@ interface ParsedSpec {
   version: string;
   description?: string;
   pathCount: number;
-  schemaCount: number;
   endpoints: Endpoint[];
 }
 
@@ -78,6 +88,10 @@ export function OpenAPIPanel() {
     "builtin",
   );
   const [customTemplatePath, setCustomTemplatePath] = useState("");
+  const [builtInTemplatePath, setBuiltInTemplatePath] = useState("");
+  const [builtInTemplateName, setBuiltInTemplateName] = useState(
+    "接口文档模板.docx",
+  );
 
   const [outputPath, setOutputPath] = useState("");
   const [fileName, setFileName] = useState("");
@@ -110,6 +124,52 @@ export function OpenAPIPanel() {
 
     return () => {
       isCancelled = true;
+    };
+  }, []);
+
+  const getFileNameFromPath = (path: string) =>
+    path.split(/[\\/]/).pop() || DEFAULT_API_TEMPLATE_PLACEHOLDER;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const syncBuiltInTemplate = async (configuredPath?: string) => {
+      const normalizedConfiguredPath = (configuredPath || "").trim();
+      if (
+        normalizedConfiguredPath &&
+        normalizedConfiguredPath !== DEFAULT_API_TEMPLATE_PLACEHOLDER
+      ) {
+        if (!isCancelled) {
+          setBuiltInTemplatePath(normalizedConfiguredPath);
+          setBuiltInTemplateName(getFileNameFromPath(normalizedConfiguredPath));
+        }
+        return;
+      }
+
+      try {
+        const resolvedPath = await documentService.getBuiltInApiTemplatePath();
+        if (!isCancelled) {
+          setBuiltInTemplatePath(resolvedPath);
+          setBuiltInTemplateName(getFileNameFromPath(resolvedPath));
+        }
+      } catch {
+        if (!isCancelled) {
+          setBuiltInTemplatePath("");
+          setBuiltInTemplateName(DEFAULT_API_TEMPLATE_PLACEHOLDER);
+        }
+      }
+    };
+
+    const settings = readTemplateSettings();
+    void syncBuiltInTemplate(settings.apiTemplatePath);
+
+    const unsubscribe = subscribeTemplateSettings((nextSettings) => {
+      void syncBuiltInTemplate(nextSettings.apiTemplatePath);
+    });
+
+    return () => {
+      isCancelled = true;
+      unsubscribe();
     };
   }, []);
 
@@ -253,7 +313,6 @@ export function OpenAPIPanel() {
       }
 
       const pathCount = Object.keys(spec.paths || {}).length;
-      const schemaCount = Object.keys(spec.components?.schemas || {}).length;
       const endpoints = extractEndpoints(spec);
       const specTitle = spec.info?.title || "未命名 API";
 
@@ -262,7 +321,6 @@ export function OpenAPIPanel() {
         version: spec.info?.version || "1.0.0",
         description: spec.info?.description || "",
         pathCount: endpoints.length || pathCount,
-        schemaCount,
         endpoints,
       });
       setFileName(getDefaultFileNameFromTitle(specTitle));
@@ -341,10 +399,15 @@ export function OpenAPIPanel() {
     setGeneratedFilePath(fullOutputPath);
 
     try {
+      const effectiveTemplatePath =
+        templateType === "custom"
+          ? customTemplatePath
+          : builtInTemplatePath || undefined;
+
       await documentService.generateApiDocument(
         fullSpec,
         fullOutputPath,
-        templateType === "custom" ? customTemplatePath : undefined,
+        effectiveTemplatePath,
         (message, percent) => {
           setProgressMessage(message);
           setGenerateProgress(percent);
@@ -366,6 +429,20 @@ export function OpenAPIPanel() {
       await invoke("reveal_in_file_manager", { path: generatedFilePath });
     } catch (err) {
       setError(`打开文件夹失败: ${String(err)}`);
+    }
+  };
+
+  const handleOpenBuiltInTemplateDir = async () => {
+    try {
+      let templatePath = builtInTemplatePath;
+      if (!templatePath) {
+        templatePath = await documentService.getBuiltInApiTemplatePath();
+        setBuiltInTemplatePath(templatePath);
+        setBuiltInTemplateName(getFileNameFromPath(templatePath));
+      }
+      await invoke("reveal_in_file_manager", { path: templatePath });
+    } catch (err) {
+      setError(`打开模板目录失败: ${String(err)}`);
     }
   };
 
@@ -537,133 +614,146 @@ export function OpenAPIPanel() {
                     </Badge>
                     <span className="text-sm text-muted-foreground leading-relaxed">
                       {parsedSpec.title} v{parsedSpec.version} ·{" "}
-                      {parsedSpec.pathCount} 接口 · {parsedSpec.schemaCount}{" "}
-                      模型
+                      {parsedSpec.pathCount} 接口
                     </span>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">
-                        接口 ({selectedEndpoints.size}/
-                        {parsedSpec.endpoints.length})
-                      </Label>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={selectAllEndpoints}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      接口 ({selectedEndpoints.size}/{parsedSpec.endpoints.length})
+                    </Label>
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="px-3 py-2 border-b bg-muted/30">
+                        <Label
+                          htmlFor="select-all-endpoints"
+                          className="flex items-center gap-2 text-sm font-normal cursor-pointer"
                         >
-                          全选
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={deselectAllEndpoints}
-                        >
-                          取消全选
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="border rounded-lg divide-y max-h-[300px] overflow-y-auto">
-                      {parsedSpec.endpoints.length === 0 && (
-                        <div className="p-4 text-sm text-muted-foreground">
-                          未发现可解析的接口路径
-                        </div>
-                      )}
-                      {parsedSpec.endpoints.map((endpoint) => (
-                        <Collapsible
-                          key={endpoint.id}
-                          open={expandedEndpoints.has(endpoint.id)}
-                          onOpenChange={() => toggleExpandEndpoint(endpoint.id)}
-                        >
-                          <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
-                            <Checkbox
-                              checked={selectedEndpoints.has(endpoint.id)}
-                              onCheckedChange={() =>
-                                toggleEndpoint(endpoint.id)
+                          <Checkbox
+                            id="select-all-endpoints"
+                            checked={
+                              parsedSpec.endpoints.length > 0 &&
+                              selectedEndpoints.size ===
+                                parsedSpec.endpoints.length
+                                ? true
+                                : selectedEndpoints.size > 0
+                                  ? "indeterminate"
+                                  : false
+                            }
+                            onCheckedChange={(checked) => {
+                              if (checked === true) {
+                                selectAllEndpoints();
+                              } else {
+                                deselectAllEndpoints();
                               }
-                            />
-                            <CollapsibleTrigger asChild>
-                              <button
-                                type="button"
-                                className="flex items-center gap-2 flex-1 text-left"
-                              >
-                                {expandedEndpoints.has(endpoint.id) ? (
-                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    "text-xs font-mono",
-                                    methodColors[endpoint.method],
-                                  )}
-                                >
-                                  {endpoint.method}
-                                </Badge>
-                                <span className="font-mono text-sm">
-                                  {endpoint.path}
-                                </span>
-                                <span className="text-sm text-muted-foreground ml-auto">
-                                  {endpoint.summary}
-                                </span>
-                              </button>
-                            </CollapsibleTrigger>
+                            }}
+                          />
+                          <span>全选</span>
+                        </Label>
+                      </div>
+                      <div className="divide-y max-h-[300px] overflow-y-auto">
+                        {parsedSpec.endpoints.length === 0 && (
+                          <div className="p-4 text-sm text-muted-foreground">
+                            未发现可解析的接口路径
                           </div>
-                          <CollapsibleContent>
-                            <div className="px-10 py-3 bg-muted/30 text-sm space-y-3">
-                              {endpoint.description && (
-                                <p className="text-muted-foreground">
-                                  {endpoint.description}
-                                </p>
-                              )}
-                              {endpoint.parameters &&
-                                endpoint.parameters.length > 0 && (
-                                  <div>
-                                    <p className="font-medium mb-1">参数:</p>
-                                    <ul className="list-disc list-inside text-muted-foreground">
-                                      {endpoint.parameters.map((param) => (
-                                        <li
-                                          key={`${endpoint.id}-${param.name}-${param.in}`}
-                                        >
-                                          <span className="font-mono">
-                                            {param.name}
-                                          </span>
-                                          <span className="text-xs ml-1">
-                                            ({param.in})
-                                          </span>
-                                          <span className="text-xs ml-1">
-                                            - {param.type}
-                                          </span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              {endpoint.responses &&
-                                endpoint.responses.length > 0 && (
-                                  <div>
-                                    <p className="font-medium mb-1">响应:</p>
-                                    <ul className="list-disc list-inside text-muted-foreground">
-                                      {endpoint.responses.map((resp) => (
-                                        <li key={`${endpoint.id}-${resp.code}`}>
-                                          <span className="font-mono">
-                                            {resp.code}
-                                          </span>
-                                          <span className="ml-1">
-                                            - {resp.description}
-                                          </span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                        )}
+                        {parsedSpec.endpoints.map((endpoint) => (
+                          <Collapsible
+                            key={endpoint.id}
+                            open={expandedEndpoints.has(endpoint.id)}
+                            onOpenChange={() =>
+                              toggleExpandEndpoint(endpoint.id)
+                            }
+                          >
+                            <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
+                              <Checkbox
+                                checked={selectedEndpoints.has(endpoint.id)}
+                                onCheckedChange={() =>
+                                  toggleEndpoint(endpoint.id)
+                                }
+                              />
+                              <CollapsibleTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-2 flex-1 text-left"
+                                >
+                                  {expandedEndpoints.has(endpoint.id) ? (
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "text-xs font-mono",
+                                      methodColors[endpoint.method],
+                                    )}
+                                  >
+                                    {endpoint.method}
+                                  </Badge>
+                                  <span className="font-mono text-sm">
+                                    {endpoint.path}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground ml-auto">
+                                    {endpoint.summary}
+                                  </span>
+                                </button>
+                              </CollapsibleTrigger>
                             </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ))}
+                            <CollapsibleContent>
+                              <div className="px-10 py-3 bg-muted/30 text-sm space-y-3">
+                                {endpoint.description && (
+                                  <p className="text-muted-foreground">
+                                    {endpoint.description}
+                                  </p>
+                                )}
+                                {endpoint.parameters &&
+                                  endpoint.parameters.length > 0 && (
+                                    <div>
+                                      <p className="font-medium mb-1">参数:</p>
+                                      <ul className="list-disc list-inside text-muted-foreground">
+                                        {endpoint.parameters.map((param) => (
+                                          <li
+                                            key={`${endpoint.id}-${param.name}-${param.in}`}
+                                          >
+                                            <span className="font-mono">
+                                              {param.name}
+                                            </span>
+                                            <span className="text-xs ml-1">
+                                              ({param.in})
+                                            </span>
+                                            <span className="text-xs ml-1">
+                                              - {param.type}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                {endpoint.responses &&
+                                  endpoint.responses.length > 0 && (
+                                    <div>
+                                      <p className="font-medium mb-1">响应:</p>
+                                      <ul className="list-disc list-inside text-muted-foreground">
+                                        {endpoint.responses.map((resp) => (
+                                          <li
+                                            key={`${endpoint.id}-${resp.code}`}
+                                          >
+                                            <span className="font-mono">
+                                              {resp.code}
+                                            </span>
+                                            <span className="ml-1">
+                                              - {resp.description}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </>
@@ -696,9 +786,24 @@ export function OpenAPIPanel() {
               <Label htmlFor="builtin" className="font-medium cursor-pointer">
                 内置模版
               </Label>
-              <span className="text-sm text-muted-foreground">
-                - 标准接口文档模版
-              </span>
+              <span className="text-sm text-muted-foreground">-</span>
+              <button
+                type="button"
+                onClick={handleOpenBuiltInTemplateDir}
+                className="text-sm text-primary hover:underline underline-offset-2"
+              >
+                {builtInTemplateName}
+              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center text-muted-foreground cursor-help">
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  可在设置中修改
+                </TooltipContent>
+              </Tooltip>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="custom" id="custom" />
@@ -788,14 +893,10 @@ export function OpenAPIPanel() {
                 <span className="font-medium">{parsedSpec.pathCount} 个</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">模型数量</span>
-                <span className="font-medium">{parsedSpec.schemaCount} 个</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-muted-foreground">文档模版</span>
                 <span className="font-medium">
                   {templateType === "builtin"
-                    ? "内置模版"
+                    ? `内置模版 (${builtInTemplateName})`
                     : customTemplatePath || "未选择"}
                 </span>
               </div>

@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { resolveResource } from '@tauri-apps/api/path';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readFile, writeFile } from '@tauri-apps/plugin-fs';
 import * as yaml from 'js-yaml';
@@ -8,6 +9,57 @@ import { OpenAPIDocGenerator } from './docxGenerator';
  * 文档生成服务
  */
 export class DocumentService {
+  private readonly builtInApiTemplateCandidates = [
+    '接口文档模板.docx',
+    'assets/接口文档模板.docx',
+    '_up_/接口文档模板.docx',
+    '_up_/assets/接口文档模板.docx',
+  ];
+  private readonly builtInDbTemplateCandidates = [
+    '数据库设计文档模板.docx',
+    'assets/数据库设计文档模板.docx',
+    '_up_/数据库设计文档模板.docx',
+    '_up_/assets/数据库设计文档模板.docx',
+  ];
+
+  private isTauriRuntime(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
+    );
+  }
+
+  private async resolveBundledTemplatePath(candidates: string[]): Promise<string> {
+    if (!this.isTauriRuntime()) {
+      throw new Error('内置模板仅支持 Tauri 桌面环境，请改用自定义模板');
+    }
+
+    const errors: string[] = [];
+    for (const candidate of candidates) {
+      try {
+        const path = await resolveResource(candidate);
+        await readFile(path);
+        return path;
+      } catch (error) {
+        errors.push(`${candidate}: ${String(error)}`);
+      }
+    }
+
+    throw new Error(
+      `未找到内置模板资源，请确认已打包模板文件。候选路径: ${candidates.join(
+        ', ',
+      )}; 失败详情: ${errors.join(' | ')}`,
+    );
+  }
+
+  async getBuiltInApiTemplatePath(): Promise<string> {
+    return this.resolveBundledTemplatePath(this.builtInApiTemplateCandidates);
+  }
+
+  async getBuiltInDbTemplatePath(): Promise<string> {
+    return this.resolveBundledTemplatePath(this.builtInDbTemplateCandidates);
+  }
+
   /**
    * 选择 OpenAPI 文件
    */
@@ -119,10 +171,8 @@ export class DocumentService {
     try {
       onProgress?.('正在解析 OpenAPI 规范...', 10);
 
-      // 如果没有指定模板，抛出错误
-      if (!templatePath) {
-        throw new Error('请先选择模板文件');
-      }
+      // 内置模板：从安装包资源目录读取；自定义模板：使用选择路径
+      const effectiveTemplatePath = templatePath || await this.getBuiltInApiTemplatePath();
 
       // 创建文档生成器
       const generator = new OpenAPIDocGenerator(openApiSpec);
@@ -130,7 +180,7 @@ export class DocumentService {
       onProgress?.('正在生成文档内容...', 50);
 
       // 从模板生成文档
-      const blob = await generator.generateFromTemplate(templatePath);
+      const blob = await generator.generateFromTemplate(effectiveTemplatePath);
 
       onProgress?.('正在保存文档...', 80);
 
