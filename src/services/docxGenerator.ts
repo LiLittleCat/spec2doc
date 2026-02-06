@@ -1,6 +1,7 @@
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { readFile } from '@tauri-apps/plugin-fs';
+import { readGenerationSettings } from '@/lib/generationSettings';
 
 /**
  * 基于模板的 OpenAPI 文档生成器
@@ -35,6 +36,11 @@ export class OpenAPIDocGenerator {
 
       // 渲染模板
       doc.render(templateData);
+
+      const generationSettings = readGenerationSettings();
+      if (!generationSettings.repeatTableHeaderOnPageBreak) {
+        this.removeRepeatTableHeaders(doc.getZip());
+      }
 
       // 生成文档
       const output = doc.getZip().generate({
@@ -396,5 +402,29 @@ export class OpenAPIDocGenerator {
     }
 
     return results;
+  }
+
+  /**
+   * 移除 Word 表格跨页重复表头标记（w:tblHeader）
+   */
+  private removeRepeatTableHeaders(zip: PizZip): void {
+    const tableHeaderSelfClosingPattern = /<w:tblHeader(?:\s+[^>]*)?\/>/g;
+    const tableHeaderOpenClosePattern = /<w:tblHeader(?:\s+[^>]*)?>\s*<\/w:tblHeader>/g;
+
+    Object.keys(zip.files)
+      .filter((fileName) => fileName.startsWith('word/') && fileName.endsWith('.xml'))
+      .forEach((fileName) => {
+        const file = zip.file(fileName);
+        if (!file) return;
+
+        const xml = file.asText();
+        const patchedXml = xml
+          .replace(tableHeaderSelfClosingPattern, '')
+          .replace(tableHeaderOpenClosePattern, '');
+
+        if (patchedXml !== xml) {
+          zip.file(fileName, patchedXml);
+        }
+      });
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, Monitor, FolderOpen, Save, RotateCcw, File } from "lucide-react";
+import { Moon, Sun, Monitor, FolderOpen, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/use-theme";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
+import {
+  getDefaultGenerationSettings,
+  readGenerationSettings,
+  saveGenerationSettings,
+} from "@/lib/generationSettings";
 import { documentService } from "@/services/documentService";
 import {
   DEFAULT_API_TEMPLATE_PLACEHOLDER,
@@ -20,8 +25,10 @@ import { open } from "@tauri-apps/plugin-dialog";
 export function SettingsPanel() {
   const { theme, setTheme } = useTheme();
   const [defaultOutputPath, setDefaultOutputPath] = useState("");
-  const [autoSave, setAutoSave] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(true);
+  const [repeatTableHeaderOnPageBreak, setRepeatTableHeaderOnPageBreak] =
+    useState(
+      getDefaultGenerationSettings().repeatTableHeaderOnPageBreak,
+    );
   const [apiTemplatePath, setApiTemplatePath] = useState(
     DEFAULT_API_TEMPLATE_PLACEHOLDER,
   );
@@ -40,6 +47,7 @@ export function SettingsPanel() {
 
     const initializeSettings = async () => {
       const storedSettings = readTemplateSettings();
+      const generationSettings = readGenerationSettings();
       const [documentsPath, apiResult, dbResult] = await Promise.allSettled([
         getDefaultDocumentsPath(),
         documentService.getBuiltInApiTemplatePath(),
@@ -75,6 +83,9 @@ export function SettingsPanel() {
           ? resolvedDefaultDbTemplatePath
           : storedSettings.dbTemplatePath.trim() || resolvedDefaultDbTemplatePath;
 
+      setRepeatTableHeaderOnPageBreak(
+        generationSettings.repeatTableHeaderOnPageBreak,
+      );
       setApiTemplatePath(normalizedApiTemplatePath);
       setDbTemplatePath(normalizedDbTemplatePath);
       saveTemplateSettings({
@@ -170,22 +181,6 @@ export function SettingsPanel() {
       return;
     }
     applyTemplateSettings(apiTemplatePath, defaultDbTemplatePath);
-  };
-
-  const handleSaveSettings = () => {
-    const normalizedApiTemplatePath = normalizeRequiredPath(
-      apiTemplatePath,
-      defaultApiTemplatePath,
-    );
-    const normalizedDbTemplatePath = normalizeRequiredPath(
-      dbTemplatePath,
-      defaultDbTemplatePath,
-    );
-    applyTemplateSettings(normalizedApiTemplatePath, normalizedDbTemplatePath);
-  };
-
-  const handleRestoreDefaults = () => {
-    applyTemplateSettings(defaultApiTemplatePath, defaultDbTemplatePath);
   };
 
   return (
@@ -335,39 +330,28 @@ export function SettingsPanel() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between py-2">
               <div className="space-y-1">
-                <Label htmlFor="auto-save" className="font-medium">自动保存草稿</Label>
+                <Label htmlFor="repeat-table-header" className="font-medium">
+                  表格跨页重复表头
+                </Label>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  在您进行更改时自动保存工作内容
+                  开启后，表格跨页时新页自动显示表头；关闭后仅首页显示表头
                 </p>
               </div>
-              <Switch id="auto-save" checked={autoSave} onCheckedChange={setAutoSave} />
-            </div>
-
-            <div className="flex items-center justify-between py-2">
-              <div className="space-y-1">
-                <Label htmlFor="notifications" className="font-medium">显示通知</Label>
-                <p className="text-sm text-muted-foreground leading-relaxed">任务完成时显示桌面通知</p>
-              </div>
               <Switch
-                id="notifications"
-                checked={showNotifications}
-                onCheckedChange={setShowNotifications}
+                id="repeat-table-header"
+                checked={repeatTableHeaderOnPageBreak}
+                onCheckedChange={(checked) => {
+                  setRepeatTableHeaderOnPageBreak(checked);
+                  saveGenerationSettings({
+                    repeatTableHeaderOnPageBreak: checked,
+                  });
+                }}
               />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex gap-3">
-        <Button onClick={handleSaveSettings}>
-          <Save className="h-4 w-4" />
-          保存设置
-        </Button>
-        <Button variant="outline" onClick={handleRestoreDefaults}>
-          <RotateCcw className="h-4 w-4" />
-          恢复默认
-        </Button>
-      </div>
     </div>
   );
 }

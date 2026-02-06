@@ -252,9 +252,6 @@ const doc = new Document({
         spacing: { before: 120, after: 60 },
         children: [new TextRun({ text: "Path 参数", bold: true })]
       }),
-      new Paragraph({
-        children: [new TextRun("{#pathParams}")]
-      }),
       new Table({
         columnWidths: [1872, 1404, 1170, 1404, 3510],
         margins: { top: 80, bottom: 80, left: 120, right: 120 },
@@ -319,7 +316,7 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 1872, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{name}")] })]
+                children: [new Paragraph({ children: [new TextRun("{#pathParams}{name}")] })]
               }),
               new TableCell({
                 borders: cellBorders,
@@ -339,14 +336,11 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 3510, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{description}")] })]
+                children: [new Paragraph({ children: [new TextRun("{description}{/pathParams}")] })]
               })
             ]
           })
         ]
-      }),
-      new Paragraph({
-        children: [new TextRun("{/pathParams}")]
       }),
 
       // Query Parameters
@@ -354,9 +348,6 @@ const doc = new Document({
         spacing: { before: 120, after: 60 },
         children: [new TextRun({ text: "Query 参数", bold: true })]
       }),
-      new Paragraph({
-        children: [new TextRun("{#queryParams}")]
-      }),
       new Table({
         columnWidths: [1872, 1404, 1170, 1404, 3510],
         margins: { top: 80, bottom: 80, left: 120, right: 120 },
@@ -421,7 +412,7 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 1872, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{name}")] })]
+                children: [new Paragraph({ children: [new TextRun("{#queryParams}{name}")] })]
               }),
               new TableCell({
                 borders: cellBorders,
@@ -441,23 +432,17 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 3510, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{description}")] })]
+                children: [new Paragraph({ children: [new TextRun("{description}{/queryParams}")] })]
               })
             ]
           })
         ]
-      }),
-      new Paragraph({
-        children: [new TextRun("{/queryParams}")]
       }),
 
       // Body Parameters
       new Paragraph({
         spacing: { before: 120, after: 60 },
         children: [new TextRun({ text: "Body 参数（JSON）", bold: true })]
-      }),
-      new Paragraph({
-        children: [new TextRun("{#bodyParams}")]
       }),
       new Table({
         columnWidths: [1872, 1404, 1170, 1404, 3510],
@@ -523,7 +508,7 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 1872, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{name}")] })]
+                children: [new Paragraph({ children: [new TextRun("{#bodyParams}{name}")] })]
               }),
               new TableCell({
                 borders: cellBorders,
@@ -543,14 +528,11 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 3510, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{description}")] })]
+                children: [new Paragraph({ children: [new TextRun("{description}{/bodyParams}")] })]
               })
             ]
           })
         ]
-      }),
-      new Paragraph({
-        children: [new TextRun("{/bodyParams}")]
       }),
 
       // Request body example
@@ -573,9 +555,6 @@ const doc = new Document({
       new Paragraph({
         spacing: { before: 60, after: 60 },
         children: [new TextRun({ text: "状态码 {statusCode} - {description}", bold: true })]
-      }),
-      new Paragraph({
-        children: [new TextRun("{#fields}")]
       }),
       new Table({
         columnWidths: [1872, 1404, 1404, 4680],
@@ -631,7 +610,7 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 1872, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{name}")] })]
+                children: [new Paragraph({ children: [new TextRun("{#fields}{name}")] })]
               }),
               new TableCell({
                 borders: cellBorders,
@@ -646,14 +625,11 @@ const doc = new Document({
               new TableCell({
                 borders: cellBorders,
                 width: { size: 4680, type: WidthType.DXA },
-                children: [new Paragraph({ children: [new TextRun("{description}")] })]
+                children: [new Paragraph({ children: [new TextRun("{description}{/fields}")] })]
               })
             ]
           })
         ]
-      }),
-      new Paragraph({
-        children: [new TextRun("{/fields}")]
       }),
       new Paragraph({
         spacing: { before: 60, after: 60 },

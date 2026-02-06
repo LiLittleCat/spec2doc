@@ -949,7 +949,6 @@ export function OpenAPIPanel() {
             <Button
               onClick={handleGenerate}
               disabled={!canGenerate || generateStatus === "generating"}
-              className="flex-1"
             >
               {generateStatus === "generating" ? (
                 <>
