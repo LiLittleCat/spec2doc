@@ -621,7 +621,7 @@ export function DatabasePanel() {
           </RadioGroup>
 
           {templateType === "custom" && (
-            <div className="space-y-3 pl-6 border-l-2 border-muted">
+            <div className="space-y-3 pt-1">
               <div className="flex gap-3">
                 <Input
                   value={customTemplatePath}
