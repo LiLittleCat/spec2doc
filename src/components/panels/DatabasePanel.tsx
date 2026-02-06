@@ -427,7 +427,7 @@ export function DatabasePanel() {
   })();
 
   return (
-    <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-5 p-6 max-w-6xl mx-auto">
       <div className="space-y-1.5">
         <h2 className="text-2xl font-bold tracking-tight">数据库文档生成</h2>
         <p className="text-muted-foreground leading-relaxed">将数据库结构转换为标准数据字典文档</p>

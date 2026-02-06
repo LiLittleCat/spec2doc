@@ -184,7 +184,7 @@ export function SettingsPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-5 p-6 max-w-6xl mx-auto">
       <div className="space-y-1.5">
         <h2 className="text-2xl font-bold tracking-tight">设置</h2>
         <p className="text-muted-foreground leading-relaxed">配置应用程序偏好设置和默认值</p>

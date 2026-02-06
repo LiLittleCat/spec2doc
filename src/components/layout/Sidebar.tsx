@@ -5,19 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import logo from "@/assets/logo.svg";
 
+export type AppTab =
+  | "openapi"
+  | "database"
+  | "template-guide"
+  | "settings"
+  | "help";
+
 interface SidebarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTab: AppTab;
+  onTabChange: (tab: AppTab) => void;
 }
 
 const navItems = [
-  { id: "openapi", label: "OpenAPI", icon: FileJson },
-  { id: "database", label: "数据库", icon: Database },
+  { id: "openapi" as const, label: "OpenAPI", icon: FileJson },
+  { id: "database" as const, label: "数据库", icon: Database },
+  { id: "template-guide" as const, label: "模板指南", icon: FileText },
 ];
 
 const bottomItems = [
-  { id: "settings", label: "设置", icon: Settings },
-  { id: "help", label: "帮助", icon: HelpCircle },
+  { id: "settings" as const, label: "设置", icon: Settings },
+  { id: "help" as const, label: "帮助", icon: HelpCircle },
 ];
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
@@ -36,7 +44,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </div>
 
         {/* Main Navigation */}
-        <nav className="p-3 space-y-1">
+        <nav className="pl-4 pr-2 py-3 space-y-1">
           {navItems.map((item) => (
             <Button
               key={item.id}
@@ -61,7 +69,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         <div className="flex-1" />
 
         {/* Bottom Items */}
-        <div className="p-3 border-t border-sidebar-border space-y-1">
+        <div className="pl-4 pr-2 py-3 border-t border-sidebar-border space-y-1">
           {bottomItems.map((item) => (
             <Button
               key={item.id}

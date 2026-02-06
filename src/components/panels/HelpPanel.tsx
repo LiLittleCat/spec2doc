@@ -8,9 +8,63 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+const GITHUB_REPOSITORY_URL = "https://github.com/LiLittleCat/spec2doc";
+const GITHUB_ISSUES_URL = `${GITHUB_REPOSITORY_URL}/issues`;
+const GITHUB_OPENAPI_TEMPLATE_GUIDE_URL =
+  `${GITHUB_REPOSITORY_URL}/blob/main/docs/openapi-template-guide.md`;
+
+const apiTemplateBaseFields: Array<[string, string]> = [
+  ["{title}", "文档标题（OpenAPI info.title）"],
+  ["{version}", "文档版本（OpenAPI info.version）"],
+  ["{description}", "文档描述（OpenAPI info.description）"],
+  ["{baseUrl}", "服务地址（servers[0].url）"],
+  ["{updateDate}", "生成日期（系统当前日期）"],
+];
+
+const apiTemplateApiFields: Array<[string, string]> = [
+  ["{tagName}", "分组名（接口 tags[0]）"],
+  ["{summary}", "接口标题"],
+  ["{method}", "请求方法（GET/POST/...）"],
+  ["{path}", "接口路径"],
+  ["{contentType}", "请求 Content-Type"],
+  ["{description}", "接口描述"],
+  ["{requestBodyExample}", "请求 Body 示例（JSON 文本）"],
+];
+
+const apiTemplateParamFields: Array<[string, string]> = [
+  ["{name}", "参数名/字段名"],
+  ["{type}", "类型"],
+  ["{required}", "是否必填（是/否）"],
+  ["{example}", "示例值"],
+  ["{description}", "说明"],
+];
+
+const apiTemplateResponseFields: Array<[string, string]> = [
+  ["{statusCode}", "响应状态码"],
+  ["{description}", "响应描述"],
+  ["{bodyExample}", "响应 Body 示例（JSON 文本）"],
+];
+
+const apiTemplateLoopSnippet = `{#apiGroups}
+  {tagName}
+  {#apis}
+    {summary} / {method} / {path}
+    {#pathParams}...{/pathParams}
+    {#queryParams}...{/queryParams}
+    {#bodyParams}...{/bodyParams}
+    {#responses}
+      {statusCode} - {description}
+      {#fields}...{/fields}
+      {bodyExample}
+    {/responses}
+  {/apis}
+{/apiGroups}`;
+
+const apiTemplateTableRowSnippet = `| {#pathParams}{name} | {type} | {required} | {example} | {description}{/pathParams} |`;
+
 export function HelpPanel() {
   return (
-    <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-5 p-6 max-w-6xl mx-auto">
       <div className="space-y-1.5">
         <h2 className="text-2xl font-bold tracking-tight">帮助与文档</h2>
         <p className="text-muted-foreground leading-relaxed">了解如何使用 Spec2Doc 并获取支持</p>
@@ -83,7 +137,18 @@ export function HelpPanel() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="ghost" className="w-full justify-start" asChild>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+              <a
+                href={GITHUB_OPENAPI_TEMPLATE_GUIDE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileText className="h-4 w-4" />
+                OpenAPI 模板指南（Markdown）
+                <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground" />
+              </a>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <a href={GITHUB_REPOSITORY_URL} target="_blank" rel="noopener noreferrer">
                 <Github className="h-4 w-4" />
                 GitHub 仓库
                 <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground" />
@@ -97,7 +162,7 @@ export function HelpPanel() {
               </a>
             </Button>
             <Button variant="ghost" className="w-full justify-start" asChild>
-              <a href="https://github.com/issues" target="_blank" rel="noopener noreferrer">
+              <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="h-4 w-4" />
                 报告问题
                 <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground" />
@@ -131,8 +196,8 @@ export function HelpPanel() {
             <AccordionItem value="templates">
               <AccordionTrigger>如何自定义文档模版？</AccordionTrigger>
               <AccordionContent className="leading-relaxed">
-                您可以从多个内置模版中选择（标准、简洁、详细、企业），或创建自己的自定义模版。模版存储在
-                assets/templates 目录中，使用 .docx 格式。
+                可以使用 .docx 文件作为自定义模版。推荐先复制一份内置接口模版，再按下方
+                “OpenAPI 模版占位符说明”中的字段与循环规则调整。
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="offline">
@@ -145,6 +210,113 @@ export function HelpPanel() {
               <AccordionTrigger>我的数据安全吗？</AccordionTrigger>
               <AccordionContent className="leading-relaxed">
                 所有数据处理都在您的本地计算机上进行。我们从不会将您的 API 规范或数据库结构发送到任何外部服务器。数据库凭据使用您系统的密钥链/凭据管理器安全存储。
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3 space-y-1.5">
+          <CardTitle className="text-lg">OpenAPI 模版占位符说明</CardTitle>
+          <CardDescription className="leading-relaxed">
+            用于接口文档（.docx）自定义模版。占位符基于 docxtemplater 语法，变量使用
+            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-xs">{`{name}`}</code>
+            ，循环使用
+            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-xs">{`{#list}...{/list}`}</code>
+            。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="api-template-base">
+              <AccordionTrigger>1. 基础字段（文档级）</AccordionTrigger>
+              <AccordionContent className="space-y-2">
+                {apiTemplateBaseFields.map(([placeholder, desc]) => (
+                  <div key={placeholder} className="flex items-start gap-3 text-sm">
+                    <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono">
+                      {placeholder}
+                    </code>
+                    <span className="text-muted-foreground">{desc}</span>
+                  </div>
+                ))}
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="api-template-loops">
+              <AccordionTrigger>2. 接口与循环结构（必须成对）</AccordionTrigger>
+              <AccordionContent className="space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  推荐按下面的嵌套层级组织模版：先按分组循环，再按接口循环，再放参数与响应循环。
+                </p>
+                <pre className="rounded-md border bg-muted/40 p-3 text-xs leading-relaxed overflow-auto">
+                  <code>{apiTemplateLoopSnippet}</code>
+                </pre>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="api-template-api-fields">
+              <AccordionTrigger>3. 接口字段、参数字段与响应字段</AccordionTrigger>
+              <AccordionContent className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">接口字段（放在 {`{#apis}`}...{`{/apis}`} 内）</p>
+                  {apiTemplateApiFields.map(([placeholder, desc]) => (
+                    <div key={placeholder} className="flex items-start gap-3 text-sm">
+                      <code className="min-w-[180px] rounded bg-muted px-2 py-1 font-mono">
+                        {placeholder}
+                      </code>
+                      <span className="text-muted-foreground">{desc}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    参数字段（放在 path/query/body 参数循环内）
+                  </p>
+                  {apiTemplateParamFields.map(([placeholder, desc]) => (
+                    <div key={`param-${placeholder}`} className="flex items-start gap-3 text-sm">
+                      <code className="min-w-[180px] rounded bg-muted px-2 py-1 font-mono">
+                        {placeholder}
+                      </code>
+                      <span className="text-muted-foreground">{desc}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    响应字段（放在 {`{#responses}`}...{`{/responses}`} 内）
+                  </p>
+                  {apiTemplateResponseFields.map(([placeholder, desc]) => (
+                    <div key={`resp-${placeholder}`} className="flex items-start gap-3 text-sm">
+                      <code className="min-w-[180px] rounded bg-muted px-2 py-1 font-mono">
+                        {placeholder}
+                      </code>
+                      <span className="text-muted-foreground">{desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="api-template-table">
+              <AccordionTrigger>4. 表格中循环的正确写法（重点）</AccordionTrigger>
+              <AccordionContent className="space-y-3">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  在 Word 表格里做参数/字段循环时，请把循环起止标签放在同一行：
+                  起始标签放首列，结束标签放末列。这样可避免每条数据重复表头等问题。
+                </p>
+                <pre className="rounded-md border bg-muted/40 p-3 text-xs leading-relaxed overflow-auto">
+                  <code>{apiTemplateTableRowSnippet}</code>
+                </pre>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  参数循环可用：{`{#pathParams}`}/{`{/pathParams}`},
+                  {` {#queryParams}`}/{`{/queryParams}`},
+                  {` {#bodyParams}`}/{`{/bodyParams}`},
+                  {` {#headerParams}`}/{`{/headerParams}`}; 响应字段循环可用：
+                  {` {#fields}`}/{`{/fields}`}.
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

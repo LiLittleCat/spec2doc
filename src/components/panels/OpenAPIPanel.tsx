@@ -510,7 +510,7 @@ export function OpenAPIPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-5 p-6 max-w-6xl mx-auto">
       <div className="space-y-1.5">
         <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           <FileJson className="w-7 h-7" />
