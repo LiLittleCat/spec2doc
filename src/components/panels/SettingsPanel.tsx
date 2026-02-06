@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/hooks/use-theme";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import { documentService } from "@/services/documentService";
 import {
@@ -15,17 +16,9 @@ import {
   saveTemplateSettings,
 } from "@/lib/templateSettings";
 import { open } from "@tauri-apps/plugin-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export function SettingsPanel() {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
-  const [language, setLanguage] = useState("zh");
+  const { theme, setTheme } = useTheme();
   const [defaultOutputPath, setDefaultOutputPath] = useState("");
   const [autoSave, setAutoSave] = useState(true);
   const [showNotifications, setShowNotifications] = useState(true);
@@ -242,17 +235,12 @@ export function SettingsPanel() {
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="language">语言</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger id="language" className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="zh">简体中文</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="ja">日本語</SelectItem>
-                  <SelectItem value="ko">한국어</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="language"
+                value="简体中文（当前仅支持中文）"
+                readOnly
+                className="w-[240px]"
+              />
             </div>
           </CardContent>
         </Card>

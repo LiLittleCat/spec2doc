@@ -123,26 +123,27 @@
 
   /* Dark Theme - Deep Charcoal with Logo Accents */
   .dark {
-    --background: 225.7 51.2% 8%;
-    --foreground: 213.6 100% 95.1%;
+    --background: 220 8% 10%;
+    --foreground: 220 20% 92%;
 
-    --card: 225 46.2% 10.2%;
-    --card-foreground: 213.6 100% 95.1%;
+    --card: 220 8% 13%;
+    --card-foreground: 220 20% 92%;
 
-    --popover: 225 46.2% 10.2%;
-    --popover-foreground: 213.6 100% 95.1%;
+    --popover: 220 8% 13%;
+    --popover-foreground: 220 20% 92%;
 
-    --primary: 222.1 100% 67.8%;
-    --primary-foreground: 225.7 51.2% 8%;
+    /* Keep dark theme primary aligned with light theme blue */
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 221.1 48.7% 15.3%;
-    --secondary-foreground: 213.6 100% 95.1%;
+    --secondary: 220 7% 18%;
+    --secondary-foreground: 220 15% 90%;
 
-    --muted: 221.4 46% 12.4%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 7% 15%;
+    --muted-foreground: 220 10% 66%;
 
-    --accent: 222 48.1% 20.4%;
-    --accent-foreground: 213.6 100% 95.1%;
+    --accent: 217 20% 20%;
+    --accent-foreground: 220 18% 93%;
 
     --destructive: 0 90.6% 70.8%;
     --destructive-foreground: 225.7 51.2% 8%;
@@ -153,42 +154,42 @@
     --warning: 43.3 96.4% 56.3%;
     --warning-foreground: 225.7 51.2% 8%;
 
-    --border: 221.1 38.8% 19.2%;
-    --input: 221.1 38.8% 19.2%;
-    --ring: 222.1 100% 67.8%;
+    --border: 220 8% 24%;
+    --input: 220 8% 24%;
+    --ring: 217.2 91.2% 59.8%;
 
-    --chart-1: 222.1 100% 67.8%;
+    --chart-1: 217.2 91.2% 59.8%;
     --chart-2: 187.9 85.7% 53.3%;
     --chart-3: 255.1 91.7% 76.3%;
     --chart-4: 158.1 64.4% 51.6%;
     --chart-5: 43.3 96.4% 56.3%;
 
-    --sidebar-background: 223.2 53.2% 9.2%;
-    --sidebar-foreground: 213.6 100% 95.1%;
-    --sidebar-primary: 222.1 100% 67.8%;
-    --sidebar-primary-foreground: 225.7 51.2% 8%;
-    --sidebar-accent: 221.1 48.7% 15.3%;
-    --sidebar-accent-foreground: 213.6 100% 95.1%;
-    --sidebar-border: 221.1 38.8% 19.2%;
-    --sidebar-ring: 222.1 100% 67.8%;
+    --sidebar-background: 220 8% 11%;
+    --sidebar-foreground: 220 20% 92%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 7% 18%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 220 8% 24%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --shadow-2xs: 0px 2px 3px 0px hsl(223 60% 6% / 0.12);
-    --shadow-xs: 0px 2px 3px 0px hsl(223 60% 6% / 0.12);
-    --shadow-sm: 0px 2px 3px 0px hsl(223 60% 6% / 0.24),
-      0px 1px 2px -1px hsl(223 60% 6% / 0.24);
-    --shadow: 0px 2px 3px 0px hsl(223 60% 6% / 0.24),
-      0px 1px 2px -1px hsl(223 60% 6% / 0.24);
-    --shadow-md: 0px 2px 3px 0px hsl(223 60% 6% / 0.24),
-      0px 2px 4px -1px hsl(223 60% 6% / 0.24);
-    --shadow-lg: 0px 2px 3px 0px hsl(223 60% 6% / 0.24),
-      0px 4px 6px -1px hsl(223 60% 6% / 0.24);
-    --shadow-xl: 0px 2px 3px 0px hsl(223 60% 6% / 0.24),
-      0px 8px 10px -1px hsl(223 60% 6% / 0.24);
-    --shadow-2xl: 0px 2px 3px 0px hsl(223 60% 6% / 0.55);
+    --shadow-2xs: 0px 2px 3px 0px hsl(220 15% 5% / 0.12);
+    --shadow-xs: 0px 2px 3px 0px hsl(220 15% 5% / 0.12);
+    --shadow-sm: 0px 2px 3px 0px hsl(220 15% 5% / 0.24),
+      0px 1px 2px -1px hsl(220 15% 5% / 0.24);
+    --shadow: 0px 2px 3px 0px hsl(220 15% 5% / 0.24),
+      0px 1px 2px -1px hsl(220 15% 5% / 0.24);
+    --shadow-md: 0px 2px 3px 0px hsl(220 15% 5% / 0.24),
+      0px 2px 4px -1px hsl(220 15% 5% / 0.24);
+    --shadow-lg: 0px 2px 3px 0px hsl(220 15% 5% / 0.24),
+      0px 4px 6px -1px hsl(220 15% 5% / 0.24);
+    --shadow-xl: 0px 2px 3px 0px hsl(220 15% 5% / 0.24),
+      0px 8px 10px -1px hsl(220 15% 5% / 0.24);
+    --shadow-2xl: 0px 2px 3px 0px hsl(220 15% 5% / 0.55);
 
     /* Custom gradients */
-    --gradient-card: linear-gradient(180deg, hsl(225 46% 12%), hsl(225.7 51.2% 8%));
-    --gradient-glow: radial-gradient(ellipse at top, hsl(187.9 85.7% 53.3% / 0.2), transparent 60%);
+    --gradient-card: linear-gradient(180deg, hsl(220 8% 14%), hsl(220 8% 10%));
+    --gradient-glow: radial-gradient(ellipse at top, hsl(217.2 91.2% 59.8% / 0.18), transparent 60%);
   }
 }
 
