@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Database,
   FileText,
@@ -42,6 +42,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { getDefaultDocumentsPath } from "@/lib/defaultPath";
+import { open } from "@tauri-apps/plugin-dialog";
 
 type ParseStatus = "idle" | "parsing" | "success" | "error";
 type GenerateStatus = "idle" | "generating" | "success" | "error";
@@ -139,10 +141,46 @@ export function DatabasePanel() {
   const [customTemplatePath, setCustomTemplatePath] = useState("");
 
   const [outputPath, setOutputPath] = useState("");
-  const [fileName, setFileName] = useState("database-dictionary.docx");
+  const [fileName, setFileName] = useState("");
 
   const [generateStatus, setGenerateStatus] = useState<GenerateStatus>("idle");
   const [generateProgress, setGenerateProgress] = useState(0);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const initializeOutputPath = async () => {
+      const path = await getDefaultDocumentsPath();
+      if (!isCancelled && path) {
+        setOutputPath(path);
+      }
+    };
+
+    void initializeOutputPath();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const formatTimestamp = () => {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
+      now.getDate(),
+    )}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  };
+
+  const getDefaultFileNameFromDatabase = (database?: string) => {
+    const safeDatabase = (database || "")
+      .trim()
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_")
+      .replace(/[. ]+$/g, "");
+    const timestamp = formatTimestamp();
+    return safeDatabase
+      ? `${safeDatabase}-数据库设计文档-${timestamp}.docx`
+      : `数据库设计文档-${timestamp}.docx`;
+  };
 
   const handleParseDDL = async () => {
     if (!ddlContent.trim() && !filePath.trim()) {
@@ -161,6 +199,7 @@ export function DatabasePanel() {
       tables: mockTables,
     };
     setParsedSchema(schema);
+    setFileName(getDefaultFileNameFromDatabase(schema.database));
     setSelectedTables(new Set(mockTables.map((t) => t.id)));
     setParseStatus("success");
   };
@@ -182,6 +221,7 @@ export function DatabasePanel() {
       tables: mockTables,
     };
     setParsedSchema(schema);
+    setFileName(getDefaultFileNameFromDatabase(schema.database));
     setSelectedTables(new Set(mockTables.map((t) => t.id)));
     setParseStatus("success");
   };
@@ -198,13 +238,26 @@ export function DatabasePanel() {
         setFilePath(file.name);
         setParseStatus("idle");
         setParsedSchema(null);
+        setFileName("");
       }
     };
     input.click();
   };
 
-  const handleSelectOutputDir = () => {
-    setOutputPath("/Users/documents/db-docs");
+  const handleSelectOutputDir = async () => {
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        defaultPath: outputPath || undefined,
+      });
+
+      if (selected) {
+        setOutputPath(selected as string);
+      }
+    } catch (err) {
+      setError(`路径选择失败: ${String(err)}`);
+    }
   };
 
   const handleTemplateFileSelect = () => {
@@ -221,6 +274,14 @@ export function DatabasePanel() {
   };
 
   const handleGenerate = async () => {
+    const trimmedFileName = fileName.trim();
+    const normalizedFileName = trimmedFileName
+      ? trimmedFileName.endsWith(".docx")
+        ? trimmedFileName
+        : `${trimmedFileName}.docx`
+      : getDefaultFileNameFromDatabase(parsedSchema?.database);
+
+    setFileName(normalizedFileName);
     setGenerateStatus("generating");
     setGenerateProgress(0);
 
@@ -267,6 +328,26 @@ export function DatabasePanel() {
     selectedTables.size > 0 &&
     outputPath !== "" &&
     (templateType === "builtin" || customTemplatePath !== "");
+
+  const fullOutputPathPreview = (() => {
+    if (!outputPath) {
+      return "未选择";
+    }
+    const trimmedFileName = fileName.trim();
+    if (!trimmedFileName) {
+      return outputPath;
+    }
+    const normalizedFileName = trimmedFileName.endsWith(".docx")
+      ? trimmedFileName
+      : `${trimmedFileName}.docx`;
+    const separator =
+      outputPath.endsWith("\\") || outputPath.endsWith("/")
+        ? ""
+        : outputPath.includes("\\")
+          ? "\\"
+          : "/";
+    return `${outputPath}${separator}${normalizedFileName}`;
+  })();
 
   return (
     <div className="flex flex-col gap-5 p-6 max-w-4xl mx-auto">
@@ -329,6 +410,7 @@ export function DatabasePanel() {
                   setDdlContent(e.target.value);
                   setParseStatus("idle");
                   setParsedSchema(null);
+                  setFileName("");
                 }}
               />
 
@@ -675,11 +757,6 @@ export function DatabasePanel() {
             />
           </div>
 
-          {outputPath && (
-            <p className="text-sm text-muted-foreground">
-              完整路径: {outputPath}/{fileName}
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -712,7 +789,9 @@ export function DatabasePanel() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">输出路径</span>
-                <span className="font-medium">{outputPath || "未选择"}</span>
+                <span className="font-medium break-all text-right">
+                  {fullOutputPathPreview}
+                </span>
               </div>
             </div>
           )}

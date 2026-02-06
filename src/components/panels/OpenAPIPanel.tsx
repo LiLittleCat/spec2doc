@@ -32,6 +32,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import { documentService } from "@/services/documentService";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/plugin-fs";
@@ -79,7 +80,7 @@ export function OpenAPIPanel() {
   const [customTemplatePath, setCustomTemplatePath] = useState("");
 
   const [outputPath, setOutputPath] = useState("");
-  const [fileName, setFileName] = useState("api-documentation.docx");
+  const [fileName, setFileName] = useState("");
 
   const [generateStatus, setGenerateStatus] = useState<GenerateStatus>("idle");
   const [generateProgress, setGenerateProgress] = useState(0);
@@ -95,6 +96,42 @@ export function OpenAPIPanel() {
     }
   }, [isDone]);
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    const initializeOutputPath = async () => {
+      const path = await getDefaultDocumentsPath();
+      if (!isCancelled && path) {
+        setOutputPath(path);
+      }
+    };
+
+    void initializeOutputPath();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const formatTimestamp = () => {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
+      now.getDate(),
+    )}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  };
+
+  const getDefaultFileNameFromTitle = (title?: string) => {
+    const safeTitle = (title || "")
+      .trim()
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_")
+      .replace(/[. ]+$/g, "");
+    const timestamp = formatTimestamp();
+    return safeTitle
+      ? `${safeTitle}-接口文档-${timestamp}.docx`
+      : `接口文档-${timestamp}.docx`;
+  };
+
   const handleFileSelect = async () => {
     try {
       const selected = await open({
@@ -102,7 +139,7 @@ export function OpenAPIPanel() {
         filters: [
           {
             name: "OpenAPI 规范",
-            extensions: ["json", "yaml", "yml"],
+            extensions: ["json", "yaml", "yml", "swagger"],
           },
         ],
       });
@@ -121,6 +158,7 @@ export function OpenAPIPanel() {
         setGenerateStatus("idle");
         setIsDone(false);
         setGeneratedFilePath("");
+        setFileName("");
       }
     } catch (err) {
       setError(`文件选择失败: ${String(err)}`);
@@ -217,15 +255,17 @@ export function OpenAPIPanel() {
       const pathCount = Object.keys(spec.paths || {}).length;
       const schemaCount = Object.keys(spec.components?.schemas || {}).length;
       const endpoints = extractEndpoints(spec);
+      const specTitle = spec.info?.title || "未命名 API";
 
       setParsedSpec({
-        title: spec.info?.title || "未命名 API",
+        title: specTitle,
         version: spec.info?.version || "1.0.0",
         description: spec.info?.description || "",
         pathCount: endpoints.length || pathCount,
         schemaCount,
         endpoints,
       });
+      setFileName(getDefaultFileNameFromTitle(specTitle));
       setFullSpec(spec);
       setSelectedEndpoints(new Set(endpoints.map((e) => e.id)));
       setExpandedEndpoints(new Set());
@@ -261,6 +301,7 @@ export function OpenAPIPanel() {
       const selected = await open({
         directory: true,
         multiple: false,
+        defaultPath: outputPath || undefined,
       });
 
       if (selected) {
@@ -288,11 +329,15 @@ export function OpenAPIPanel() {
     setIsDone(false);
     setError(null);
 
-    const normalizedFileName = fileName.trim().endsWith(".docx")
-      ? fileName.trim()
-      : `${fileName.trim() || "api-documentation"}.docx`;
+    const trimmedFileName = fileName.trim();
+    const normalizedFileName = trimmedFileName
+      ? trimmedFileName.endsWith(".docx")
+        ? trimmedFileName
+        : `${trimmedFileName}.docx`
+      : getDefaultFileNameFromTitle(parsedSpec?.title);
     const separator = outputPath.endsWith("\\") ? "" : "\\";
     const fullOutputPath = `${outputPath}${separator}${normalizedFileName}`;
+    setFileName(normalizedFileName);
     setGeneratedFilePath(fullOutputPath);
 
     try {
@@ -328,6 +373,26 @@ export function OpenAPIPanel() {
     parseStatus === "success" &&
     outputPath !== "" &&
     (templateType === "builtin" || customTemplatePath !== "");
+
+  const fullOutputPathPreview = (() => {
+    if (!outputPath) {
+      return "未选择";
+    }
+    const trimmedFileName = fileName.trim();
+    if (!trimmedFileName) {
+      return outputPath;
+    }
+    const normalizedFileName = trimmedFileName.endsWith(".docx")
+      ? trimmedFileName
+      : `${trimmedFileName}.docx`;
+    const separator =
+      outputPath.endsWith("\\") || outputPath.endsWith("/")
+        ? ""
+        : outputPath.includes("\\")
+          ? "\\"
+          : "/";
+    return `${outputPath}${separator}${normalizedFileName}`;
+  })();
 
   const methodColors: Record<string, string> = {
     GET: "bg-green-500/10 text-green-600 border-green-500/30",
@@ -387,7 +452,9 @@ export function OpenAPIPanel() {
             </div>
             导入数据
           </CardTitle>
-          <CardDescription className="leading-relaxed">支持 JSON、YAML、YML 格式</CardDescription>
+          <CardDescription className="leading-relaxed">
+            支持 JSON、YAML、YML、Swagger 格式
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-3">
@@ -426,6 +493,7 @@ export function OpenAPIPanel() {
               setGenerateStatus("idle");
               setIsDone(false);
               setGeneratedFilePath("");
+              setFileName("");
               setSelectedEndpoints(new Set());
               setExpandedEndpoints(new Set());
             }}
@@ -695,11 +763,6 @@ export function OpenAPIPanel() {
             />
           </div>
 
-          {outputPath && (
-            <p className="text-sm text-muted-foreground">
-              完整路径: {outputPath}\\{fileName}
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -738,7 +801,9 @@ export function OpenAPIPanel() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">输出路径</span>
-                <span className="font-medium">{outputPath || "未选择"}</span>
+                <span className="font-medium break-all text-right">
+                  {fullOutputPathPreview}
+                </span>
               </div>
             </div>
           )}

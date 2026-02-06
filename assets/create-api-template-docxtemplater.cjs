@@ -553,6 +553,15 @@ const doc = new Document({
         children: [new TextRun("{/bodyParams}")]
       }),
 
+      // Request body example
+      new Paragraph({
+        spacing: { before: 120, after: 60 },
+        children: [new TextRun({ text: "请求 Body 示例", bold: true })]
+      }),
+      new Paragraph({
+        children: [new TextRun("{requestBodyExample}")]
+      }),
+
       // Response
       new Paragraph({
         spacing: { before: 120, after: 60 },
@@ -563,7 +572,7 @@ const doc = new Document({
       }),
       new Paragraph({
         spacing: { before: 60, after: 60 },
-        children: [new TextRun({ text: "状态码 {statusCode}", bold: true })]
+        children: [new TextRun({ text: "状态码 {statusCode} - {description}", bold: true })]
       }),
       new Paragraph({
         children: [new TextRun("{#fields}")]
@@ -645,6 +654,13 @@ const doc = new Document({
       }),
       new Paragraph({
         children: [new TextRun("{/fields}")]
+      }),
+      new Paragraph({
+        spacing: { before: 60, after: 60 },
+        children: [new TextRun({ text: "响应 Body 示例", bold: true })]
+      }),
+      new Paragraph({
+        children: [new TextRun("{bodyExample}")]
       }),
       new Paragraph({
         children: [new TextRun("{/responses}")]

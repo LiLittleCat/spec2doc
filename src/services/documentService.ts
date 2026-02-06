@@ -16,7 +16,7 @@ export class DocumentService {
       multiple: false,
       filters: [{
         name: 'OpenAPI',
-        extensions: ['json', 'yaml', 'yml']
+        extensions: ['json', 'yaml', 'yml', 'swagger']
       }]
     });
 
@@ -64,10 +64,11 @@ export class DocumentService {
 
       // 解析 JSON 或 YAML
       let spec: any;
-      if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) {
+      const lowerPath = filePath.toLowerCase();
+      if (lowerPath.endsWith('.yaml') || lowerPath.endsWith('.yml') || lowerPath.endsWith('.swagger')) {
         // 解析 YAML
         spec = yaml.load(text);
-      } else if (filePath.endsWith('.json')) {
+      } else if (lowerPath.endsWith('.json')) {
         // 解析 JSON
         spec = JSON.parse(text);
       } else {

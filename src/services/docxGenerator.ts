@@ -115,6 +115,7 @@ export class OpenAPIDocGenerator {
       queryParams: this.extractParameters(operation.parameters, 'query'),
       headerParams: this.extractParameters(operation.parameters, 'header'),
       bodyParams: this.extractBodyParameters(operation.requestBody),
+      requestBodyExample: this.extractRequestBodyExample(operation.requestBody),
       responses: this.extractResponses(operation.responses),
     };
   }
@@ -151,49 +152,53 @@ export class OpenAPIDocGenerator {
   }
 
   /**
+   * 提取请求 Body 示例
+   */
+  private extractRequestBodyExample(requestBody: any): string {
+    if (!requestBody?.content) return '';
+
+    const bodyContent = Object.values(requestBody.content)[0] as any;
+    let bodySchema = bodyContent?.schema;
+
+    if (bodySchema?.$ref) {
+      bodySchema = this.resolveSchema(bodySchema.$ref);
+    }
+
+    return this.extractExampleFromContent(bodyContent, bodySchema);
+  }
+
+  /**
    * 提取响应信息
    */
   private extractResponses(responses: any): any[] {
     if (!responses) return [];
 
     const result: any[] = [];
+    for (const [statusCode, response] of Object.entries(responses)) {
+      const responseItem = response as any;
+      let responseSchema = null;
+      let bodyExample = '';
 
-    // 成功响应
-    const response200 = responses['200'];
-    if (response200?.content) {
-      const responseContent = Object.values(response200.content)[0] as any;
-      let responseSchema = responseContent.schema;
+      if (responseItem?.content) {
+        const responseContent = Object.values(responseItem.content)[0] as any;
+        responseSchema = responseContent?.schema;
 
-      if (responseSchema?.$ref) {
-        responseSchema = this.resolveSchema(responseSchema.$ref);
+        if (responseSchema?.$ref) {
+          responseSchema = this.resolveSchema(responseSchema.$ref);
+        }
+
+        bodyExample = this.extractExampleFromContent(
+          responseContent,
+          responseSchema,
+        );
       }
 
-      if (responseSchema) {
-        const fields = this.flattenProperties(responseSchema);
-        result.push({
-          statusCode: '200',
-          description: response200.description || '成功',
-          fields,
-        });
-      }
-    }
-
-    // 错误响应
-    const errorCodes = ['400', '401', '403', '404', '500'];
-    const errors: any[] = [];
-    errorCodes.forEach((code) => {
-      if (responses[code]) {
-        errors.push({
-          code,
-          description: responses[code].description || this.getDefaultErrorMessage(code),
-        });
-      }
-    });
-
-    if (errors.length > 0) {
       result.push({
-        statusCode: 'errors',
-        errors,
+        statusCode,
+        description:
+          responseItem?.description || this.getDefaultErrorMessage(statusCode),
+        fields: responseSchema ? this.flattenProperties(responseSchema) : [],
+        bodyExample,
       });
     }
 
@@ -205,6 +210,7 @@ export class OpenAPIDocGenerator {
    */
   private getDefaultErrorMessage(code: string): string {
     const messages: Record<string, string> = {
+      '200': '成功',
       '400': '请求参数错误',
       '401': '未授权，Token无效或已过期',
       '403': '无权限访问该资源',
@@ -244,6 +250,119 @@ export class OpenAPIDocGenerator {
     if (!ref || !ref.startsWith('#/components/schemas/')) return null;
     const schemaName = ref.split('/').pop();
     return this.openApiSpec.components?.schemas?.[schemaName];
+  }
+
+  /**
+   * 从 content 中提取示例（example/examples/schema.example）
+   */
+  private extractExampleFromContent(content: any, schema?: any): string {
+    const contentExample = content?.example;
+    const examplesExample = this.extractFirstExampleValue(content?.examples);
+    const schemaExample = schema?.example;
+    const generatedExample = this.buildExampleFromSchema(schema);
+
+    return this.stringifyExample(
+      contentExample ?? examplesExample ?? schemaExample ?? generatedExample,
+    );
+  }
+
+  /**
+   * 提取 examples 的第一个示例值
+   */
+  private extractFirstExampleValue(examples: any): any {
+    if (!examples || typeof examples !== 'object') return undefined;
+    const firstExample = Object.values(examples)[0] as any;
+    if (!firstExample) return undefined;
+    if (typeof firstExample === 'object' && 'value' in firstExample) {
+      return firstExample.value;
+    }
+    return firstExample;
+  }
+
+  /**
+   * 将示例值转为文档可展示文本
+   */
+  private stringifyExample(value: any): string {
+    if (value === undefined || value === null) return '';
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return '';
+      try {
+        const parsed = JSON.parse(trimmed);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return value;
+      }
+    }
+
+    if (typeof value === 'object') {
+      return JSON.stringify(value, null, 2);
+    }
+
+    return String(value);
+  }
+
+  /**
+   * 根据 schema 生成兜底示例
+   */
+  private buildExampleFromSchema(schema: any, depth = 0): any {
+    if (!schema || depth > 5) return undefined;
+
+    if (schema.$ref) {
+      return this.buildExampleFromSchema(this.resolveSchema(schema.$ref), depth + 1);
+    }
+
+    if (schema.example !== undefined) {
+      return schema.example;
+    }
+
+    if (Array.isArray(schema.enum) && schema.enum.length > 0) {
+      return schema.enum[0];
+    }
+
+    if (Array.isArray(schema.oneOf) && schema.oneOf.length > 0) {
+      return this.buildExampleFromSchema(schema.oneOf[0], depth + 1);
+    }
+
+    if (Array.isArray(schema.anyOf) && schema.anyOf.length > 0) {
+      return this.buildExampleFromSchema(schema.anyOf[0], depth + 1);
+    }
+
+    if (Array.isArray(schema.allOf) && schema.allOf.length > 0) {
+      const merged: Record<string, any> = {};
+      schema.allOf.forEach((item: any) => {
+        const example = this.buildExampleFromSchema(item, depth + 1);
+        if (example && typeof example === 'object' && !Array.isArray(example)) {
+          Object.assign(merged, example);
+        }
+      });
+      return Object.keys(merged).length > 0 ? merged : undefined;
+    }
+
+    if (schema.type === 'object' || schema.properties) {
+      const result: Record<string, any> = {};
+      const properties = schema.properties || {};
+      Object.entries(properties).forEach(([key, prop]) => {
+        const example = this.buildExampleFromSchema(prop, depth + 1);
+        if (example !== undefined) {
+          result[key] = example;
+        }
+      });
+      return Object.keys(result).length > 0 ? result : undefined;
+    }
+
+    if (schema.type === 'array') {
+      const itemExample = this.buildExampleFromSchema(schema.items, depth + 1);
+      return itemExample === undefined ? [] : [itemExample];
+    }
+
+    if (schema.type === 'string') return 'string';
+    if (schema.type === 'integer') return 0;
+    if (schema.type === 'number') return 0;
+    if (schema.type === 'boolean') return false;
+
+    return undefined;
   }
 
   /**
