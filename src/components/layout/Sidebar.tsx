@@ -8,7 +8,6 @@ import logo from "@/assets/logo.svg";
 export type AppTab =
   | "openapi"
   | "database"
-  | "template-guide"
   | "settings"
   | "help";
 
@@ -20,7 +19,6 @@ interface SidebarProps {
 const navItems = [
   { id: "openapi" as const, label: "OpenAPI", icon: FileJson },
   { id: "database" as const, label: "数据库", icon: Database },
-  { id: "template-guide" as const, label: "模板指南", icon: FileText },
 ];
 
 const bottomItems = [
