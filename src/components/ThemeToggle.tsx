@@ -1,23 +1,26 @@
 import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "@/hooks/use-theme";
+import { Button } from "@heroui/react";
+import { useTheme as useNextTheme } from "next-themes";
 
 export function ThemeToggle() {
-  const { resolvedTheme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useNextTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   return (
     <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggleTheme}
-      className="h-9 w-9"
+      isIconOnly
+      variant="light"
+      size="sm"
+      onPress={toggleTheme}
     >
-      {resolvedTheme === "dark" ? (
+      {theme === "dark" ? (
         <Sun className="h-4 w-4" />
       ) : (
         <Moon className="h-4 w-4" />
       )}
-      <span className="sr-only">切换主题</span>
     </Button>
   );
 }

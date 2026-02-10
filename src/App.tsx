@@ -1,9 +1,7 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/hooks/use-theme";
+import { HeroUIProvider } from "@heroui/react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -16,10 +14,8 @@ const Router = isTauri ? HashRouter : BrowserRouter;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
+    <NextThemesProvider attribute="class" defaultTheme="system">
+      <HeroUIProvider>
         <Router>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -27,8 +23,8 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
-      </TooltipProvider>
-    </ThemeProvider>
+      </HeroUIProvider>
+    </NextThemesProvider>
   </QueryClientProvider>
 );
 

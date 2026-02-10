@@ -1,8 +1,6 @@
-import { FileJson, Database, FileText, Settings, HelpCircle, Github } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { FileJson, Database, Settings, HelpCircle, Github } from "lucide-react";
+import { Button } from "@heroui/react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import logo from "@/assets/logo.svg";
 
 export type AppTab =
@@ -28,79 +26,68 @@ const bottomItems = [
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   return (
-    <aside className="w-64 h-screen bg-background p-3">
-      <Card className="h-full w-full flex flex-col bg-card text-card-foreground gap-0 py-0">
-        {/* Logo */}
-        <div className="p-5 border-b border-sidebar-border">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2.5">
-              <img src={logo} alt="Spec2Doc" className="h-6 w-6" />
-              <h1 className="text-xl font-bold text-foreground">Spec2Doc</h1>
-            </div>
-            <p className="text-xs text-muted-foreground">根据规范生成 word 设计文档</p>
+    <aside className="w-64 h-screen bg-content1 border-r border-divider flex flex-col">
+      {/* Logo */}
+      <div className="p-6 border-b border-divider">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Spec2Doc" className="h-6 w-6" />
+            <h1 className="text-xl font-bold">Spec2Doc</h1>
           </div>
+          <p className="text-xs text-default-500">根据规范生成 word 设计文档</p>
         </div>
+      </div>
 
-        {/* Main Navigation */}
-        <nav className="pl-4 pr-2 py-3 space-y-1">
-          {navItems.map((item) => (
-            <Button
-              key={item.id}
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onTabChange(item.id)}
-              className={cn(
-                "w-full flex items-center justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                activeTab === item.id
-                  ? "bg-primary/10 text-primary"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground cursor-pointer"
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Button>
-          ))}
-        </nav>
+      {/* Main Navigation */}
+      <nav className="flex-1 p-4 space-y-1">
+        {navItems.map((item) => (
+          <Button
+            key={item.id}
+            variant={activeTab === item.id ? "flat" : "light"}
+            color={activeTab === item.id ? "primary" : "default"}
+            className="w-full justify-start"
+            onPress={() => onTabChange(item.id)}
+            startContent={<item.icon className="w-4 h-4" />}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </nav>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+      {/* Bottom Items */}
+      <div className="p-4 border-t border-divider space-y-1">
+        {bottomItems.map((item) => (
+          <Button
+            key={item.id}
+            variant={activeTab === item.id ? "flat" : "light"}
+            color={activeTab === item.id ? "primary" : "default"}
+            className="w-full justify-start"
+            onPress={() => onTabChange(item.id)}
+            startContent={<item.icon className="w-4 h-4" />}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </div>
 
-        {/* Bottom Items */}
-        <div className="pl-4 pr-2 py-3 border-t border-sidebar-border space-y-1">
-          {bottomItems.map((item) => (
-            <Button
-              key={item.id}
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onTabChange(item.id)}
-              className={cn(
-                "w-full flex items-center justify-start gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                activeTab === item.id
-                  ? "bg-primary/10 text-primary"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground cursor-pointer"
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </Button>
-          ))}
+      {/* Version & GitHub */}
+      <div className="p-4 border-t border-divider flex items-center justify-between">
+        <p className="text-xs text-default-500">v1.0.0</p>
+        <div className="flex items-center gap-1">
+          <Button
+            isIconOnly
+            variant="light"
+            size="sm"
+            as="a"
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Github className="h-4 w-4" />
+          </Button>
+          <ThemeToggle />
         </div>
-
-        {/* Theme Toggle & Version */}
-        <div className="p-3 border-t border-sidebar-border flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">v1.0.0</p>
-          <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                <Github className="h-3.5 w-3.5" />
-              </a>
-            </Button>
-            <ThemeToggle />
-          </div>
-        </div>
-      </Card>
+      </div>
     </aside>
   );
 }
