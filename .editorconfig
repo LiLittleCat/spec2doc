@@ -1,0 +1,53 @@
+# EditorConfig for Spec2Doc Frontend Development
+# This file helps maintain consistent coding styles across different editors/IDEs
+
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# JavaScript, TypeScript, TSX, JSX
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+# JSON, JSON5
+[*.{json,json5}]
+indent_style = space
+indent_size = 2
+
+# YAML
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
+
+# CSS, SCSS, Tailwind
+[*.{css,scss}]
+indent_style = space
+indent_size = 2
+
+# HTML
+[*.html]
+indent_style = space
+indent_size = 2
+
+# Rust (Tauri backend)
+[*.rs]
+indent_style = space
+indent_size = 4
+
+# Configuration files
+[*.{conf,config}]
+indent_style = space
+indent_size = 2
