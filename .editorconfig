@@ -15,6 +15,8 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 max_line_length = 100
+quote_type = double
+end_of_line = lf
 
 # JSON, JSON5
 [*.{json,json5}]

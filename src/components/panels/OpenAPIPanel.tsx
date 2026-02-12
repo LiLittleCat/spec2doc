@@ -8,23 +8,23 @@ import {
   Loader2,
   File,
   FileJson,
-  ChevronDown,
-  ChevronRight,
   CircleHelp,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Button,
-  Input,
-  Textarea,
-  Chip,
-  Progress,
-  Checkbox,
   Accordion,
+  AccordionContent,
   AccordionItem,
-  RadioGroup,
-  Radio,
-  Tooltip,
-} from "@heroui/react";
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import { documentService } from "@/services/documentService";
@@ -65,21 +65,13 @@ export function OpenAPIPanel() {
   const [parsedSpec, setParsedSpec] = useState<ParsedSpec | null>(null);
   const [fullSpec, setFullSpec] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(
-    new Set(),
-  );
-  const [expandedEndpoints, setExpandedEndpoints] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
+  const [expandedEndpoints, setExpandedEndpoints] = useState<string[]>([]);
 
-  const [templateType, setTemplateType] = useState<"builtin" | "custom">(
-    "builtin",
-  );
+  const [templateType, setTemplateType] = useState<"builtin" | "custom">("builtin");
   const [customTemplatePath, setCustomTemplatePath] = useState("");
   const [builtInTemplatePath, setBuiltInTemplatePath] = useState("");
-  const [builtInTemplateName, setBuiltInTemplateName] = useState(
-    "接口文档模板.docx",
-  );
+  const [builtInTemplateName, setBuiltInTemplateName] = useState("接口文档模板.docx");
 
   const [outputPath, setOutputPath] = useState("");
   const [fileName, setFileName] = useState("");
@@ -175,9 +167,7 @@ export function OpenAPIPanel() {
       .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_")
       .replace(/[. ]+$/g, "");
     const timestamp = formatTimestamp();
-    return safeTitle
-      ? `${safeTitle}-接口文档-${timestamp}.docx`
-      : `接口文档-${timestamp}.docx`;
+    return safeTitle ? `${safeTitle}-接口文档-${timestamp}.docx` : `接口文档-${timestamp}.docx`;
   };
 
   const handleFileSelect = async () => {
@@ -202,7 +192,7 @@ export function OpenAPIPanel() {
         setFullSpec(null);
         setError(null);
         setSelectedEndpoints(new Set());
-        setExpandedEndpoints(new Set());
+        setExpandedEndpoints([]);
         setGenerateStatus("idle");
         setIsDone(false);
         setGeneratedFilePath("");
@@ -214,8 +204,7 @@ export function OpenAPIPanel() {
     }
   };
 
-  const extractRefType = (ref?: string) =>
-    ref ? ref.split("/").pop() || "object" : "object";
+  const extractRefType = (ref?: string) => (ref ? ref.split("/").pop() || "object" : "object");
 
   const extractEndpoints = (spec: any): Endpoint[] => {
     const paths = spec?.paths ?? {};
@@ -245,8 +234,7 @@ export function OpenAPIPanel() {
         const parameters = allParams
           .map((param: any) => {
             const schema = param?.schema ?? {};
-            const type =
-              schema.type || extractRefType(schema.$ref) || param.type || "any";
+            const type = schema.type || extractRefType(schema.$ref) || param.type || "any";
             return {
               name: param?.name || "",
               in: param?.in || "",
@@ -255,12 +243,10 @@ export function OpenAPIPanel() {
           })
           .filter((param: any) => param.name);
 
-        const responses = Object.entries(op?.responses ?? {}).map(
-          ([code, resp]) => ({
-            code,
-            description: (resp as any)?.description || "",
-          }),
-        );
+        const responses = Object.entries(op?.responses ?? {}).map(([code, resp]) => ({
+          code,
+          description: (resp as any)?.description || "",
+        }));
 
         endpoints.push({
           id: `${method.toUpperCase()} ${path}`,
@@ -314,7 +300,7 @@ export function OpenAPIPanel() {
       setFileName(getDefaultFileNameFromTitle(specTitle));
       setFullSpec(spec);
       setSelectedEndpoints(new Set(endpoints.map((e) => e.id)));
-      setExpandedEndpoints(new Set());
+      setExpandedEndpoints([]);
       setParseStatus("success");
     } catch (err: any) {
       setError(`解析失败: ${err.message || String(err)}`);
@@ -388,9 +374,7 @@ export function OpenAPIPanel() {
 
     try {
       const effectiveTemplatePath =
-        templateType === "custom"
-          ? customTemplatePath
-          : builtInTemplatePath || undefined;
+        templateType === "custom" ? customTemplatePath : builtInTemplatePath || undefined;
 
       await documentService.generateApiDocument(
         fullSpec,
@@ -500,7 +484,7 @@ export function OpenAPIPanel() {
           <FileJson className="w-7 h-7" />
           <span>OpenAPI 规范</span>
         </h2>
-        <p className="text-default-500 leading-relaxed">
+        <p className="text-muted-foreground leading-relaxed">
           导入 OpenAPI/Swagger 规范文件，生成接口设计文档
         </p>
       </div>
@@ -512,8 +496,8 @@ export function OpenAPIPanel() {
             1
           </div>
           <h3 className="text-lg font-semibold">导入数据</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">支持 JSON、YAML、YML、Swagger 格式</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">支持 JSON、YAML、YML、Swagger 格式</p>
         </div>
 
         <div className="pl-9 space-y-4">
@@ -524,7 +508,7 @@ export function OpenAPIPanel() {
               className="flex-1"
               readOnly
             />
-            <Button variant="bordered" onPress={handleFileSelect}>
+            <Button variant="outline" onClick={handleFileSelect}>
               <File className="h-4 w-4" />
               选择文件
             </Button>
@@ -535,9 +519,7 @@ export function OpenAPIPanel() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-3 text-muted-foreground">
-                或直接粘贴内容
-              </span>
+              <span className="bg-card px-3 text-muted-foreground">或直接粘贴内容</span>
             </div>
           </div>
 
@@ -545,7 +527,8 @@ export function OpenAPIPanel() {
             placeholder={`{\n  "openapi": "3.0.0",\n  "info": { "title": "My API", "version": "1.0.0" }\n}`}
             className="min-h-[160px] font-mono text-sm leading-relaxed"
             value={specContent}
-            onValueChange={(value) => {
+            onChange={(e) => {
+              const value = e.target.value;
               setSpecContent(value);
               setParseStatus("idle");
               setParsedSpec(null);
@@ -555,15 +538,11 @@ export function OpenAPIPanel() {
               setGeneratedFilePath("");
               setFileName("");
               setSelectedEndpoints(new Set());
-              setExpandedEndpoints(new Set());
+              setExpandedEndpoints([]);
             }}
           />
 
-          <Button
-            onPress={handleParseSpec}
-            isDisabled={parseStatus === "parsing"}
-            color="primary"
-          >
+          <Button onClick={handleParseSpec} disabled={parseStatus === "parsing"}>
             {parseStatus === "parsing" ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -580,7 +559,7 @@ export function OpenAPIPanel() {
           {(parsedSpec || (error && parseStatus === "error")) && (
             <div className="space-y-4 pt-4 border-t">
               {error && parseStatus === "error" && (
-                <div className="flex items-center gap-2 text-danger text-sm leading-relaxed">
+                <div className="flex items-center gap-2 text-destructive text-sm leading-relaxed">
                   <AlertCircle className="h-4 w-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -588,16 +567,15 @@ export function OpenAPIPanel() {
               {parsedSpec && (
                 <>
                   <div className="flex items-center gap-3">
-                    <Chip
-                      variant="flat"
-                      color="success"
-                      startContent={<Check className="h-3 w-3" />}
+                    <Badge
+                      variant="outline"
+                      className="bg-green-500/10 text-green-600 border-green-500/30"
                     >
+                      <Check className="h-3 w-3" />
                       解析成功
-                    </Chip>
-                    <span className="text-sm text-default-500 leading-relaxed">
-                      {parsedSpec.title} v{parsedSpec.version} ·{" "}
-                      {parsedSpec.pathCount} 接口
+                    </Badge>
+                    <span className="text-sm text-muted-foreground leading-relaxed">
+                      {parsedSpec.title} v{parsedSpec.version} · {parsedSpec.pathCount} 接口
                     </span>
                   </div>
 
@@ -613,9 +591,9 @@ export function OpenAPIPanel() {
                         >
                           <Checkbox
                             id="select-all-endpoints"
-                            isSelected={allSelected}
-                            onValueChange={(isSelected) => {
-                              if (isSelected) {
+                            checked={!!allSelected}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
                                 selectAllEndpoints();
                               } else {
                                 deselectAllEndpoints();
@@ -632,99 +610,68 @@ export function OpenAPIPanel() {
                           </div>
                         )}
                         <Accordion
-                          selectionMode="multiple"
-                          selectedKeys={Array.from(expandedEndpoints)}
-                          onSelectionChange={(keys) => {
-                            if (keys === "all") {
-                              setExpandedEndpoints(
-                                new Set(parsedSpec.endpoints.map((e) => e.id)),
-                              );
-                            } else {
-                              setExpandedEndpoints(new Set(keys as Set<string>));
-                            }
-                          }}
+                          type="multiple"
+                          value={expandedEndpoints}
+                          onValueChange={setExpandedEndpoints}
                         >
                           {parsedSpec.endpoints.map((endpoint) => (
-                            <AccordionItem
-                              key={endpoint.id}
-                              title={
+                            <AccordionItem key={endpoint.id} value={endpoint.id}>
+                              <AccordionTrigger className="px-3 py-2 hover:no-underline">
                                 <div className="flex items-center gap-2 flex-1">
                                   <Checkbox
-                                    isSelected={selectedEndpoints.has(endpoint.id)}
-                                    onValueChange={() =>
-                                      toggleEndpoint(endpoint.id)
-                                    }
+                                    checked={selectedEndpoints.has(endpoint.id)}
+                                    onCheckedChange={() => toggleEndpoint(endpoint.id)}
                                     onClick={(e) => e.stopPropagation()}
                                   />
-                                  <Chip
-                                    variant="bordered"
-                                    size="sm"
+                                  <Badge
+                                    variant="outline"
                                     className={cn(
                                       "text-xs font-mono",
                                       methodColors[endpoint.method],
                                     )}
                                   >
                                     {endpoint.method}
-                                  </Chip>
-                                  <span className="font-mono text-sm">
-                                    {endpoint.path}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground ml-auto">
+                                  </Badge>
+                                  <span className="font-mono text-sm">{endpoint.path}</span>
+                                  <span className="text-sm text-muted-foreground ml-auto mr-2">
                                     {endpoint.summary}
                                   </span>
                                 </div>
-                              }
-                            >
-                              <div className="px-10 py-3 bg-muted/30 text-sm space-y-3">
-                                {endpoint.description && (
-                                  <p className="text-muted-foreground">
-                                    {endpoint.description}
-                                  </p>
-                                )}
-                                {endpoint.parameters &&
-                                  endpoint.parameters.length > 0 && (
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="px-10 py-3 bg-muted/30 text-sm space-y-3">
+                                  {endpoint.description && (
+                                    <p className="text-muted-foreground">{endpoint.description}</p>
+                                  )}
+                                  {endpoint.parameters && endpoint.parameters.length > 0 && (
                                     <div>
                                       <p className="font-medium mb-1">参数:</p>
                                       <ul className="list-disc list-inside text-muted-foreground">
                                         {endpoint.parameters.map((param) => (
-                                          <li
-                                            key={`${endpoint.id}-${param.name}-${param.in}`}
-                                          >
-                                            <span className="font-mono">
-                                              {param.name}
-                                            </span>
-                                            <span className="text-xs ml-1">
-                                              ({param.in})
-                                            </span>
-                                            <span className="text-xs ml-1">
-                                              - {param.type}
-                                            </span>
+                                          <li key={`${endpoint.id}-${param.name}-${param.in}`}>
+                                            <span className="font-mono">{param.name}</span>
+                                            <span className="text-xs ml-1">({param.in})</span>
+                                            <span className="text-xs ml-1">- {param.type}</span>
                                           </li>
                                         ))}
                                       </ul>
                                     </div>
                                   )}
-                                {endpoint.responses &&
-                                  endpoint.responses.length > 0 && (
+                                  {endpoint.responses && endpoint.responses.length > 0 && (
                                     <div>
                                       <p className="font-medium mb-1">响应:</p>
                                       <ul className="list-disc list-inside text-muted-foreground">
                                         {endpoint.responses.map((resp) => (
-                                          <li
-                                            key={`${endpoint.id}-${resp.code}`}
-                                          >
-                                            <span className="font-mono">
-                                              {resp.code}
-                                            </span>
-                                            <span className="ml-1">
-                                              - {resp.description}
-                                            </span>
+                                          <li key={`${endpoint.id}-${resp.code}`}>
+                                            <span className="font-mono">{resp.code}</span>
+                                            <span className="ml-1">- {resp.description}</span>
                                           </li>
                                         ))}
                                       </ul>
                                     </div>
                                   )}
-                              </div>
+                                </div>
+                              </AccordionContent>
                             </AccordionItem>
                           ))}
                         </Accordion>
@@ -738,7 +685,7 @@ export function OpenAPIPanel() {
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Step 2: Template Selection */}
       <section className="space-y-4">
@@ -747,22 +694,20 @@ export function OpenAPIPanel() {
             2
           </div>
           <h3 className="text-lg font-semibold">模版选择</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">选择内置模版或使用自定义模版</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">选择内置模版或使用自定义模版</p>
         </div>
 
         <div className="pl-9 space-y-5">
           <RadioGroup
             value={templateType}
-            onValueChange={(value) =>
-              setTemplateType(value as "builtin" | "custom")
-            }
+            onValueChange={(value) => setTemplateType(value as "builtin" | "custom")}
           >
             <div className="flex items-center space-x-2">
-              <Radio value="builtin" id="builtin" />
-              <label htmlFor="builtin" className="font-medium cursor-pointer">
+              <RadioGroupItem value="builtin" id="builtin" />
+              <Label htmlFor="builtin" className="font-medium cursor-pointer">
                 内置模版
-              </label>
+              </Label>
               <span className="text-sm text-muted-foreground">-</span>
               <button
                 type="button"
@@ -771,17 +716,20 @@ export function OpenAPIPanel() {
               >
                 {builtInTemplateName}
               </button>
-              <Tooltip content="可在设置中修改">
-                <span className="inline-flex items-center text-muted-foreground cursor-help">
-                  <CircleHelp className="h-3.5 w-3.5" />
-                </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center text-muted-foreground cursor-help">
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>可在设置中修改</TooltipContent>
               </Tooltip>
             </div>
             <div className="flex items-center space-x-2">
-              <Radio value="custom" id="custom" />
-              <label htmlFor="custom" className="font-medium cursor-pointer">
+              <RadioGroupItem value="custom" id="custom" />
+              <Label htmlFor="custom" className="font-medium cursor-pointer">
                 自定义模版
-              </label>
+              </Label>
             </div>
           </RadioGroup>
 
@@ -790,24 +738,22 @@ export function OpenAPIPanel() {
               <div className="flex gap-4">
                 <Input
                   value={customTemplatePath}
-                  onValueChange={setCustomTemplatePath}
+                  onChange={(e) => setCustomTemplatePath(e.target.value)}
                   placeholder="选择模版文件..."
                   className="flex-1"
                 />
-                <Button variant="bordered" onPress={handleTemplateFileSelect}>
+                <Button variant="outline" onClick={handleTemplateFileSelect}>
                   <File className="h-4 w-4" />
                   选择文件
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                支持 .docx 格式的 Word 模版文件
-              </p>
+              <p className="text-xs text-muted-foreground">支持 .docx 格式的 Word 模版文件</p>
             </div>
           )}
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Step 3: Output Directory */}
       <section className="space-y-4">
@@ -816,19 +762,19 @@ export function OpenAPIPanel() {
             3
           </div>
           <h3 className="text-lg font-semibold">输出目录</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">设置生成文档的保存位置</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">设置生成文档的保存位置</p>
         </div>
 
         <div className="pl-9 space-y-5">
           <div className="flex gap-3">
             <Input
               value={outputPath}
-              onValueChange={setOutputPath}
+              onChange={(e) => setOutputPath(e.target.value)}
               placeholder="选择输出目录..."
               className="flex-1"
             />
-            <Button variant="bordered" onPress={handleSelectOutputDir}>
+            <Button variant="outline" onClick={handleSelectOutputDir}>
               <FolderOpen className="h-4 w-4" />
               浏览
             </Button>
@@ -836,16 +782,12 @@ export function OpenAPIPanel() {
 
           <div className="flex flex-col gap-2">
             <label htmlFor="filename">文件名</label>
-            <Input
-              id="filename"
-              value={fileName}
-              onValueChange={setFileName}
-            />
+            <Input id="filename" value={fileName} onChange={(e) => setFileName(e.target.value)} />
           </div>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Step 4: Generate Document */}
       <section className="space-y-4">
@@ -854,8 +796,8 @@ export function OpenAPIPanel() {
             4
           </div>
           <h3 className="text-lg font-semibold">生成文档</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">确认配置并生成 Word 文档</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">确认配置并生成 Word 文档</p>
         </div>
 
         <div className="pl-9 space-y-5">
@@ -879,9 +821,7 @@ export function OpenAPIPanel() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">输出路径</span>
-                <span className="font-medium break-all text-right">
-                  {fullOutputPathPreview}
-                </span>
+                <span className="font-medium break-all text-right">{fullOutputPathPreview}</span>
               </div>
             </div>
           )}
@@ -914,19 +854,16 @@ export function OpenAPIPanel() {
           )}
 
           {error && generateStatus === "error" && (
-            <div className="flex items-center gap-2 text-danger text-sm">
+            <div className="flex items-center gap-2 text-destructive text-sm">
               <AlertCircle className="h-4 w-4" />
               {error}
             </div>
           )}
 
-          <div
-            className={cn("flex gap-3", generateStatus === "success" && "pt-1")}
-          >
+          <div className={cn("flex gap-3", generateStatus === "success" && "pt-1")}>
             <Button
-              onPress={handleGenerate}
-              isDisabled={!canGenerate || generateStatus === "generating"}
-              color="primary"
+              onClick={handleGenerate}
+              disabled={!canGenerate || generateStatus === "generating"}
             >
               {generateStatus === "generating" ? (
                 <>
@@ -943,7 +880,7 @@ export function OpenAPIPanel() {
               )}
             </Button>
             {generateStatus === "success" && (
-              <Button variant="bordered" onPress={handleOpenFolder}>
+              <Button variant="outline" onClick={handleOpenFolder}>
                 <FolderOpen className="h-4 w-4" />
                 打开目录
               </Button>

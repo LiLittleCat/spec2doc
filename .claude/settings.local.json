@@ -1,21 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)",
-      "Bash(python -c:*)",
-      "Bash(pip show:*)",
-      "Bash(pip install:*)",
-      "Bash(python:*)",
-      "Bash(build_nuitka_onefile.bat)",
-      "Bash(cmd /c:*)",
-      "Bash(pyinstaller:*)",
-      "Bash(ls:*)",
-      "Bash(node:*)",
-      "Bash(npm:*)",
-      "Bash(npx tailwindcss:*)",
-      "Bash(pnpm:*)",
-      "Bash(playwright install:*)",
-      "Bash(python3:*)"
+      "Bash(git checkout:*)",
+      "WebFetch(domain:v3.heroui.com)",
+      "Bash(pnpm dlx:*)",
+      "Bash(set NODE_OPTIONS=--max-old-space-size=4096)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm test:*)"
     ]
   }
 }

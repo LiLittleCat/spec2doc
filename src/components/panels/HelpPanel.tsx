@@ -1,5 +1,22 @@
-import { ExternalLink, FileText, Github, MessageCircle, BookOpen, Zap, Database as DatabaseIcon, HelpCircle, Layers } from "lucide-react";
-import { Button, Tabs, Tab, Accordion, AccordionItem } from "@heroui/react";
+import {
+  ExternalLink,
+  FileText,
+  Github,
+  MessageCircle,
+  BookOpen,
+  Zap,
+  Database as DatabaseIcon,
+  HelpCircle,
+  Layers,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const GITHUB_REPOSITORY_URL = "https://github.com/LiLittleCat/spec2doc";
 const GITHUB_ISSUES_URL = `${GITHUB_REPOSITORY_URL}/issues`;
@@ -9,7 +26,7 @@ export function HelpPanel() {
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">帮助与文档</h2>
-        <p className="text-default-500">了解如何使用 Spec2Doc 并获取支持</p>
+        <p className="text-muted-foreground">了解如何使用 Spec2Doc 并获取支持</p>
       </div>
 
       {/* Quick Start */}
@@ -17,8 +34,8 @@ export function HelpPanel() {
         <div className="flex items-center gap-2.5">
           <Zap className="h-5 w-5" />
           <h3 className="text-lg font-semibold">快速开始</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">几分钟内即可上手使用</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">几分钟内即可上手使用</p>
         </div>
 
         <div className="pl-9">
@@ -29,7 +46,7 @@ export function HelpPanel() {
               </div>
               <div className="space-y-1">
                 <p className="font-medium">导入数据</p>
-                <p className="text-sm text-default-500">
+                <p className="text-sm text-muted-foreground">
                   粘贴或上传 OpenAPI 规范，或导入数据库结构
                 </p>
               </div>
@@ -40,9 +57,7 @@ export function HelpPanel() {
               </div>
               <div className="space-y-1">
                 <p className="font-medium">选择模版</p>
-                <p className="text-sm text-default-500">
-                  使用内置模版或自定义 .docx 模版
-                </p>
+                <p className="text-sm text-muted-foreground">使用内置模版或自定义 .docx 模版</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -51,7 +66,7 @@ export function HelpPanel() {
               </div>
               <div className="space-y-1">
                 <p className="font-medium">设置输出目录</p>
-                <p className="text-sm text-default-500">选择生成文档的保存位置</p>
+                <p className="text-sm text-muted-foreground">选择生成文档的保存位置</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -60,44 +75,46 @@ export function HelpPanel() {
               </div>
               <div className="space-y-1">
                 <p className="font-medium">生成文档</p>
-                <p className="text-sm text-default-500">
-                  点击生成按钮，创建标准 Word 文档
-                </p>
+                <p className="text-sm text-muted-foreground">点击生成按钮，创建标准 Word 文档</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Template Guide */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
           <Layers className="h-5 w-5" />
           <h3 className="text-lg font-semibold">模板指南</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">了解如何在 Word 模板中使用占位符自定义文档样式</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">
+            了解如何在 Word 模板中使用占位符自定义文档样式
+          </p>
         </div>
 
         <div className="pl-9">
-          <Tabs aria-label="模板类型">
-            <Tab
-              key="openapi"
-              title={
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span>OpenAPI 模板</span>
-                </div>
-              }
-            >
+          <Tabs defaultValue="openapi">
+            <TabsList>
+              <TabsTrigger value="openapi">
+                <FileText className="h-4 w-4" />
+                OpenAPI 模板
+              </TabsTrigger>
+              <TabsTrigger value="database">
+                <DatabaseIcon className="h-4 w-4" />
+                数据库模板
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="openapi">
               <div className="space-y-6 pt-4">
-                <div className="p-4 bg-default-100 rounded-lg">
+                <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm">
                     自定义模板使用 <strong>docxtemplater</strong> 语法：变量用{" "}
-                    <code className="mx-1 rounded bg-default-200 px-1.5 py-0.5 text-xs">{`{变量名}`}</code>
+                    <code className="mx-1 rounded bg-muted-foreground/10 px-1.5 py-0.5 text-xs">{`{变量名}`}</code>
                     ，循环用{" "}
-                    <code className="mx-1 rounded bg-default-200 px-1.5 py-0.5 text-xs">{`{#列表}...{/列表}`}</code>
+                    <code className="mx-1 rounded bg-muted-foreground/10 px-1.5 py-0.5 text-xs">{`{#列表}...{/列表}`}</code>
                   </p>
                 </div>
 
@@ -110,20 +127,20 @@ export function HelpPanel() {
                   </h4>
                   <div className="space-y-2 pl-7">
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-default-100 px-2 py-1 font-mono text-xs">{`{title}`}</code>
-                      <span className="text-default-500">文档标题</span>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{title}`}</code>
+                      <span className="text-muted-foreground">文档标题</span>
                     </div>
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-default-100 px-2 py-1 font-mono text-xs">{`{version}`}</code>
-                      <span className="text-default-500">版本号</span>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{version}`}</code>
+                      <span className="text-muted-foreground">版本号</span>
                     </div>
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-default-100 px-2 py-1 font-mono text-xs">{`{description}`}</code>
-                      <span className="text-default-500">文档描述</span>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{description}`}</code>
+                      <span className="text-muted-foreground">文档描述</span>
                     </div>
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-default-100 px-2 py-1 font-mono text-xs">{`{baseUrl}`}</code>
-                      <span className="text-default-500">服务器地址</span>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{baseUrl}`}</code>
+                      <span className="text-muted-foreground">服务器地址</span>
                     </div>
                   </div>
                 </div>
@@ -136,11 +153,9 @@ export function HelpPanel() {
                     接口循环结构
                   </h4>
                   <div className="pl-7">
-                    <p className="text-sm text-default-500 mb-3">
-                      使用嵌套循环输出所有接口：
-                    </p>
-                    <pre className="rounded-lg border border-divider bg-default-50 p-3 text-xs overflow-auto font-mono">
-{`{#apiGroups}
+                    <p className="text-sm text-muted-foreground mb-3">使用嵌套循环输出所有接口：</p>
+                    <pre className="rounded-lg border border-border bg-muted/50 p-3 text-xs overflow-auto font-mono">
+                      {`{#apiGroups}
   {tagName}
   {#apis}
     {summary}
@@ -152,18 +167,10 @@ export function HelpPanel() {
                   </div>
                 </div>
               </div>
-            </Tab>
-            <Tab
-              key="database"
-              title={
-                <div className="flex items-center gap-2">
-                  <DatabaseIcon className="h-4 w-4" />
-                  <span>数据库模板</span>
-                </div>
-              }
-            >
+            </TabsContent>
+            <TabsContent value="database">
               <div className="space-y-6 pt-4">
-                <div className="p-4 bg-default-100 rounded-lg">
+                <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm">
                     数据库模板用于生成数据字典文档，支持表结构、字段、索引等信息的展示
                   </p>
@@ -178,12 +185,12 @@ export function HelpPanel() {
                   </h4>
                   <div className="space-y-2 pl-7">
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-default-100 px-2 py-1 font-mono text-xs">{`{databaseName}`}</code>
-                      <span className="text-default-500">数据库名称</span>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{databaseName}`}</code>
+                      <span className="text-muted-foreground">数据库名称</span>
                     </div>
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-default-100 px-2 py-1 font-mono text-xs">{`{tableCount}`}</code>
-                      <span className="text-default-500">数据表总数</span>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{tableCount}`}</code>
+                      <span className="text-muted-foreground">数据表总数</span>
                     </div>
                   </div>
                 </div>
@@ -196,8 +203,8 @@ export function HelpPanel() {
                     表循环结构
                   </h4>
                   <div className="pl-7">
-                    <pre className="rounded-lg border border-divider bg-default-50 p-3 text-xs overflow-auto font-mono">
-{`{#tables}
+                    <pre className="rounded-lg border border-border bg-muted/50 p-3 text-xs overflow-auto font-mono">
+                      {`{#tables}
   {tableName}
   {comment}
   {columnCount}
@@ -206,12 +213,12 @@ export function HelpPanel() {
                   </div>
                 </div>
               </div>
-            </Tab>
+            </TabsContent>
           </Tabs>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* FAQ */}
       <section className="space-y-4">
@@ -221,93 +228,90 @@ export function HelpPanel() {
         </div>
 
         <div className="pl-9">
-          <Accordion>
-            <AccordionItem key="1" aria-label="支持哪些文件格式" title="支持哪些文件格式？">
-              <p className="text-default-500">
-                对于 OpenAPI 规范，支持 YAML（.yaml、.yml）和 JSON（.json）格式，兼容
-                OpenAPI 2.0（Swagger）和 OpenAPI 3.x。对于数据库结构，支持来自
-                PostgreSQL、MySQL、SQL Server 和 SQLite 的标准 SQL DDL 语句。
-              </p>
+          <Accordion type="multiple">
+            <AccordionItem value="1">
+              <AccordionTrigger>支持哪些文件格式？</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground">
+                  对于 OpenAPI 规范，支持 YAML（.yaml、.yml）和 JSON（.json）格式，兼容 OpenAPI
+                  2.0（Swagger）和 OpenAPI 3.x。对于数据库结构，支持来自 PostgreSQL、MySQL、SQL
+                  Server 和 SQLite 的标准 SQL DDL 语句。
+                </p>
+              </AccordionContent>
             </AccordionItem>
-            <AccordionItem key="2" aria-label="如何自定义文档模版" title="如何自定义文档模版？">
-              <p className="text-default-500">
-                可以使用 .docx 文件作为自定义模版。推荐在设置中打开内置模版文件夹，
-                复制一份内置模版，再根据上方"模板指南"中的占位符规则进行修改。
-              </p>
+            <AccordionItem value="2">
+              <AccordionTrigger>如何自定义文档模版？</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground">
+                  可以使用 .docx 文件作为自定义模版。推荐在设置中打开内置模版文件夹，
+                  复制一份内置模版，再根据上方"模板指南"中的占位符规则进行修改。
+                </p>
+              </AccordionContent>
             </AccordionItem>
-            <AccordionItem key="3" aria-label="应用是否支持离线使用" title="应用是否支持离线使用？">
-              <p className="text-default-500">
-                是的，Spec2Doc 是完全离线的桌面应用程序。所有处理都在本地计算机上进行，
-                数据不会上传到任何外部服务器。
-              </p>
+            <AccordionItem value="3">
+              <AccordionTrigger>应用是否支持离线使用？</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground">
+                  是的，Spec2Doc 是完全离线的桌面应用程序。所有处理都在本地计算机上进行，
+                  数据不会上传到任何外部服务器。
+                </p>
+              </AccordionContent>
             </AccordionItem>
-            <AccordionItem key="4" aria-label="我的数据安全吗" title="我的数据安全吗？">
-              <p className="text-default-500">
-                所有数据处理都在本地计算机上进行。我们从不会将您的 API 规范或数据库结构
-                发送到任何外部服务器。
-              </p>
+            <AccordionItem value="4">
+              <AccordionTrigger>我的数据安全吗？</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-muted-foreground">
+                  所有数据处理都在本地计算机上进行。我们从不会将您的 API 规范或数据库结构
+                  发送到任何外部服务器。
+                </p>
+              </AccordionContent>
             </AccordionItem>
           </Accordion>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Resources */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
           <BookOpen className="h-5 w-5" />
           <h3 className="text-lg font-semibold">资源链接</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">获取更多帮助和支持</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">获取更多帮助和支持</p>
         </div>
 
         <div className="pl-9 space-y-2">
-          <Button
-            variant="light"
-            className="justify-start"
-            as="a"
-            href={GITHUB_REPOSITORY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            startContent={<Github className="h-4 w-4" />}
-            endContent={<ExternalLink className="h-4 w-4 text-default-400" />}
-          >
-            GitHub 仓库
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href={GITHUB_REPOSITORY_URL} target="_blank" rel="noopener noreferrer">
+              <Github className="h-4 w-4" />
+              GitHub 仓库
+              <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
+            </a>
           </Button>
-          <Button
-            variant="light"
-            className="justify-start"
-            as="a"
-            href="https://swagger.io/specification/"
-            target="_blank"
-            rel="noopener noreferrer"
-            startContent={<FileText className="h-4 w-4" />}
-            endContent={<ExternalLink className="h-4 w-4 text-default-400" />}
-          >
-            OpenAPI 规范文档
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href="https://swagger.io/specification/" target="_blank" rel="noopener noreferrer">
+              <FileText className="h-4 w-4" />
+              OpenAPI 规范文档
+              <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
+            </a>
           </Button>
-          <Button
-            variant="light"
-            className="justify-start"
-            as="a"
-            href={GITHUB_ISSUES_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            startContent={<MessageCircle className="h-4 w-4" />}
-            endContent={<ExternalLink className="h-4 w-4 text-default-400" />}
-          >
-            报告问题
+          <Button variant="ghost" className="justify-start" asChild>
+            <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="h-4 w-4" />
+              报告问题
+              <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
+            </a>
           </Button>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Footer */}
       <section className="space-y-4">
         <div className="pl-9">
-          <div className="flex items-center justify-between text-sm text-default-500">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>Spec2Doc v1.0.0</span>
             <span>基于 Tauri + React 构建</span>
           </div>

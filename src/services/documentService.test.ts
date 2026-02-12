@@ -22,9 +22,9 @@ vi.mock("./docxGenerator", () => ({
   OpenAPIDocGenerator: vi.fn(),
 }));
 
-import { DocumentService } from "./documentService";
 import { resolveResource } from "@tauri-apps/api/path";
 import { readFile } from "@tauri-apps/plugin-fs";
+import { DocumentService } from "./documentService";
 
 describe("DocumentService OpenAPI parsing", () => {
   it("parses Swagger 2.0 YAML text", () => {

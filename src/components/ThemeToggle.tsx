@@ -1,5 +1,5 @@
 import { Moon, Sun } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { useTheme as useNextTheme } from "next-themes";
 
 export function ThemeToggle() {
@@ -10,17 +10,8 @@ export function ThemeToggle() {
   };
 
   return (
-    <Button
-      isIconOnly
-      variant="light"
-      size="sm"
-      onPress={toggleTheme}
-    >
-      {theme === "dark" ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
+    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
+      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
   );
 }

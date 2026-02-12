@@ -8,30 +8,34 @@ import {
   FolderOpen,
   Play,
   Loader2,
-  ChevronDown,
-  ChevronRight,
   File,
   Table2,
   Key,
   CircleHelp,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Button,
-  Input,
-  Textarea,
-  Tabs,
-  Tab,
-  Chip,
-  Progress,
-  RadioGroup,
-  Radio,
-  Checkbox,
   Select,
+  SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Accordion,
+  AccordionContent,
   AccordionItem,
-  Tooltip,
-} from "@heroui/react";
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import {
   DEFAULT_DB_TEMPLATE_PLACEHOLDER,
@@ -74,10 +78,39 @@ const mockTables: TableInfo[] = [
     name: "users",
     comment: "用户表",
     columns: [
-      { name: "id", type: "SERIAL", nullable: false, isPrimary: true, isForeign: false, comment: "用户ID" },
-      { name: "email", type: "VARCHAR(255)", nullable: false, isPrimary: false, isForeign: false, comment: "邮箱地址" },
-      { name: "name", type: "VARCHAR(100)", nullable: true, isPrimary: false, isForeign: false, comment: "用户名" },
-      { name: "created_at", type: "TIMESTAMP", nullable: false, isPrimary: false, isForeign: false, comment: "创建时间", default: "CURRENT_TIMESTAMP" },
+      {
+        name: "id",
+        type: "SERIAL",
+        nullable: false,
+        isPrimary: true,
+        isForeign: false,
+        comment: "用户ID",
+      },
+      {
+        name: "email",
+        type: "VARCHAR(255)",
+        nullable: false,
+        isPrimary: false,
+        isForeign: false,
+        comment: "邮箱地址",
+      },
+      {
+        name: "name",
+        type: "VARCHAR(100)",
+        nullable: true,
+        isPrimary: false,
+        isForeign: false,
+        comment: "用户名",
+      },
+      {
+        name: "created_at",
+        type: "TIMESTAMP",
+        nullable: false,
+        isPrimary: false,
+        isForeign: false,
+        comment: "创建时间",
+        default: "CURRENT_TIMESTAMP",
+      },
     ],
     indexes: [{ name: "users_email_idx", columns: ["email"], unique: true }],
   },
@@ -86,11 +119,46 @@ const mockTables: TableInfo[] = [
     name: "posts",
     comment: "文章表",
     columns: [
-      { name: "id", type: "SERIAL", nullable: false, isPrimary: true, isForeign: false, comment: "文章ID" },
-      { name: "user_id", type: "INTEGER", nullable: false, isPrimary: false, isForeign: true, comment: "用户ID" },
-      { name: "title", type: "VARCHAR(255)", nullable: false, isPrimary: false, isForeign: false, comment: "标题" },
-      { name: "content", type: "TEXT", nullable: true, isPrimary: false, isForeign: false, comment: "内容" },
-      { name: "published_at", type: "TIMESTAMP", nullable: true, isPrimary: false, isForeign: false, comment: "发布时间" },
+      {
+        name: "id",
+        type: "SERIAL",
+        nullable: false,
+        isPrimary: true,
+        isForeign: false,
+        comment: "文章ID",
+      },
+      {
+        name: "user_id",
+        type: "INTEGER",
+        nullable: false,
+        isPrimary: false,
+        isForeign: true,
+        comment: "用户ID",
+      },
+      {
+        name: "title",
+        type: "VARCHAR(255)",
+        nullable: false,
+        isPrimary: false,
+        isForeign: false,
+        comment: "标题",
+      },
+      {
+        name: "content",
+        type: "TEXT",
+        nullable: true,
+        isPrimary: false,
+        isForeign: false,
+        comment: "内容",
+      },
+      {
+        name: "published_at",
+        type: "TIMESTAMP",
+        nullable: true,
+        isPrimary: false,
+        isForeign: false,
+        comment: "发布时间",
+      },
     ],
   },
   {
@@ -98,10 +166,38 @@ const mockTables: TableInfo[] = [
     name: "comments",
     comment: "评论表",
     columns: [
-      { name: "id", type: "SERIAL", nullable: false, isPrimary: true, isForeign: false, comment: "评论ID" },
-      { name: "post_id", type: "INTEGER", nullable: false, isPrimary: false, isForeign: true, comment: "文章ID" },
-      { name: "user_id", type: "INTEGER", nullable: false, isPrimary: false, isForeign: true, comment: "用户ID" },
-      { name: "content", type: "TEXT", nullable: false, isPrimary: false, isForeign: false, comment: "评论内容" },
+      {
+        name: "id",
+        type: "SERIAL",
+        nullable: false,
+        isPrimary: true,
+        isForeign: false,
+        comment: "评论ID",
+      },
+      {
+        name: "post_id",
+        type: "INTEGER",
+        nullable: false,
+        isPrimary: false,
+        isForeign: true,
+        comment: "文章ID",
+      },
+      {
+        name: "user_id",
+        type: "INTEGER",
+        nullable: false,
+        isPrimary: false,
+        isForeign: true,
+        comment: "用户ID",
+      },
+      {
+        name: "content",
+        type: "TEXT",
+        nullable: false,
+        isPrimary: false,
+        isForeign: false,
+        comment: "评论内容",
+      },
     ],
   },
   {
@@ -109,9 +205,30 @@ const mockTables: TableInfo[] = [
     name: "categories",
     comment: "分类表",
     columns: [
-      { name: "id", type: "SERIAL", nullable: false, isPrimary: true, isForeign: false, comment: "分类ID" },
-      { name: "name", type: "VARCHAR(100)", nullable: false, isPrimary: false, isForeign: false, comment: "分类名称" },
-      { name: "parent_id", type: "INTEGER", nullable: true, isPrimary: false, isForeign: true, comment: "父分类ID" },
+      {
+        name: "id",
+        type: "SERIAL",
+        nullable: false,
+        isPrimary: true,
+        isForeign: false,
+        comment: "分类ID",
+      },
+      {
+        name: "name",
+        type: "VARCHAR(100)",
+        nullable: false,
+        isPrimary: false,
+        isForeign: false,
+        comment: "分类名称",
+      },
+      {
+        name: "parent_id",
+        type: "INTEGER",
+        nullable: true,
+        isPrimary: false,
+        isForeign: true,
+        comment: "父分类ID",
+      },
     ],
   },
 ];
@@ -132,14 +249,12 @@ export function DatabasePanel() {
   });
 
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set());
-  const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
+  const [expandedTables, setExpandedTables] = useState<string[]>([]);
 
   const [templateType, setTemplateType] = useState<"builtin" | "custom">("builtin");
   const [customTemplatePath, setCustomTemplatePath] = useState("");
   const [builtInTemplatePath, setBuiltInTemplatePath] = useState("");
-  const [builtInTemplateName, setBuiltInTemplateName] = useState(
-    "数据库设计文档模板.docx",
-  );
+  const [builtInTemplateName, setBuiltInTemplateName] = useState("数据库设计文档模板.docx");
 
   const [outputPath, setOutputPath] = useState("");
   const [fileName, setFileName] = useState("");
@@ -364,16 +479,6 @@ export function DatabasePanel() {
     setSelectedTables(newSet);
   };
 
-  const toggleExpandTable = (id: string) => {
-    const newSet = new Set(expandedTables);
-    if (newSet.has(id)) {
-      newSet.delete(id);
-    } else {
-      newSet.add(id);
-    }
-    setExpandedTables(newSet);
-  };
-
   const selectAllTables = () => {
     if (parsedSchema) {
       setSelectedTables(new Set(parsedSchema.tables.map((t) => t.id)));
@@ -424,30 +529,32 @@ export function DatabasePanel() {
             1
           </div>
           <h3 className="text-lg font-semibold">导入数据</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">通过 DDL 语句或直接连接数据库导入表结构</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">通过 DDL 语句或直接连接数据库导入表结构</p>
         </div>
 
         <div className="pl-9 space-y-5">
-          <Tabs defaultSelectedKey="ddl">
-            <Tab
-              key="ddl"
-              title={
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  DDL 语句
-                </div>
-              }
-            >
+          <Tabs defaultValue="ddl">
+            <TabsList>
+              <TabsTrigger value="ddl">
+                <FileText className="h-4 w-4" />
+                DDL 语句
+              </TabsTrigger>
+              <TabsTrigger value="connection">
+                <Server className="h-4 w-4" />
+                数据库连接
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="ddl">
               <div className="mt-5 space-y-5">
                 <div className="flex gap-4">
                   <Input
                     value={filePath}
                     placeholder="选择 DDL 文件..."
                     className="flex-1"
-                    isReadOnly
+                    readOnly
                   />
-                  <Button variant="bordered" onPress={handleFileSelect}>
+                  <Button variant="outline" onClick={handleFileSelect}>
                     <File className="h-4 w-4" />
                     选择文件
                   </Button>
@@ -458,7 +565,7 @@ export function DatabasePanel() {
                     <span className="w-full border-t" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-content1 px-3 text-default-500">或直接粘贴内容</span>
+                    <span className="bg-card px-3 text-muted-foreground">或直接粘贴内容</span>
                   </div>
                 </div>
 
@@ -466,15 +573,15 @@ export function DatabasePanel() {
                   placeholder={`CREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR(255) NOT NULL COMMENT '用户邮箱',\n  name VARCHAR(100) COMMENT '用户名',\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n) COMMENT='用户表';`}
                   className="min-h-[160px] font-mono text-sm leading-relaxed"
                   value={ddlContent}
-                  onValueChange={(value) => {
-                    setDdlContent(value);
+                  onChange={(e) => {
+                    setDdlContent(e.target.value);
                     setParseStatus("idle");
                     setParsedSchema(null);
                     setFileName("");
                   }}
                 />
 
-                <Button onPress={handleParseDDL} isDisabled={parseStatus === "parsing"} className="gap-2">
+                <Button onClick={handleParseDDL} disabled={parseStatus === "parsing"}>
                   {parseStatus === "parsing" ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -488,99 +595,106 @@ export function DatabasePanel() {
                   )}
                 </Button>
               </div>
-            </Tab>
+            </TabsContent>
 
-            <Tab
-              key="connection"
-              title={
-                <div className="flex items-center gap-2">
-                  <Server className="h-4 w-4" />
-                  数据库连接
-                </div>
-              }
-            >
+            <TabsContent value="connection">
               <div className="mt-5 space-y-5">
                 <div className="grid grid-cols-2 gap-5">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="db-type" className="text-sm font-medium">数据库类型</label>
+                    <label htmlFor="db-type" className="text-sm font-medium">
+                      数据库类型
+                    </label>
                     <Select
-                      id="db-type"
-                      selectedKeys={[connectionConfig.type]}
-                      onSelectionChange={(keys) => {
-                        const value = Array.from(keys)[0] as string;
-                        setConnectionConfig({ ...connectionConfig, type: value });
-                      }}
+                      value={connectionConfig.type}
+                      onValueChange={(value) =>
+                        setConnectionConfig({ ...connectionConfig, type: value })
+                      }
                     >
-                      <SelectItem key="postgresql">PostgreSQL</SelectItem>
-                      <SelectItem key="mysql">MySQL</SelectItem>
-                      <SelectItem key="sqlserver">SQL Server</SelectItem>
-                      <SelectItem key="sqlite">SQLite</SelectItem>
+                      <SelectTrigger id="db-type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="postgresql">PostgreSQL</SelectItem>
+                        <SelectItem value="mysql">MySQL</SelectItem>
+                        <SelectItem value="sqlserver">SQL Server</SelectItem>
+                        <SelectItem value="sqlite">SQLite</SelectItem>
+                      </SelectContent>
                     </Select>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="db-port" className="text-sm font-medium">端口</label>
+                    <label htmlFor="db-port" className="text-sm font-medium">
+                      端口
+                    </label>
                     <Input
                       id="db-port"
                       placeholder="5432"
                       value={connectionConfig.port}
-                      onValueChange={(value) =>
-                        setConnectionConfig({ ...connectionConfig, port: value })
+                      onChange={(e) =>
+                        setConnectionConfig({ ...connectionConfig, port: e.target.value })
                       }
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="db-host" className="text-sm font-medium">主机地址</label>
+                  <label htmlFor="db-host" className="text-sm font-medium">
+                    主机地址
+                  </label>
                   <Input
                     id="db-host"
                     placeholder="localhost"
                     value={connectionConfig.host}
-                    onValueChange={(value) =>
-                      setConnectionConfig({ ...connectionConfig, host: value })
+                    onChange={(e) =>
+                      setConnectionConfig({ ...connectionConfig, host: e.target.value })
                     }
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="db-name" className="text-sm font-medium">数据库名称</label>
+                  <label htmlFor="db-name" className="text-sm font-medium">
+                    数据库名称
+                  </label>
                   <Input
                     id="db-name"
                     placeholder="mydb"
                     value={connectionConfig.database}
-                    onValueChange={(value) =>
-                      setConnectionConfig({ ...connectionConfig, database: value })
+                    onChange={(e) =>
+                      setConnectionConfig({ ...connectionConfig, database: e.target.value })
                     }
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="db-user" className="text-sm font-medium">用户名</label>
+                    <label htmlFor="db-user" className="text-sm font-medium">
+                      用户名
+                    </label>
                     <Input
                       id="db-user"
                       placeholder="postgres"
                       value={connectionConfig.username}
-                      onValueChange={(value) =>
-                        setConnectionConfig({ ...connectionConfig, username: value })
+                      onChange={(e) =>
+                        setConnectionConfig({ ...connectionConfig, username: e.target.value })
                       }
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="db-password" className="text-sm font-medium">密码</label>
+                    <label htmlFor="db-password" className="text-sm font-medium">
+                      密码
+                    </label>
                     <Input
                       id="db-password"
                       type="password"
                       placeholder="••••••••"
                       value={connectionConfig.password}
-                      onValueChange={(value) =>
-                        setConnectionConfig({ ...connectionConfig, password: value })
+                      onChange={(e) =>
+                        setConnectionConfig({ ...connectionConfig, password: e.target.value })
                       }
                     />
                   </div>
                 </div>
 
-                <Button onPress={handleConnect} isDisabled={parseStatus === "parsing"} className="gap-2">
+                <Button onClick={handleConnect} disabled={parseStatus === "parsing"}>
                   {parseStatus === "parsing" ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -594,13 +708,13 @@ export function DatabasePanel() {
                   )}
                 </Button>
               </div>
-            </Tab>
+            </TabsContent>
           </Tabs>
 
           {(parsedSchema || (error && parseStatus === "error")) && (
             <div className="space-y-4 pt-4 border-t">
               {error && parseStatus === "error" && (
-                <div className="flex items-center gap-2 text-danger text-sm leading-relaxed">
+                <div className="flex items-center gap-2 text-destructive text-sm leading-relaxed">
                   <AlertCircle className="h-4 w-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -609,14 +723,14 @@ export function DatabasePanel() {
               {parsedSchema && (
                 <>
                   <div className="flex items-center gap-3">
-                    <Chip
-                      variant="flat"
-                      color="success"
-                      startContent={<Check className="h-3 w-3" />}
+                    <Badge
+                      variant="outline"
+                      className="bg-green-500/10 text-green-600 border-green-500/30"
                     >
+                      <Check className="h-3 w-3" />
                       解析成功
-                    </Chip>
-                    <span className="text-sm text-default-500 leading-relaxed">
+                    </Badge>
+                    <span className="text-sm text-muted-foreground leading-relaxed">
                       {parsedSchema.database} - {parsedSchema.tables.length} 张表
                     </span>
                   </div>
@@ -626,18 +740,18 @@ export function DatabasePanel() {
                       数据表 ({selectedTables.size}/{parsedSchema.tables.length})
                     </label>
                     <div className="border rounded-lg overflow-hidden">
-                      <div className="px-3 py-2 border-b bg-default-100">
+                      <div className="px-3 py-2 border-b bg-muted">
                         <label
                           htmlFor="select-all-tables"
                           className="flex items-center gap-2 text-sm font-normal cursor-pointer"
                         >
                           <Checkbox
                             id="select-all-tables"
-                            isSelected={
+                            checked={
                               parsedSchema.tables.length > 0 &&
                               selectedTables.size === parsedSchema.tables.length
                             }
-                            onValueChange={(checked) => {
+                            onCheckedChange={(checked) => {
                               if (checked) {
                                 selectAllTables();
                               } else {
@@ -650,92 +764,89 @@ export function DatabasePanel() {
                       </div>
                       <div className="divide-y max-h-[400px] overflow-y-auto">
                         <Accordion
-                          selectionMode="multiple"
-                          selectedKeys={Array.from(expandedTables)}
-                          onSelectionChange={(keys) => {
-                            setExpandedTables(new Set(keys as Set<string>));
-                          }}
+                          type="multiple"
+                          value={expandedTables}
+                          onValueChange={setExpandedTables}
                         >
                           {parsedSchema.tables.map((table) => (
-                            <AccordionItem
-                              key={table.id}
-                              title={
+                            <AccordionItem key={table.id} value={table.id}>
+                              <AccordionTrigger className="px-3 py-2 hover:no-underline">
                                 <div className="flex items-center gap-2 w-full">
                                   <Checkbox
-                                    isSelected={selectedTables.has(table.id)}
-                                    onValueChange={() => toggleTable(table.id)}
+                                    checked={selectedTables.has(table.id)}
+                                    onCheckedChange={() => toggleTable(table.id)}
                                     onClick={(e) => e.stopPropagation()}
                                   />
-                                  <Table2 className="h-4 w-4 text-default-500" />
+                                  <Table2 className="h-4 w-4 text-muted-foreground" />
                                   <span className="font-mono font-medium">{table.name}</span>
                                   {table.comment && (
-                                    <span className="text-sm text-default-500 ml-auto">
+                                    <span className="text-sm text-muted-foreground ml-auto mr-2">
                                       {table.comment}
                                     </span>
                                   )}
-                                  <Chip size="sm" variant="flat" className="text-xs">
+                                  <Badge variant="secondary" className="text-xs">
                                     {table.columns.length} 字段
-                                  </Chip>
+                                  </Badge>
                                 </div>
-                              }
-                              className="px-0"
-                            >
-                              <div className="px-4 py-3 bg-default-50">
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="text-left text-default-500 border-b">
-                                      <th className="pb-2 font-medium w-8"></th>
-                                      <th className="pb-2 font-medium">字段名</th>
-                                      <th className="pb-2 font-medium">类型</th>
-                                      <th className="pb-2 font-medium">可空</th>
-                                      <th className="pb-2 font-medium">默认值</th>
-                                      <th className="pb-2 font-medium">注释</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {table.columns.map((col) => (
-                                      <tr key={col.name} className="border-b last:border-0">
-                                        <td className="py-2">
-                                          {col.isPrimary && (
-                                            <Key className="h-3 w-3 text-amber-500" />
-                                          )}
-                                          {col.isForeign && !col.isPrimary && (
-                                            <Key className="h-3 w-3 text-blue-500" />
-                                          )}
-                                        </td>
-                                        <td className="py-2 font-mono">{col.name}</td>
-                                        <td className="py-2 text-default-500 font-mono text-xs">
-                                          {col.type}
-                                        </td>
-                                        <td className="py-2 text-default-500">
-                                          {col.nullable ? "YES" : "NO"}
-                                        </td>
-                                        <td className="py-2 text-default-500 font-mono text-xs">
-                                          {col.default || "-"}
-                                        </td>
-                                        <td className="py-2 text-default-500">
-                                          {col.comment || "-"}
-                                        </td>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="px-4 py-3 bg-muted/50">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="text-left text-muted-foreground border-b">
+                                        <th className="pb-2 font-medium w-8"></th>
+                                        <th className="pb-2 font-medium">字段名</th>
+                                        <th className="pb-2 font-medium">类型</th>
+                                        <th className="pb-2 font-medium">可空</th>
+                                        <th className="pb-2 font-medium">默认值</th>
+                                        <th className="pb-2 font-medium">注释</th>
                                       </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                                {table.indexes && table.indexes.length > 0 && (
-                                  <div className="mt-3 pt-3 border-t">
-                                    <p className="text-xs font-medium text-default-500 mb-2">
-                                      索引:
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {table.indexes.map((idx) => (
-                                        <Chip key={idx.name} variant="bordered" size="sm">
-                                          {idx.name}
-                                          {idx.unique && " (唯一)"}
-                                        </Chip>
+                                    </thead>
+                                    <tbody>
+                                      {table.columns.map((col) => (
+                                        <tr key={col.name} className="border-b last:border-0">
+                                          <td className="py-2">
+                                            {col.isPrimary && (
+                                              <Key className="h-3 w-3 text-amber-500" />
+                                            )}
+                                            {col.isForeign && !col.isPrimary && (
+                                              <Key className="h-3 w-3 text-blue-500" />
+                                            )}
+                                          </td>
+                                          <td className="py-2 font-mono">{col.name}</td>
+                                          <td className="py-2 text-muted-foreground font-mono text-xs">
+                                            {col.type}
+                                          </td>
+                                          <td className="py-2 text-muted-foreground">
+                                            {col.nullable ? "YES" : "NO"}
+                                          </td>
+                                          <td className="py-2 text-muted-foreground font-mono text-xs">
+                                            {col.default || "-"}
+                                          </td>
+                                          <td className="py-2 text-muted-foreground">
+                                            {col.comment || "-"}
+                                          </td>
+                                        </tr>
                                       ))}
+                                    </tbody>
+                                  </table>
+                                  {table.indexes && table.indexes.length > 0 && (
+                                    <div className="mt-3 pt-3 border-t">
+                                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                                        索引:
+                                      </p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {table.indexes.map((idx) => (
+                                          <Badge key={idx.name} variant="outline">
+                                            {idx.name}
+                                            {idx.unique && " (唯一)"}
+                                          </Badge>
+                                        ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
-                              </div>
+                                  )}
+                                </div>
+                              </AccordionContent>
                             </AccordionItem>
                           ))}
                         </Accordion>
@@ -749,7 +860,7 @@ export function DatabasePanel() {
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Step 2: Template Selection */}
       <section className="space-y-4">
@@ -758,8 +869,8 @@ export function DatabasePanel() {
             2
           </div>
           <h3 className="text-lg font-semibold">模版选择</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">选择内置模版或使用自定义模版</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">选择内置模版或使用自定义模版</p>
         </div>
 
         <div className="pl-9 space-y-5">
@@ -769,11 +880,11 @@ export function DatabasePanel() {
             className="gap-4"
           >
             <div className="flex items-center space-x-2">
-              <Radio value="builtin" id="db-builtin" />
-              <label htmlFor="db-builtin" className="font-medium cursor-pointer">
+              <RadioGroupItem value="builtin" id="db-builtin" />
+              <Label htmlFor="db-builtin" className="font-medium cursor-pointer">
                 内置模版
-              </label>
-              <span className="text-sm text-default-500">-</span>
+              </Label>
+              <span className="text-sm text-muted-foreground">-</span>
               <button
                 type="button"
                 onClick={handleOpenBuiltInTemplateDir}
@@ -781,17 +892,20 @@ export function DatabasePanel() {
               >
                 {builtInTemplateName}
               </button>
-              <Tooltip content="可在设置中修改" placement="top">
-                <span className="inline-flex items-center text-default-500 cursor-help">
-                  <CircleHelp className="h-3.5 w-3.5" />
-                </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center text-muted-foreground cursor-help">
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>可在设置中修改</TooltipContent>
               </Tooltip>
             </div>
             <div className="flex items-center space-x-2">
-              <Radio value="custom" id="db-custom" />
-              <label htmlFor="db-custom" className="font-medium cursor-pointer">
+              <RadioGroupItem value="custom" id="db-custom" />
+              <Label htmlFor="db-custom" className="font-medium cursor-pointer">
                 自定义模版
-              </label>
+              </Label>
             </div>
           </RadioGroup>
 
@@ -800,24 +914,22 @@ export function DatabasePanel() {
               <div className="flex gap-3">
                 <Input
                   value={customTemplatePath}
-                  onValueChange={(value) => setCustomTemplatePath(value)}
+                  onChange={(e) => setCustomTemplatePath(e.target.value)}
                   placeholder="选择模版文件..."
                   className="flex-1"
                 />
-                <Button variant="bordered" onPress={handleTemplateFileSelect}>
+                <Button variant="outline" onClick={handleTemplateFileSelect}>
                   <File className="h-4 w-4" />
                   选择文件
                 </Button>
               </div>
-              <p className="text-xs text-default-500">
-                支持 .docx 格式的 Word 模版文件
-              </p>
+              <p className="text-xs text-muted-foreground">支持 .docx 格式的 Word 模版文件</p>
             </div>
           )}
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Step 3: Output Directory */}
       <section className="space-y-4">
@@ -826,36 +938,38 @@ export function DatabasePanel() {
             3
           </div>
           <h3 className="text-lg font-semibold">输出目录</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">设置生成文档的保存位置</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">设置生成文档的保存位置</p>
         </div>
 
         <div className="pl-9 space-y-5">
           <div className="flex gap-3">
             <Input
               value={outputPath}
-              onValueChange={(value) => setOutputPath(value)}
+              onChange={(e) => setOutputPath(e.target.value)}
               placeholder="选择输出目录..."
               className="flex-1"
             />
-            <Button variant="bordered" onPress={handleSelectOutputDir}>
+            <Button variant="outline" onClick={handleSelectOutputDir}>
               <FolderOpen className="h-4 w-4" />
               浏览
             </Button>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="db-filename" className="text-sm font-medium">文件名</label>
+            <label htmlFor="db-filename" className="text-sm font-medium">
+              文件名
+            </label>
             <Input
               id="db-filename"
               value={fileName}
-              onValueChange={(value) => setFileName(value)}
+              onChange={(e) => setFileName(e.target.value)}
             />
           </div>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Step 4: Generate Document */}
       <section className="space-y-4">
@@ -864,23 +978,23 @@ export function DatabasePanel() {
             4
           </div>
           <h3 className="text-lg font-semibold">生成文档</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">确认配置并生成数据字典文档</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">确认配置并生成数据字典文档</p>
         </div>
 
         <div className="pl-9 space-y-5">
           {parsedSchema && (
-            <div className="p-4 bg-default-100 rounded-lg space-y-2 text-sm">
+            <div className="p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-default-500">数据库</span>
+                <span className="text-muted-foreground">数据库</span>
                 <span className="font-medium">{parsedSchema.database}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-default-500">导出表</span>
+                <span className="text-muted-foreground">导出表</span>
                 <span className="font-medium">{selectedTables.size} 张</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-default-500">文档模版</span>
+                <span className="text-muted-foreground">文档模版</span>
                 <span className="font-medium">
                   {templateType === "builtin"
                     ? `内置模版 (${builtInTemplateName})`
@@ -888,10 +1002,8 @@ export function DatabasePanel() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-default-500">输出路径</span>
-                <span className="font-medium break-all text-right">
-                  {fullOutputPathPreview}
-                </span>
+                <span className="text-muted-foreground">输出路径</span>
+                <span className="font-medium break-all text-right">{fullOutputPathPreview}</span>
               </div>
             </div>
           )}
@@ -903,17 +1015,17 @@ export function DatabasePanel() {
                 <span>{generateProgress}%</span>
               </div>
               <Progress value={generateProgress} />
-              <p className="text-sm text-default-500">正在生成文档，请稍候...</p>
+              <p className="text-sm text-muted-foreground">正在生成文档，请稍候...</p>
             </div>
           )}
 
           {generateStatus === "success" && (
-            <div className="p-4 bg-success-50 rounded-lg border border-success-200">
-              <div className="flex items-center gap-2 text-success-600">
+            <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+              <div className="flex items-center gap-2 text-green-600">
                 <Check className="h-5 w-5" />
                 <span className="font-medium">文档生成成功!</span>
               </div>
-              <p className="text-sm text-default-500 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 文件已保存至: {outputPath}/{fileName}
               </p>
             </div>
@@ -921,8 +1033,8 @@ export function DatabasePanel() {
 
           <div className="flex gap-3">
             <Button
-              onPress={handleGenerate}
-              isDisabled={!canGenerate || generateStatus === "generating"}
+              onClick={handleGenerate}
+              disabled={!canGenerate || generateStatus === "generating"}
             >
               {generateStatus === "generating" ? (
                 <>
@@ -939,7 +1051,7 @@ export function DatabasePanel() {
               )}
             </Button>
             {generateStatus === "success" && (
-              <Button variant="bordered">
+              <Button variant="outline">
                 <FolderOpen className="h-4 w-4" />
                 打开目录
               </Button>

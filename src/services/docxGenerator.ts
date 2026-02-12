@@ -1,7 +1,7 @@
-import PizZip from 'pizzip';
-import Docxtemplater from 'docxtemplater';
-import { readFile } from '@tauri-apps/plugin-fs';
-import { readGenerationSettings } from '@/lib/generationSettings';
+import { readGenerationSettings } from "@/lib/generationSettings";
+import { readFile } from "@tauri-apps/plugin-fs";
+import Docxtemplater from "docxtemplater";
+import PizZip from "pizzip";
 
 /**
  * 基于模板的 OpenAPI 文档生成器
@@ -44,13 +44,13 @@ export class OpenAPIDocGenerator {
 
       // 生成文档
       const output = doc.getZip().generate({
-        type: 'blob',
-        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        type: "blob",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       });
 
       return output;
     } catch (error) {
-      console.error('模板生成失败:', error);
+      console.error("模板生成失败:", error);
       throw new Error(`模板生成失败: ${error}`);
     }
   }
@@ -63,11 +63,11 @@ export class OpenAPIDocGenerator {
 
     // 基本信息
     const info = {
-      title: spec.info?.title || '未命名 API',
-      version: spec.info?.version || '1.0.0',
-      description: spec.info?.description || '',
-      baseUrl: spec.servers?.[0]?.url || 'N/A',
-      updateDate: new Date().toLocaleDateString('zh-CN'),
+      title: spec.info?.title || "未命名 API",
+      version: spec.info?.version || "1.0.0",
+      description: spec.info?.description || "",
+      baseUrl: spec.servers?.[0]?.url || "N/A",
+      updateDate: new Date().toLocaleDateString("zh-CN"),
     };
 
     // 按 tag 分组接口
@@ -87,7 +87,7 @@ export class OpenAPIDocGenerator {
 
     for (const [path, methods] of Object.entries(this.openApiSpec.paths || {})) {
       for (const [method, operation] of Object.entries(methods as any)) {
-        const tag = (operation as any).tags?.[0] || '未分类';
+        const tag = (operation as any).tags?.[0] || "未分类";
 
         if (!groups[tag]) {
           groups[tag] = {
@@ -109,17 +109,17 @@ export class OpenAPIDocGenerator {
   private parseApiOperation(path: string, method: string, operation: any): any {
     const contentType = operation.requestBody?.content
       ? Object.keys(operation.requestBody.content)[0]
-      : 'application/json';
+      : "application/json";
 
     return {
       summary: operation.summary || path,
       method,
       path,
       contentType,
-      description: operation.description || operation.summary || '',
-      pathParams: this.extractParameters(operation.parameters, 'path'),
-      queryParams: this.extractParameters(operation.parameters, 'query'),
-      headerParams: this.extractParameters(operation.parameters, 'header'),
+      description: operation.description || operation.summary || "",
+      pathParams: this.extractParameters(operation.parameters, "path"),
+      queryParams: this.extractParameters(operation.parameters, "query"),
+      headerParams: this.extractParameters(operation.parameters, "header"),
       bodyParams: this.extractBodyParameters(operation.requestBody),
       requestBodyExample: this.extractRequestBodyExample(operation.requestBody),
       responses: this.extractResponses(operation.responses),
@@ -137,9 +137,9 @@ export class OpenAPIDocGenerator {
       .map((p: any) => ({
         name: p.name,
         type: this.getSchemaType(p.schema),
-        required: p.required ? '是' : '否',
-        description: p.description || '',
-        example: p.example || p.schema?.example || '',
+        required: p.required ? "是" : "否",
+        description: p.description || "",
+        example: p.example || p.schema?.example || "",
       }));
   }
 
@@ -161,7 +161,7 @@ export class OpenAPIDocGenerator {
    * 提取请求 Body 示例
    */
   private extractRequestBodyExample(requestBody: any): string {
-    if (!requestBody?.content) return '';
+    if (!requestBody?.content) return "";
 
     const bodyContent = Object.values(requestBody.content)[0] as any;
     let bodySchema = bodyContent?.schema;
@@ -183,7 +183,7 @@ export class OpenAPIDocGenerator {
     for (const [statusCode, response] of Object.entries(responses)) {
       const responseItem = response as any;
       let responseSchema = null;
-      let bodyExample = '';
+      let bodyExample = "";
 
       if (responseItem?.content) {
         const responseContent = Object.values(responseItem.content)[0] as any;
@@ -193,16 +193,12 @@ export class OpenAPIDocGenerator {
           responseSchema = this.resolveSchema(responseSchema.$ref);
         }
 
-        bodyExample = this.extractExampleFromContent(
-          responseContent,
-          responseSchema,
-        );
+        bodyExample = this.extractExampleFromContent(responseContent, responseSchema);
       }
 
       result.push({
         statusCode,
-        description:
-          responseItem?.description || this.getDefaultErrorMessage(statusCode),
+        description: responseItem?.description || this.getDefaultErrorMessage(statusCode),
         fields: responseSchema ? this.flattenProperties(responseSchema) : [],
         bodyExample,
       });
@@ -216,45 +212,45 @@ export class OpenAPIDocGenerator {
    */
   private getDefaultErrorMessage(code: string): string {
     const messages: Record<string, string> = {
-      '200': '成功',
-      '400': '请求参数错误',
-      '401': '未授权，Token无效或已过期',
-      '403': '无权限访问该资源',
-      '404': '请求的资源不存在',
-      '500': '服务器内部错误',
+      "200": "成功",
+      "400": "请求参数错误",
+      "401": "未授权，Token无效或已过期",
+      "403": "无权限访问该资源",
+      "404": "请求的资源不存在",
+      "500": "服务器内部错误",
     };
-    return messages[code] || '未知错误';
+    return messages[code] || "未知错误";
   }
 
   /**
    * 解析 schema 类型
    */
   private getSchemaType(schema: any): string {
-    if (!schema) return 'any';
+    if (!schema) return "any";
     if (schema.$ref) {
-      return schema.$ref.split('/').pop();
+      return schema.$ref.split("/").pop();
     }
-    if (schema.type === 'array') {
+    if (schema.type === "array") {
       return `array<${this.getSchemaType(schema.items)}>`;
     }
-    if (schema.type === 'object') {
-      return 'object';
+    if (schema.type === "object") {
+      return "object";
     }
     if (schema.format) {
       return `${schema.type}(${schema.format})`;
     }
     if (schema.enum) {
-      return schema.enum.join(' | ');
+      return schema.enum.join(" | ");
     }
-    return schema.type || 'any';
+    return schema.type || "any";
   }
 
   /**
    * 解析 $ref 引用
    */
   private resolveSchema(ref: string): any {
-    if (!ref || !ref.startsWith('#/components/schemas/')) return null;
-    const schemaName = ref.split('/').pop();
+    if (!ref || !ref.startsWith("#/components/schemas/")) return null;
+    const schemaName = ref.split("/").pop();
     return this.openApiSpec.components?.schemas?.[schemaName];
   }
 
@@ -276,10 +272,10 @@ export class OpenAPIDocGenerator {
    * 提取 examples 的第一个示例值
    */
   private extractFirstExampleValue(examples: any): any {
-    if (!examples || typeof examples !== 'object') return undefined;
+    if (!examples || typeof examples !== "object") return undefined;
     const firstExample = Object.values(examples)[0] as any;
     if (!firstExample) return undefined;
-    if (typeof firstExample === 'object' && 'value' in firstExample) {
+    if (typeof firstExample === "object" && "value" in firstExample) {
       return firstExample.value;
     }
     return firstExample;
@@ -289,11 +285,11 @@ export class OpenAPIDocGenerator {
    * 将示例值转为文档可展示文本
    */
   private stringifyExample(value: any): string {
-    if (value === undefined || value === null) return '';
+    if (value === undefined || value === null) return "";
 
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       const trimmed = value.trim();
-      if (!trimmed) return '';
+      if (!trimmed) return "";
       try {
         const parsed = JSON.parse(trimmed);
         return JSON.stringify(parsed, null, 2);
@@ -302,7 +298,7 @@ export class OpenAPIDocGenerator {
       }
     }
 
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       return JSON.stringify(value, null, 2);
     }
 
@@ -339,14 +335,14 @@ export class OpenAPIDocGenerator {
       const merged: Record<string, any> = {};
       schema.allOf.forEach((item: any) => {
         const example = this.buildExampleFromSchema(item, depth + 1);
-        if (example && typeof example === 'object' && !Array.isArray(example)) {
+        if (example && typeof example === "object" && !Array.isArray(example)) {
           Object.assign(merged, example);
         }
       });
       return Object.keys(merged).length > 0 ? merged : undefined;
     }
 
-    if (schema.type === 'object' || schema.properties) {
+    if (schema.type === "object" || schema.properties) {
       const result: Record<string, any> = {};
       const properties = schema.properties || {};
       Object.entries(properties).forEach(([key, prop]) => {
@@ -358,15 +354,15 @@ export class OpenAPIDocGenerator {
       return Object.keys(result).length > 0 ? result : undefined;
     }
 
-    if (schema.type === 'array') {
+    if (schema.type === "array") {
       const itemExample = this.buildExampleFromSchema(schema.items, depth + 1);
       return itemExample === undefined ? [] : [itemExample];
     }
 
-    if (schema.type === 'string') return 'string';
-    if (schema.type === 'integer') return 0;
-    if (schema.type === 'number') return 0;
-    if (schema.type === 'boolean') return false;
+    if (schema.type === "string") return "string";
+    if (schema.type === "integer") return 0;
+    if (schema.type === "number") return 0;
+    if (schema.type === "boolean") return false;
 
     return undefined;
   }
@@ -374,21 +370,22 @@ export class OpenAPIDocGenerator {
   /**
    * 扁平化对象属性
    */
-  private flattenProperties(schema: any, prefix = ''): any[] {
+  private flattenProperties(schema: any, prefix = ""): any[] {
     const results: any[] = [];
     if (!schema || !schema.properties) return results;
 
     for (const [key, prop] of Object.entries(schema.properties)) {
       const fieldName = prefix ? `${prefix}.${key}` : key;
-      const isRequired = schema.required?.includes(key) ? '是' : '否';
+      const isRequired = schema.required?.includes(key) ? "是" : "否";
       const type = this.getSchemaType(prop);
-      const description = (prop as any).description || '';
-      const example = (prop as any).example || ((prop as any).enum ? (prop as any).enum.join(' | ') : '');
+      const description = (prop as any).description || "";
+      const example =
+        (prop as any).example || ((prop as any).enum ? (prop as any).enum.join(" | ") : "");
 
       results.push({ name: fieldName, type, required: isRequired, description, example });
 
       // 如果是嵌套对象，递归展开
-      if ((prop as any).type === 'object' && (prop as any).properties) {
+      if ((prop as any).type === "object" && (prop as any).properties) {
         results.push(...this.flattenProperties(prop, fieldName));
       }
 
@@ -412,15 +409,15 @@ export class OpenAPIDocGenerator {
     const tableHeaderOpenClosePattern = /<w:tblHeader(?:\s+[^>]*)?>\s*<\/w:tblHeader>/g;
 
     Object.keys(zip.files)
-      .filter((fileName) => fileName.startsWith('word/') && fileName.endsWith('.xml'))
+      .filter((fileName) => fileName.startsWith("word/") && fileName.endsWith(".xml"))
       .forEach((fileName) => {
         const file = zip.file(fileName);
         if (!file) return;
 
         const xml = file.asText();
         const patchedXml = xml
-          .replace(tableHeaderSelfClosingPattern, '')
-          .replace(tableHeaderOpenClosePattern, '');
+          .replace(tableHeaderSelfClosingPattern, "")
+          .replace(tableHeaderOpenClosePattern, "");
 
         if (patchedXml !== xml) {
           zip.file(fileName, patchedXml);

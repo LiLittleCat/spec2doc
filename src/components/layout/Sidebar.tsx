@@ -1,13 +1,9 @@
 import { FileJson, Database, Settings, HelpCircle, Github } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import logo from "@/assets/logo.svg";
 
-export type AppTab =
-  | "openapi"
-  | "database"
-  | "settings"
-  | "help";
+export type AppTab = "openapi" | "database" | "settings" | "help";
 
 interface SidebarProps {
   activeTab: AppTab;
@@ -26,15 +22,15 @@ const bottomItems = [
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   return (
-    <aside className="w-64 h-screen bg-content1 border-r border-divider flex flex-col">
+    <aside className="w-64 h-screen bg-card border-r border-border flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-divider">
+      <div className="p-6 border-b border-border">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <img src={logo} alt="Spec2Doc" className="h-6 w-6" />
             <h1 className="text-xl font-bold">Spec2Doc</h1>
           </div>
-          <p className="text-xs text-default-500">根据规范生成 word 设计文档</p>
+          <p className="text-xs text-muted-foreground">根据规范生成 word 设计文档</p>
         </div>
       </div>
 
@@ -43,47 +39,39 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         {navItems.map((item) => (
           <Button
             key={item.id}
-            variant={activeTab === item.id ? "flat" : "light"}
-            color={activeTab === item.id ? "primary" : "default"}
+            variant={activeTab === item.id ? "secondary" : "ghost"}
             className="w-full justify-start"
-            onPress={() => onTabChange(item.id)}
-            startContent={<item.icon className="w-4 h-4" />}
+            onClick={() => onTabChange(item.id)}
           >
+            <item.icon className="w-4 h-4" />
             {item.label}
           </Button>
         ))}
       </nav>
 
       {/* Bottom Items */}
-      <div className="p-4 border-t border-divider space-y-1">
+      <div className="p-4 border-t border-border space-y-1">
         {bottomItems.map((item) => (
           <Button
             key={item.id}
-            variant={activeTab === item.id ? "flat" : "light"}
-            color={activeTab === item.id ? "primary" : "default"}
+            variant={activeTab === item.id ? "secondary" : "ghost"}
             className="w-full justify-start"
-            onPress={() => onTabChange(item.id)}
-            startContent={<item.icon className="w-4 h-4" />}
+            onClick={() => onTabChange(item.id)}
           >
+            <item.icon className="w-4 h-4" />
             {item.label}
           </Button>
         ))}
       </div>
 
       {/* Version & GitHub */}
-      <div className="p-4 border-t border-divider flex items-center justify-between">
-        <p className="text-xs text-default-500">v1.0.0</p>
+      <div className="p-4 border-t border-border flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">v1.0.0</p>
         <div className="flex items-center gap-1">
-          <Button
-            isIconOnly
-            variant="light"
-            size="sm"
-            as="a"
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Github className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+              <Github className="h-4 w-4" />
+            </a>
           </Button>
           <ThemeToggle />
         </div>

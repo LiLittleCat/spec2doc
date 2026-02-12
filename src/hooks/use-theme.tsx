@@ -16,9 +16,7 @@ const getSystemTheme = (): ResolvedTheme => {
   if (typeof window === "undefined") {
     return "light";
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
 const isValidTheme = (value: string | null): value is Theme =>
@@ -35,9 +33,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
     return "system";
   });
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
-    getSystemTheme(),
-  );
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => getSystemTheme());
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -56,8 +52,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const resolvedTheme: ResolvedTheme =
-    theme === "system" ? systemTheme : theme;
+  const resolvedTheme: ResolvedTheme = theme === "system" ? systemTheme : theme;
 
   useEffect(() => {
     const root = window.document.documentElement;

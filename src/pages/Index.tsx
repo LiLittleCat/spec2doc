@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Sidebar, type AppTab } from "@/components/layout/Sidebar";
-import { OpenAPIPanel } from "@/components/panels/OpenAPIPanel";
+import { type AppTab, Sidebar } from "@/components/layout/Sidebar";
 import { DatabasePanel } from "@/components/panels/DatabasePanel";
-import { SettingsPanel } from "@/components/panels/SettingsPanel";
 import { HelpPanel } from "@/components/panels/HelpPanel";
+import { OpenAPIPanel } from "@/components/panels/OpenAPIPanel";
+import { SettingsPanel } from "@/components/panels/SettingsPanel";
+import { useState } from "react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<AppTab>("openapi");

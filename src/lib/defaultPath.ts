@@ -10,8 +10,7 @@ const appendDocumentsDir = (path: string) => {
 
 export async function getDefaultDocumentsPath(): Promise<string> {
   const isTauri =
-    typeof window !== "undefined" &&
-    ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
+    typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window);
 
   if (!isTauri) {
     return "";

@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun, Monitor, FolderOpen, File } from "lucide-react";
-import { Button, Input, RadioGroup, Radio, Switch } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useTheme } from "next-themes";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import {
@@ -20,16 +24,11 @@ import { open } from "@tauri-apps/plugin-dialog";
 export function SettingsPanel() {
   const { theme, setTheme } = useTheme();
   const [defaultOutputPath, setDefaultOutputPath] = useState("");
-  const [repeatTableHeaderOnPageBreak, setRepeatTableHeaderOnPageBreak] =
-    useState(
-      getDefaultGenerationSettings().repeatTableHeaderOnPageBreak,
-    );
-  const [apiTemplatePath, setApiTemplatePath] = useState(
-    DEFAULT_API_TEMPLATE_PLACEHOLDER,
+  const [repeatTableHeaderOnPageBreak, setRepeatTableHeaderOnPageBreak] = useState(
+    getDefaultGenerationSettings().repeatTableHeaderOnPageBreak,
   );
-  const [dbTemplatePath, setDbTemplatePath] = useState(
-    DEFAULT_DB_TEMPLATE_PLACEHOLDER,
-  );
+  const [apiTemplatePath, setApiTemplatePath] = useState(DEFAULT_API_TEMPLATE_PLACEHOLDER);
+  const [dbTemplatePath, setDbTemplatePath] = useState(DEFAULT_DB_TEMPLATE_PLACEHOLDER);
   const [defaultApiTemplatePath, setDefaultApiTemplatePath] = useState(
     DEFAULT_API_TEMPLATE_PLACEHOLDER,
   );
@@ -58,13 +57,9 @@ export function SettingsPanel() {
       }
 
       const resolvedDefaultApiTemplatePath =
-        apiResult.status === "fulfilled"
-          ? apiResult.value
-          : DEFAULT_API_TEMPLATE_PLACEHOLDER;
+        apiResult.status === "fulfilled" ? apiResult.value : DEFAULT_API_TEMPLATE_PLACEHOLDER;
       const resolvedDefaultDbTemplatePath =
-        dbResult.status === "fulfilled"
-          ? dbResult.value
-          : DEFAULT_DB_TEMPLATE_PLACEHOLDER;
+        dbResult.status === "fulfilled" ? dbResult.value : DEFAULT_DB_TEMPLATE_PLACEHOLDER;
 
       setDefaultApiTemplatePath(resolvedDefaultApiTemplatePath);
       setDefaultDbTemplatePath(resolvedDefaultDbTemplatePath);
@@ -78,9 +73,7 @@ export function SettingsPanel() {
           ? resolvedDefaultDbTemplatePath
           : storedSettings.dbTemplatePath.trim() || resolvedDefaultDbTemplatePath;
 
-      setRepeatTableHeaderOnPageBreak(
-        generationSettings.repeatTableHeaderOnPageBreak,
-      );
+      setRepeatTableHeaderOnPageBreak(generationSettings.repeatTableHeaderOnPageBreak);
       setApiTemplatePath(normalizedApiTemplatePath);
       setDbTemplatePath(normalizedDbTemplatePath);
       saveTemplateSettings({
@@ -163,10 +156,7 @@ export function SettingsPanel() {
       return;
     }
 
-    const normalizedDbTemplatePath = normalizeRequiredPath(
-      dbTemplatePath,
-      defaultDbTemplatePath,
-    );
+    const normalizedDbTemplatePath = normalizeRequiredPath(dbTemplatePath, defaultDbTemplatePath);
     applyTemplateSettings(apiTemplatePath, normalizedDbTemplatePath);
   };
 
@@ -187,15 +177,15 @@ export function SettingsPanel() {
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">设置</h2>
-        <p className="text-default-500">配置应用程序偏好设置和默认值</p>
+        <p className="text-muted-foreground">配置应用程序偏好设置和默认值</p>
       </div>
 
       {/* Appearance */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
           <h3 className="text-lg font-semibold">外观</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">自定义应用程序的外观和主题</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">自定义应用程序的外观和主题</p>
         </div>
 
         <div className="pl-9 space-y-6">
@@ -204,48 +194,47 @@ export function SettingsPanel() {
             <RadioGroup
               value={theme}
               onValueChange={(value) => setTheme(value)}
-              orientation="horizontal"
+              className="flex gap-4"
             >
-              <Radio value="light">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="light" id="theme-light" />
+                <Label htmlFor="theme-light" className="flex items-center gap-2 cursor-pointer">
                   <Sun className="h-4 w-4" />
                   浅色
-                </div>
-              </Radio>
-              <Radio value="dark">
-                <div className="flex items-center gap-2">
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dark" id="theme-dark" />
+                <Label htmlFor="theme-dark" className="flex items-center gap-2 cursor-pointer">
                   <Moon className="h-4 w-4" />
                   深色
-                </div>
-              </Radio>
-              <Radio value="system">
-                <div className="flex items-center gap-2">
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="system" id="theme-system" />
+                <Label htmlFor="theme-system" className="flex items-center gap-2 cursor-pointer">
                   <Monitor className="h-4 w-4" />
                   跟随系统
-                </div>
-              </Radio>
+                </Label>
+              </div>
             </RadioGroup>
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">语言</label>
-            <Input
-              value="简体中文（当前仅支持中文）"
-              isReadOnly
-              className="max-w-xs"
-            />
+            <Input value="简体中文（当前仅支持中文）" readOnly className="max-w-xs" />
           </div>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Default Settings */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
           <h3 className="text-lg font-semibold">默认设置</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">设置文档生成的默认值</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">设置文档生成的默认值</p>
         </div>
 
         <div className="pl-9 space-y-6">
@@ -258,11 +247,8 @@ export function SettingsPanel() {
                 placeholder="选择默认输出目录..."
                 className="flex-1"
               />
-              <Button
-                variant="flat"
-                onPress={handleSelectDefaultPath}
-                startContent={<FolderOpen className="h-4 w-4" />}
-              >
+              <Button variant="secondary" onClick={handleSelectDefaultPath}>
+                <FolderOpen className="h-4 w-4" />
                 浏览
               </Button>
             </div>
@@ -271,26 +257,26 @@ export function SettingsPanel() {
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium">表格标题跨页重复</label>
-              <p className="text-xs text-default-500">
+              <p className="text-xs text-muted-foreground">
                 在数据库文档中，当表格跨页时是否在每页重复显示表头
               </p>
             </div>
             <Switch
-              isSelected={repeatTableHeaderOnPageBreak}
-              onValueChange={handleRepeatTableHeaderChange}
+              checked={repeatTableHeaderOnPageBreak}
+              onCheckedChange={handleRepeatTableHeaderChange}
             />
           </div>
         </div>
       </section>
 
-      <div className="border-t border-divider" />
+      <div className="border-t border-border" />
 
       {/* Template Settings */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
           <h3 className="text-lg font-semibold">模板配置</h3>
-          <span className="text-sm text-default-400">·</span>
-          <p className="text-sm text-default-500">配置自定义文档模板路径</p>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">配置自定义文档模板路径</p>
         </div>
 
         <div className="pl-9 space-y-6">
@@ -305,17 +291,11 @@ export function SettingsPanel() {
                 placeholder="输入模板文件路径或使用默认模板"
                 className="flex-1"
               />
-              <Button
-                variant="flat"
-                onPress={() => handleSelectTemplateFile("api")}
-                startContent={<File className="h-4 w-4" />}
-              >
+              <Button variant="secondary" onClick={() => handleSelectTemplateFile("api")}>
+                <File className="h-4 w-4" />
                 选择
               </Button>
-              <Button
-                variant="light"
-                onPress={() => handleUseDefaultTemplate("api")}
-              >
+              <Button variant="ghost" onClick={() => handleUseDefaultTemplate("api")}>
                 使用默认
               </Button>
             </div>
@@ -332,17 +312,11 @@ export function SettingsPanel() {
                 placeholder="输入模板文件路径或使用默认模板"
                 className="flex-1"
               />
-              <Button
-                variant="flat"
-                onPress={() => handleSelectTemplateFile("db")}
-                startContent={<File className="h-4 w-4" />}
-              >
+              <Button variant="secondary" onClick={() => handleSelectTemplateFile("db")}>
+                <File className="h-4 w-4" />
                 选择
               </Button>
-              <Button
-                variant="light"
-                onPress={() => handleUseDefaultTemplate("db")}
-              >
+              <Button variant="ghost" onClick={() => handleUseDefaultTemplate("db")}>
                 使用默认
               </Button>
             </div>

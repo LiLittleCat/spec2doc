@@ -18,8 +18,7 @@ const normalizeGenerationSettings = (
       : defaultGenerationSettings.repeatTableHeaderOnPageBreak,
 });
 
-export const getDefaultGenerationSettings = (): GenerationSettings =>
-  normalizeGenerationSettings();
+export const getDefaultGenerationSettings = (): GenerationSettings => normalizeGenerationSettings();
 
 export const readGenerationSettings = (): GenerationSettings => {
   if (typeof window === "undefined") {
@@ -60,19 +59,14 @@ export const saveGenerationSettings = (
   });
 
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(
-      GENERATION_SETTINGS_STORAGE_KEY,
-      JSON.stringify(merged),
-    );
+    window.localStorage.setItem(GENERATION_SETTINGS_STORAGE_KEY, JSON.stringify(merged));
   }
 
   emitGenerationSettingsUpdated(merged);
   return merged;
 };
 
-export const subscribeGenerationSettings = (
-  listener: (settings: GenerationSettings) => void,
-) => {
+export const subscribeGenerationSettings = (listener: (settings: GenerationSettings) => void) => {
   if (typeof window === "undefined") {
     return () => {};
   }
@@ -89,10 +83,7 @@ export const subscribeGenerationSettings = (
     listener(readGenerationSettings());
   };
 
-  window.addEventListener(
-    GENERATION_SETTINGS_UPDATED_EVENT,
-    handleCustomEvent as EventListener,
-  );
+  window.addEventListener(GENERATION_SETTINGS_UPDATED_EVENT, handleCustomEvent as EventListener);
   window.addEventListener("storage", handleStorage);
 
   return () => {
