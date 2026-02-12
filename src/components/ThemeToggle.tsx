@@ -1,5 +1,5 @@
-import { Moon, Sun, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme as useNextTheme } from "next-themes";
 
 const themeOrder = ["system", "light", "dark"] as const;

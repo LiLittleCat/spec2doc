@@ -1,27 +1,16 @@
-import { useEffect, useState } from "react";
 import {
-  Database,
-  FileText,
-  Server,
-  Check,
-  AlertCircle,
-  FolderOpen,
-  Play,
-  Loader2,
-  File,
-  Table2,
-  Key,
-  CircleHelp,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -29,12 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import {
@@ -45,6 +30,21 @@ import {
 import { documentService } from "@/services/documentService";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import {
+  AlertCircle,
+  Check,
+  CircleHelp,
+  Database,
+  File,
+  FileText,
+  FolderOpen,
+  Key,
+  Loader2,
+  Play,
+  Server,
+  Table2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 type ParseStatus = "idle" | "parsing" | "success" | "error";
 type GenerateStatus = "idle" | "generating" | "success" | "error";

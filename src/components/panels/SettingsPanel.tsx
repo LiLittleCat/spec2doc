@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
-import { Moon, Sun, Monitor, FolderOpen, File, Settings, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useTheme } from "next-themes";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import {
   getDefaultGenerationSettings,
   readGenerationSettings,
   saveGenerationSettings,
 } from "@/lib/generationSettings";
-import { documentService } from "@/services/documentService";
 import {
   DEFAULT_API_TEMPLATE_PLACEHOLDER,
   DEFAULT_DB_TEMPLATE_PLACEHOLDER,
   readTemplateSettings,
   saveTemplateSettings,
 } from "@/lib/templateSettings";
+import { documentService } from "@/services/documentService";
 import { open } from "@tauri-apps/plugin-dialog";
+import { File, FolderOpen, Monitor, Moon, RotateCcw, Settings, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export function SettingsPanel() {
   const { theme, setTheme } = useTheme();

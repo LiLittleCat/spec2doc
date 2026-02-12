@@ -23,7 +23,12 @@
       "csp": null
     }
   },
-  "plugins": {},
+  "plugins": {
+    "updater": {
+      "endpoints": ["https://github.com/LiLittleCat/spec2doc/releases/latest/download/latest.json"],
+      "pubkey": "PUBLIC_KEY_PLACEHOLDER"
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

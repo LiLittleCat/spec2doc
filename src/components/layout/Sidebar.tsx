@@ -1,8 +1,12 @@
-import { FileJson, Database, Settings, HelpCircle, Github } from "lucide-react";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import logo from "@/assets/logo.svg";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { UpdateDialog } from "@/components/UpdateDialog";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUpdater } from "@/hooks/use-updater";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { Database, FileJson, Github, HelpCircle, Settings } from "lucide-react";
+import { useState } from "react";
 
 export type AppTab = "openapi" | "database" | "settings" | "help";
 
@@ -22,6 +26,9 @@ const bottomItems = [
 ];
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const updater = useUpdater();
+
   return (
     <aside className="w-64 h-screen bg-card border-r border-border flex flex-col">
       {/* Logo */}
@@ -67,14 +74,50 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       {/* Version & GitHub */}
       <div className="px-4 py-3 border-t border-border flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">v{__APP_VERSION__}</p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="relative text-xs text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => updater.hasUpdate && setDialogOpen(true)}
+            >
+              v{__APP_VERSION__}
+              {updater.hasUpdate && (
+                <span className="absolute -top-1 -right-2.5 h-2 w-2 rounded-full bg-destructive" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {updater.hasUpdate ? `新版本 ${updater.version} 可用` : "已是最新版本"}
+          </TooltipContent>
+        </Tooltip>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openUrl("https://github.com/LiLittleCat/spec2doc")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => openUrl("https://github.com/LiLittleCat/spec2doc")}
+          >
             <Github className="h-4 w-4" />
           </Button>
           <ThemeToggle />
         </div>
       </div>
+
+      <UpdateDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        status={updater.status}
+        version={updater.version}
+        body={updater.body}
+        date={updater.date}
+        progress={updater.progress}
+        downloadedBytes={updater.downloadedBytes}
+        totalBytes={updater.totalBytes}
+        error={updater.error}
+        onDownload={updater.downloadAndInstall}
+        onRetry={updater.checkForUpdate}
+      />
     </aside>
   );
 }

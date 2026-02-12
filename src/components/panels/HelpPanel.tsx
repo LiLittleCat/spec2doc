@@ -1,23 +1,23 @@
 import {
-  ExternalLink,
-  FileText,
-  Github,
-  MessageCircle,
-  BookOpen,
-  Zap,
-  Database as DatabaseIcon,
-  HelpCircle,
-  Layers,
-} from "lucide-react";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import {
+  BookOpen,
+  Database as DatabaseIcon,
+  ExternalLink,
+  FileText,
+  Github,
+  HelpCircle,
+  Layers,
+  MessageCircle,
+  Zap,
+} from "lucide-react";
 
 const GITHUB_REPOSITORY_URL = "https://github.com/LiLittleCat/spec2doc";
 const GITHUB_ISSUES_URL = `${GITHUB_REPOSITORY_URL}/issues`;
@@ -283,17 +283,29 @@ export function HelpPanel() {
         </div>
 
         <div className="pl-9 space-y-2">
-          <Button variant="ghost" className="justify-start" onClick={() => openUrl(GITHUB_REPOSITORY_URL)}>
+          <Button
+            variant="ghost"
+            className="justify-start"
+            onClick={() => openUrl(GITHUB_REPOSITORY_URL)}
+          >
             <Github className="h-4 w-4" />
             GitHub 仓库
             <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
           </Button>
-          <Button variant="ghost" className="justify-start" onClick={() => openUrl("https://spec.openapis.org/oas/latest.html")}>
+          <Button
+            variant="ghost"
+            className="justify-start"
+            onClick={() => openUrl("https://spec.openapis.org/oas/latest.html")}
+          >
             <FileText className="h-4 w-4" />
             OpenAPI 规范文档
             <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
           </Button>
-          <Button variant="ghost" className="justify-start" onClick={() => openUrl(GITHUB_ISSUES_URL)}>
+          <Button
+            variant="ghost"
+            className="justify-start"
+            onClick={() => openUrl(GITHUB_ISSUES_URL)}
+          >
             <MessageCircle className="h-4 w-4" />
             报告问题
             <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
