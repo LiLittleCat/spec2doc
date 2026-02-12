@@ -23,8 +23,8 @@ spec2doc/
     components/
       layout/             # Layout components (Sidebar)
       panels/             # Feature panels (OpenAPI, Database, Settings, Help)
-      ui/                 # shadcn/ui components (13 components)
-    hooks/                # React hooks (use-theme, use-mobile)
+      ui/                 # shadcn/ui components (14 components)
+    hooks/                # React hooks (use-theme, use-mobile, use-updater)
     services/             # Business logic (documentService, docxGenerator)
     pages/                # Route pages (Index, NotFound)
     lib/                  # Utilities (defaultPath, generationSettings, templateSettings, utils)
@@ -60,13 +60,15 @@ spec2doc/
 - **Capabilities** (defined in `src-tauri/capabilities/default.json`):
   - `dialog`: File open/save dialogs
   - `fs`: File system access (read/write for document, desktop, download, home, resource scopes)
+  - `updater`: Auto-update support
+  - `process`: App restart (for applying updates)
 - **Security**: CSP is disabled (`null`)
 
 ### Key Dependencies
 
 - **Parsing**: `@apidevtools/swagger-parser` (OpenAPI), `sql-ddl-to-json-schema` (DDL)
 - **Document Generation**: `docxtemplater` + `pizzip` for template-based .docx generation
-- **Tauri Plugins**: `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-fs`
+- **Tauri Plugins**: `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-fs`, `@tauri-apps/plugin-updater`, `@tauri-apps/plugin-process`
 - **Linting/Formatting**: Biome (`@biomejs/biome`) — configured in `biome.json`
 
 ## Development Commands
@@ -126,16 +128,33 @@ import { useTheme } from "@/hooks/use-theme";
 
 ## shadcn/ui Components
 
-Components are installed in `src/components/ui/` via `pnpm dlx shadcn@latest add <component>`. Currently installed: accordion, badge, button, checkbox, input, label, progress, radio-group, select, switch, tabs, textarea, tooltip.
+Components are installed in `src/components/ui/` via `pnpm dlx shadcn@latest add <component>`. Currently installed: accordion, badge, button, checkbox, dialog, input, label, progress, radio-group, select, switch, tabs, textarea, tooltip.
 
 Configuration is in `components.json`. When adding new shadcn components, use:
 ```bash
 set NODE_OPTIONS=--max-old-space-size=4096 && pnpm dlx shadcn@latest add <component-name>
 ```
 
+## CI/CD
+
+### CI Workflow (`.github/workflows/ci.yml`)
+Runs on push to `main` and PRs targeting `main`. Steps: lint (Biome), test (Vitest), frontend build, and `cargo check` (Rust). Runs on `ubuntu-latest` only.
+
+### Release Workflow (`.github/workflows/release.yml`)
+Triggered by pushing a tag matching `v*`. Builds Tauri installers for Linux, macOS (aarch64), and Windows using `tauri-apps/tauri-action`. Automatically creates a GitHub Release with signed update bundles and `latest.json` for auto-update.
+
+**Required secrets**: `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+
+**Release process**:
+```bash
+# Update version in package.json and src-tauri/tauri.conf.json, then:
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## Current Status & Future Work
 
-- **Complete**: UI workflow, all panels functional, theme support, template-based docx generation with docxtemplater, OpenAPI parsing, DDL parsing, Tauri dialog/fs integration
+- **Complete**: UI workflow, all panels functional, theme support, template-based docx generation with docxtemplater, OpenAPI parsing, DDL parsing, Tauri dialog/fs integration, auto-update with sidebar notification and update dialog, CI/CD workflows
 - **Planned**:
   - Database connection-based schema import (currently DDL-only)
   - Additional template customization options
