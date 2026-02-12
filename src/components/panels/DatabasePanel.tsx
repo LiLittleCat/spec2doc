@@ -741,7 +741,7 @@ export function DatabasePanel() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium mb-4 block">
                       数据表 ({selectedTables.size}/{parsedSchema.tables.length})
                     </label>
                     <div className="border rounded-lg overflow-hidden">

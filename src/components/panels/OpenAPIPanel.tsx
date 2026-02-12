@@ -580,7 +580,7 @@ export function OpenAPIPanel() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label className="text-sm font-medium mb-4 block">
                       接口 ({selectedEndpoints.size}/{parsedSpec.endpoints.length})
                     </label>
                     <div className="border rounded-lg overflow-hidden">
