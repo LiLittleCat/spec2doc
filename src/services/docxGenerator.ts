@@ -111,16 +111,24 @@ export class OpenAPIDocGenerator {
       ? Object.keys(operation.requestBody.content)[0]
       : "application/json";
 
+    const pathParams = this.extractParameters(operation.parameters, "path");
+    const queryParams = this.extractParameters(operation.parameters, "query");
+    const headerParams = this.extractParameters(operation.parameters, "header");
+    const bodyParams = this.extractBodyParameters(operation.requestBody);
+
     return {
       summary: operation.summary || path,
       method,
       path,
       contentType,
       description: operation.description || operation.summary || "",
-      pathParams: this.extractParameters(operation.parameters, "path"),
-      queryParams: this.extractParameters(operation.parameters, "query"),
-      headerParams: this.extractParameters(operation.parameters, "header"),
-      bodyParams: this.extractBodyParameters(operation.requestBody),
+      pathParams,
+      queryParams,
+      headerParams,
+      bodyParams,
+      hasPathParams: pathParams.length > 0,
+      hasQueryParams: queryParams.length > 0,
+      hasBodyParams: bodyParams.length > 0,
       requestBodyExample: this.extractRequestBodyExample(operation.requestBody),
       responses: this.extractResponses(operation.responses),
     };
