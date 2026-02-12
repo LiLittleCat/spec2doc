@@ -1,4 +1,5 @@
 import { FileJson, Database, Settings, HelpCircle, Github } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import logo from "@/assets/logo.svg";
@@ -39,8 +40,8 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         {navItems.map((item) => (
           <Button
             key={item.id}
-            variant={activeTab === item.id ? "secondary" : "ghost"}
-            className="w-full justify-start"
+            variant="ghost"
+            className={`w-full justify-start ${activeTab === item.id ? "bg-foreground/10 text-foreground font-medium" : ""}`}
             onClick={() => onTabChange(item.id)}
           >
             <item.icon className="w-4 h-4" />
@@ -54,8 +55,8 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         {bottomItems.map((item) => (
           <Button
             key={item.id}
-            variant={activeTab === item.id ? "secondary" : "ghost"}
-            className="w-full justify-start"
+            variant="ghost"
+            className={`w-full justify-start ${activeTab === item.id ? "bg-foreground/10 text-foreground font-medium" : ""}`}
             onClick={() => onTabChange(item.id)}
           >
             <item.icon className="w-4 h-4" />
@@ -65,13 +66,11 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       </div>
 
       {/* Version & GitHub */}
-      <div className="p-4 border-t border-border flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">v1.0.0</p>
+      <div className="px-4 py-3 border-t border-border flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">v{__APP_VERSION__}</p>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-              <Github className="h-4 w-4" />
-            </a>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openUrl("https://github.com/LiLittleCat/spec2doc")}>
+            <Github className="h-4 w-4" />
           </Button>
           <ThemeToggle />
         </div>

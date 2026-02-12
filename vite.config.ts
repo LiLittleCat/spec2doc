@@ -2,6 +2,7 @@ import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
+import { version } from "./package.json";
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -26,6 +27,9 @@ export default defineConfig({
     watch: {
       ignored: ["**/src-tauri/**"],
     },
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
   },
   plugins: [react(), tailwindcss()],
   resolve: {

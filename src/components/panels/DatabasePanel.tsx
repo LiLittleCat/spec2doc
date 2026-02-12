@@ -518,8 +518,13 @@ export function DatabasePanel() {
   return (
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold tracking-tight">数据库文档生成</h2>
-        <p className="text-muted-foreground leading-relaxed">将数据库结构转换为标准数据字典文档</p>
+        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <Database className="w-7 h-7" />
+          <span>数据库文档生成</span>
+        </h2>
+        <p className="text-muted-foreground leading-relaxed">
+          导入数据库设计文档，或连接数据库提取结构，生成数据库设计文档。
+        </p>
       </div>
 
       {/* Step 1: Import Data */}

@@ -9,6 +9,7 @@ import {
   HelpCircle,
   Layers,
 } from "lucide-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -282,26 +283,20 @@ export function HelpPanel() {
         </div>
 
         <div className="pl-9 space-y-2">
-          <Button variant="ghost" className="justify-start" asChild>
-            <a href={GITHUB_REPOSITORY_URL} target="_blank" rel="noopener noreferrer">
-              <Github className="h-4 w-4" />
-              GitHub 仓库
-              <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
-            </a>
+          <Button variant="ghost" className="justify-start" onClick={() => openUrl(GITHUB_REPOSITORY_URL)}>
+            <Github className="h-4 w-4" />
+            GitHub 仓库
+            <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
           </Button>
-          <Button variant="ghost" className="justify-start" asChild>
-            <a href="https://swagger.io/specification/" target="_blank" rel="noopener noreferrer">
-              <FileText className="h-4 w-4" />
-              OpenAPI 规范文档
-              <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
-            </a>
+          <Button variant="ghost" className="justify-start" onClick={() => openUrl("https://spec.openapis.org/oas/latest.html")}>
+            <FileText className="h-4 w-4" />
+            OpenAPI 规范文档
+            <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
           </Button>
-          <Button variant="ghost" className="justify-start" asChild>
-            <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="h-4 w-4" />
-              报告问题
-              <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
-            </a>
+          <Button variant="ghost" className="justify-start" onClick={() => openUrl(GITHUB_ISSUES_URL)}>
+            <MessageCircle className="h-4 w-4" />
+            报告问题
+            <ExternalLink className="h-4 w-4 text-muted-foreground ml-auto" />
           </Button>
         </div>
       </section>
@@ -312,7 +307,7 @@ export function HelpPanel() {
       <section className="space-y-4">
         <div className="pl-9">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Spec2Doc v1.0.0</span>
+            <span>Spec2Doc v{__APP_VERSION__}</span>
             <span>基于 Tauri + React 构建</span>
           </div>
         </div>
