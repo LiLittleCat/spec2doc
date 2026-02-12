@@ -535,7 +535,7 @@ export function DatabasePanel() {
           </div>
           <h3 className="text-lg font-semibold">导入数据</h3>
           <span className="text-sm text-muted-foreground/60">·</span>
-          <p className="text-sm text-muted-foreground">通过 DDL 语句或直接连接数据库导入表结构</p>
+          <p className="text-sm text-muted-foreground">通过 DDL 语句或连接数据库导入表结构</p>
         </div>
 
         <div className="pl-9 space-y-5">
