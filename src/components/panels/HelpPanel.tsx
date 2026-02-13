@@ -18,9 +18,54 @@ import {
   MessageCircle,
   Zap,
 } from "lucide-react";
+import type { Components } from "react-markdown";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import openapiGuide from "../../../docs/openapi-template-guide.md?raw";
 
 const GITHUB_REPOSITORY_URL = "https://github.com/LiLittleCat/spec2doc";
 const GITHUB_ISSUES_URL = `${GITHUB_REPOSITORY_URL}/issues`;
+const GITHUB_GUIDE_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/openapi-template-guide.md`;
+
+const markdownComponents: Components = {
+  h1: () => null,
+  h2: ({ children }) => (
+    <h2 className="text-lg font-semibold mt-6 mb-3 pb-2 border-b">{children}</h2>
+  ),
+  h3: ({ children }) => <h3 className="text-base font-medium mt-4 mb-2">{children}</h3>,
+  p: ({ children }) => (
+    <p className="text-sm text-muted-foreground leading-relaxed mb-3">{children}</p>
+  ),
+  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+  code: ({ children, className }) => {
+    if (className?.includes("language-")) {
+      return <code className="text-xs font-mono">{children}</code>;
+    }
+    return <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">{children}</code>;
+  },
+  pre: ({ children }) => (
+    <pre className="rounded-lg border bg-muted/50 p-3 text-xs overflow-auto font-mono my-3">
+      {children}
+    </pre>
+  ),
+  table: ({ children }) => (
+    <table className="w-full text-sm border-collapse my-3">{children}</table>
+  ),
+  thead: ({ children }) => <thead>{children}</thead>,
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => <tr>{children}</tr>,
+  th: ({ children }) => (
+    <th className="border border-border bg-muted px-3 py-1.5 text-left font-medium">{children}</th>
+  ),
+  td: ({ children }) => <td className="border border-border px-3 py-1.5">{children}</td>,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-border pl-4 my-3 text-sm">{children}</blockquote>
+  ),
+  ul: ({ children }) => <ul className="text-sm pl-5 mb-3 space-y-1 list-disc">{children}</ul>,
+  ol: ({ children }) => <ol className="text-sm pl-5 mb-3 space-y-1 list-decimal">{children}</ol>,
+  li: ({ children }) => <li className="text-muted-foreground">{children}</li>,
+  hr: () => <hr className="border-t border-border my-6" />,
+};
 
 export function HelpPanel() {
   return (
@@ -112,64 +157,15 @@ export function HelpPanel() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="openapi">
-              <div className="space-y-6 pt-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm">
-                    自定义模板使用 <strong>docxtemplater</strong> 语法：变量用{" "}
-                    <code className="mx-1 rounded bg-muted-foreground/10 px-1.5 py-0.5 text-xs">{`{变量名}`}</code>
-                    ，循环用{" "}
-                    <code className="mx-1 rounded bg-muted-foreground/10 px-1.5 py-0.5 text-xs">{`{#列表}...{/列表}`}</code>
-                  </p>
+              <div className="pt-4 space-y-1">
+                <div className="flex justify-end">
+                  <Button variant="ghost" size="sm" onClick={() => openUrl(GITHUB_GUIDE_URL)}>
+                    <ExternalLink className="h-4 w-4" />在 GitHub 上查看完整文档
+                  </Button>
                 </div>
-
-                <div>
-                  <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      1
-                    </div>
-                    基础信息字段
-                  </h4>
-                  <div className="space-y-2 pl-7">
-                    <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{title}`}</code>
-                      <span className="text-muted-foreground">文档标题</span>
-                    </div>
-                    <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{version}`}</code>
-                      <span className="text-muted-foreground">版本号</span>
-                    </div>
-                    <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{description}`}</code>
-                      <span className="text-muted-foreground">文档描述</span>
-                    </div>
-                    <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{baseUrl}`}</code>
-                      <span className="text-muted-foreground">服务器地址</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      2
-                    </div>
-                    接口循环结构
-                  </h4>
-                  <div className="pl-7">
-                    <p className="text-sm text-muted-foreground mb-3">使用嵌套循环输出所有接口：</p>
-                    <pre className="rounded-lg border border-border bg-muted/50 p-3 text-xs overflow-auto font-mono">
-                      {`{#apiGroups}
-  {tagName}
-  {#apis}
-    {summary}
-    {method}
-    {path}
-  {/apis}
-{/apiGroups}`}
-                    </pre>
-                  </div>
-                </div>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {openapiGuide}
+                </ReactMarkdown>
               </div>
             </TabsContent>
             <TabsContent value="database">
@@ -189,11 +185,15 @@ export function HelpPanel() {
                   </h4>
                   <div className="space-y-2 pl-7">
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{databaseName}`}</code>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">
+                        {"{databaseName}"}
+                      </code>
                       <span className="text-muted-foreground">数据库名称</span>
                     </div>
                     <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">{`{tableCount}`}</code>
+                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">
+                        {"{tableCount}"}
+                      </code>
                       <span className="text-muted-foreground">数据表总数</span>
                     </div>
                   </div>
