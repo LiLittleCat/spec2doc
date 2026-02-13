@@ -14,8 +14,8 @@ export function ThemeToggle() {
   };
 
   const icon = {
-    light: <Moon className="h-4 w-4" />,
-    dark: <Sun className="h-4 w-4" />,
+    light: <Sun className="h-4 w-4" />,
+    dark: <Moon className="h-4 w-4" />,
     system: <Monitor className="h-4 w-4" />,
   }[theme ?? "system"];
 

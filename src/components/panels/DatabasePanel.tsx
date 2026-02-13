@@ -520,7 +520,7 @@ export function DatabasePanel() {
       <div className="space-y-2">
         <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           <Database className="w-7 h-7" />
-          <span>数据库文档生成</span>
+          <span>数据库</span>
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           导入数据库设计文档，或连接数据库提取结构，生成数据库设计文档。

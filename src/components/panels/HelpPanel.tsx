@@ -26,7 +26,10 @@ export function HelpPanel() {
   return (
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold">帮助与文档</h2>
+        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <HelpCircle className="w-7 h-7" />
+          <span>帮助</span>
+        </h2>
         <p className="text-muted-foreground">了解如何使用 Spec2Doc 并获取支持</p>
       </div>
 

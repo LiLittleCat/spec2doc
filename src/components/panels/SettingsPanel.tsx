@@ -206,7 +206,7 @@ export function SettingsPanel() {
           <div className="flex flex-col gap-3">
             <label className="text-sm font-medium">主题</label>
             <RadioGroup
-              value={theme}
+              value={theme ?? "system"}
               onValueChange={(value) => setTheme(value)}
               className="flex gap-4"
             >
