@@ -390,7 +390,8 @@ export function OpenAPIPanel() {
       setIsDone(true);
     } catch (err: any) {
       setGenerateStatus("error");
-      setError(`文档生成失败: ${err.message || String(err)}`);
+      const message = err.message || String(err);
+      setError(message.startsWith("模板") ? message : `文档生成失败: ${message}`);
     }
   };
 
@@ -854,9 +855,9 @@ export function OpenAPIPanel() {
           )}
 
           {error && generateStatus === "error" && (
-            <div className="flex items-center gap-2 text-destructive text-sm">
-              <AlertCircle className="h-4 w-4" />
-              {error}
+            <div className="flex gap-2 text-destructive text-sm">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <pre className="whitespace-pre-wrap font-sans">{error}</pre>
             </div>
           )}
 

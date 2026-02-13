@@ -3,6 +3,69 @@ import { readFile } from "@tauri-apps/plugin-fs";
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 
+interface DocxtemplaterSubError {
+  properties?: {
+    id?: string;
+    explanation?: string;
+    context?: string;
+    xtag?: string;
+  };
+}
+
+interface DocxtemplaterError extends Error {
+  properties?: {
+    errors?: DocxtemplaterSubError[];
+    id?: string;
+    explanation?: string;
+    context?: string;
+    xtag?: string;
+  };
+}
+
+const templateErrorMessages: Record<string, (tag: string) => string> = {
+  unclosed_tag: (tag) => `占位符 "{${tag}" 缺少关闭符号 "}"`,
+  unopened_tag: (tag) => `占位符 "${tag}}" 缺少开始符号 "{"`,
+  duplicate_open_tag: (tag) => `占位符 "${tag}" 出现了连续的 "{{"，缺少对应的 "}"`,
+  duplicate_close_tag: (tag) => `占位符 "${tag}" 出现了连续的 "}}"，缺少对应的 "{"`,
+  unclosed_loop: (tag) => `循环标签 "{#${tag}}" 缺少对应的结束标签 "{/${tag}}"`,
+  unopened_loop: (tag) => `结束标签 "{/${tag}}" 缺少对应的开始标签 "{#${tag}}"`,
+  closing_tag_does_not_match_opening_tag: (tag) =>
+    `结束标签 "{/${tag}}" 与开始标签不匹配，请检查标签名是否一致`,
+  raw_xml_tag_should_be_only_text_in_paragraph: (tag) =>
+    `原始 XML 标签 "{@${tag}}" 必须单独占一个段落`,
+};
+
+function formatTemplateError(error: DocxtemplaterError): string {
+  const subErrors = error.properties?.errors;
+
+  if (subErrors && subErrors.length > 0) {
+    const messages = subErrors.map((subError) => {
+      const id = subError.properties?.id;
+      const tag = subError.properties?.xtag || subError.properties?.context || "?";
+      const explanation = subError.properties?.explanation;
+
+      if (id && templateErrorMessages[id]) {
+        return templateErrorMessages[id](tag.trim());
+      }
+
+      if (explanation) {
+        return explanation;
+      }
+
+      return `未知模板错误: ${JSON.stringify(subError.properties || subError)}`;
+    });
+
+    const header = `模板语法错误（共 ${messages.length} 处）：`;
+    return `${header}\n${messages.map((m, i) => `${i + 1}. ${m}`).join("\n")}`;
+  }
+
+  if (error.properties?.explanation) {
+    return `模板语法错误：${error.properties.explanation}`;
+  }
+
+  return `模板错误：${error.message}`;
+}
+
 /**
  * 基于模板的 OpenAPI 文档生成器
  */
@@ -51,6 +114,19 @@ export class OpenAPIDocGenerator {
       return output;
     } catch (error) {
       console.error("模板生成失败:", error);
+
+      const docxError = error as DocxtemplaterError;
+      if (docxError.properties?.errors || docxError.properties?.id) {
+        throw new Error(formatTemplateError(docxError));
+      }
+
+      if (error instanceof Error) {
+        const msg = error.message;
+        if (msg.includes("not a valid zip") || msg.includes("Corrupted")) {
+          throw new Error("模板文件无效：不是有效的 .docx 文件，请检查文件是否损坏");
+        }
+        throw new Error(`模板生成失败: ${msg}`);
+      }
       throw new Error(`模板生成失败: ${error}`);
     }
   }
