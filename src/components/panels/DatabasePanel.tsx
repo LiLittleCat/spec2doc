@@ -27,9 +27,11 @@ import {
   readTemplateSettings,
   subscribeTemplateSettings,
 } from "@/lib/templateSettings";
+import { parseDDL, type ParsedSchema } from "@/services/ddlParser";
 import { documentService } from "@/services/documentService";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import {
   AlertCircle,
   Check,
@@ -48,190 +50,6 @@ import { useEffect, useState } from "react";
 
 type ParseStatus = "idle" | "parsing" | "success" | "error";
 type GenerateStatus = "idle" | "generating" | "success" | "error";
-
-interface Column {
-  name: string;
-  type: string;
-  nullable: boolean;
-  isPrimary: boolean;
-  isForeign: boolean;
-  comment?: string;
-  default?: string;
-}
-
-interface TableInfo {
-  id: string;
-  name: string;
-  comment?: string;
-  columns: Column[];
-  indexes?: { name: string; columns: string[]; unique: boolean }[];
-}
-
-interface ParsedSchema {
-  database: string;
-  tables: TableInfo[];
-}
-
-const mockTables: TableInfo[] = [
-  {
-    id: "t1",
-    name: "users",
-    comment: "用户表",
-    columns: [
-      {
-        name: "id",
-        type: "SERIAL",
-        nullable: false,
-        isPrimary: true,
-        isForeign: false,
-        comment: "用户ID",
-      },
-      {
-        name: "email",
-        type: "VARCHAR(255)",
-        nullable: false,
-        isPrimary: false,
-        isForeign: false,
-        comment: "邮箱地址",
-      },
-      {
-        name: "name",
-        type: "VARCHAR(100)",
-        nullable: true,
-        isPrimary: false,
-        isForeign: false,
-        comment: "用户名",
-      },
-      {
-        name: "created_at",
-        type: "TIMESTAMP",
-        nullable: false,
-        isPrimary: false,
-        isForeign: false,
-        comment: "创建时间",
-        default: "CURRENT_TIMESTAMP",
-      },
-    ],
-    indexes: [{ name: "users_email_idx", columns: ["email"], unique: true }],
-  },
-  {
-    id: "t2",
-    name: "posts",
-    comment: "文章表",
-    columns: [
-      {
-        name: "id",
-        type: "SERIAL",
-        nullable: false,
-        isPrimary: true,
-        isForeign: false,
-        comment: "文章ID",
-      },
-      {
-        name: "user_id",
-        type: "INTEGER",
-        nullable: false,
-        isPrimary: false,
-        isForeign: true,
-        comment: "用户ID",
-      },
-      {
-        name: "title",
-        type: "VARCHAR(255)",
-        nullable: false,
-        isPrimary: false,
-        isForeign: false,
-        comment: "标题",
-      },
-      {
-        name: "content",
-        type: "TEXT",
-        nullable: true,
-        isPrimary: false,
-        isForeign: false,
-        comment: "内容",
-      },
-      {
-        name: "published_at",
-        type: "TIMESTAMP",
-        nullable: true,
-        isPrimary: false,
-        isForeign: false,
-        comment: "发布时间",
-      },
-    ],
-  },
-  {
-    id: "t3",
-    name: "comments",
-    comment: "评论表",
-    columns: [
-      {
-        name: "id",
-        type: "SERIAL",
-        nullable: false,
-        isPrimary: true,
-        isForeign: false,
-        comment: "评论ID",
-      },
-      {
-        name: "post_id",
-        type: "INTEGER",
-        nullable: false,
-        isPrimary: false,
-        isForeign: true,
-        comment: "文章ID",
-      },
-      {
-        name: "user_id",
-        type: "INTEGER",
-        nullable: false,
-        isPrimary: false,
-        isForeign: true,
-        comment: "用户ID",
-      },
-      {
-        name: "content",
-        type: "TEXT",
-        nullable: false,
-        isPrimary: false,
-        isForeign: false,
-        comment: "评论内容",
-      },
-    ],
-  },
-  {
-    id: "t4",
-    name: "categories",
-    comment: "分类表",
-    columns: [
-      {
-        name: "id",
-        type: "SERIAL",
-        nullable: false,
-        isPrimary: true,
-        isForeign: false,
-        comment: "分类ID",
-      },
-      {
-        name: "name",
-        type: "VARCHAR(100)",
-        nullable: false,
-        isPrimary: false,
-        isForeign: false,
-        comment: "分类名称",
-      },
-      {
-        name: "parent_id",
-        type: "INTEGER",
-        nullable: true,
-        isPrimary: false,
-        isForeign: true,
-        comment: "父分类ID",
-      },
-    ],
-  },
-];
 
 export function DatabasePanel() {
   const [ddlContent, setDdlContent] = useState("");
@@ -354,56 +172,46 @@ export function DatabasePanel() {
     setParseStatus("parsing");
     setError(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const schema: ParsedSchema = {
-      database: "示例数据库",
-      tables: mockTables,
-    };
-    setParsedSchema(schema);
-    setFileName(getDefaultFileNameFromDatabase(schema.database));
-    setSelectedTables(new Set(mockTables.map((t) => t.id)));
-    setParseStatus("success");
+    try {
+      let textToParse = ddlContent.trim();
+      if (!textToParse && filePath) {
+        textToParse = await readTextFile(filePath);
+      }
+      const schema = parseDDL(textToParse);
+      setParsedSchema(schema);
+      setFileName(getDefaultFileNameFromDatabase(schema.database));
+      setSelectedTables(new Set(schema.tables.map((t) => t.id)));
+      setParseStatus("success");
+    } catch (err: any) {
+      setError(`DDL 解析失败: ${err.message || String(err)}`);
+      setParseStatus("error");
+    }
   };
 
   const handleConnect = async () => {
-    if (!connectionConfig.host || !connectionConfig.database) {
-      setError("请填写必要的连接信息");
-      setParseStatus("error");
-      return;
-    }
-
-    setParseStatus("parsing");
-    setError(null);
-
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const schema: ParsedSchema = {
-      database: connectionConfig.database,
-      tables: mockTables,
-    };
-    setParsedSchema(schema);
-    setFileName(getDefaultFileNameFromDatabase(schema.database));
-    setSelectedTables(new Set(mockTables.map((t) => t.id)));
-    setParseStatus("success");
+    setError("数据库连接功能正在开发中，敬请期待。当前请使用 DDL 语句导入。");
+    setParseStatus("error");
   };
 
-  const handleFileSelect = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".sql,.ddl,.txt";
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const text = await file.text();
-        setDdlContent(text);
-        setFilePath(file.name);
+  const handleFileSelect = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "DDL 文件", extensions: ["sql", "ddl", "txt"] }],
+      });
+      if (selected) {
+        const selectedPath = selected as string;
+        const content = await readTextFile(selectedPath);
+        setFilePath(selectedPath);
+        setDdlContent(content);
         setParseStatus("idle");
         setParsedSchema(null);
         setFileName("");
       }
-    };
-    input.click();
+    } catch (err) {
+      setError(`文件选择失败: ${String(err)}`);
+      setParseStatus("error");
+    }
   };
 
   const handleSelectOutputDir = async () => {
@@ -422,17 +230,18 @@ export function DatabasePanel() {
     }
   };
 
-  const handleTemplateFileSelect = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".docx";
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        setCustomTemplatePath(file.name);
+  const handleTemplateFileSelect = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "Word 模板", extensions: ["docx"] }],
+      });
+      if (selected) {
+        setCustomTemplatePath(selected as string);
       }
-    };
-    input.click();
+    } catch (err) {
+      setError(`模板选择失败: ${String(err)}`);
+    }
   };
 
   const handleGenerate = async () => {
