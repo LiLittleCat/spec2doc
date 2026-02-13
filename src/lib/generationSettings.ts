@@ -6,7 +6,7 @@ const GENERATION_SETTINGS_STORAGE_KEY = "spec2doc.generation-settings";
 const GENERATION_SETTINGS_UPDATED_EVENT = "spec2doc:generation-settings-updated";
 
 const defaultGenerationSettings: GenerationSettings = {
-  repeatTableHeaderOnPageBreak: true,
+  repeatTableHeaderOnPageBreak: false,
 };
 
 const normalizeGenerationSettings = (
