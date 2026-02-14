@@ -35,6 +35,8 @@ import { readTextFile } from "@tauri-apps/plugin-fs";
 import {
   AlertCircle,
   Check,
+  ChevronDown,
+  ChevronRight,
   CircleHelp,
   Database,
   File,
@@ -64,6 +66,16 @@ export function DatabasePanel() {
     database: "",
     username: "",
     password: "",
+  });
+
+  const [sshEnabled, setSshEnabled] = useState(false);
+  const [sshConfig, setSshConfig] = useState({
+    host: "",
+    port: "22",
+    username: "",
+    authType: "password" as "password" | "privateKey",
+    password: "",
+    privateKey: "",
   });
 
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set());
@@ -195,6 +207,20 @@ export function DatabasePanel() {
   const handleConnect = async () => {
     setError("数据库连接功能正在开发中，敬请期待。当前请使用 DDL 语句导入。");
     setParseStatus("error");
+  };
+
+  const handleSshKeySelect = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "私钥文件", extensions: ["pem", "key", "ppk", "*"] }],
+      });
+      if (selected) {
+        setSshConfig({ ...sshConfig, privateKey: selected as string });
+      }
+    } catch (err) {
+      setError(`文件选择失败: ${String(err)}`);
+    }
   };
 
   const handleFileSelect = async () => {
@@ -478,7 +504,8 @@ export function DatabasePanel() {
 
             <TabsContent value="connection">
               <div className="mt-5 space-y-5">
-                <div className="grid grid-cols-2 gap-5">
+                {/* Row 1: Type + Host + Port */}
+                <div className="grid grid-cols-[1fr_2fr_120px] gap-4">
                   <div className="flex flex-col gap-2">
                     <label htmlFor="db-type" className="text-sm font-medium">
                       数据库类型
@@ -501,6 +528,19 @@ export function DatabasePanel() {
                     </Select>
                   </div>
                   <div className="flex flex-col gap-2">
+                    <label htmlFor="db-host" className="text-sm font-medium">
+                      主机地址
+                    </label>
+                    <Input
+                      id="db-host"
+                      placeholder="localhost"
+                      value={connectionConfig.host}
+                      onChange={(e) =>
+                        setConnectionConfig({ ...connectionConfig, host: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
                     <label htmlFor="db-port" className="text-sm font-medium">
                       端口
                     </label>
@@ -515,35 +555,21 @@ export function DatabasePanel() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="db-host" className="text-sm font-medium">
-                    主机地址
-                  </label>
-                  <Input
-                    id="db-host"
-                    placeholder="localhost"
-                    value={connectionConfig.host}
-                    onChange={(e) =>
-                      setConnectionConfig({ ...connectionConfig, host: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="db-name" className="text-sm font-medium">
-                    数据库名称
-                  </label>
-                  <Input
-                    id="db-name"
-                    placeholder="mydb"
-                    value={connectionConfig.database}
-                    onChange={(e) =>
-                      setConnectionConfig({ ...connectionConfig, database: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                {/* Row 2: Database + Username + Password */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="db-name" className="text-sm font-medium">
+                      数据库名称
+                    </label>
+                    <Input
+                      id="db-name"
+                      placeholder="mydb"
+                      value={connectionConfig.database}
+                      onChange={(e) =>
+                        setConnectionConfig({ ...connectionConfig, database: e.target.value })
+                      }
+                    />
+                  </div>
                   <div className="flex flex-col gap-2">
                     <label htmlFor="db-user" className="text-sm font-medium">
                       用户名
@@ -571,6 +597,133 @@ export function DatabasePanel() {
                       }
                     />
                   </div>
+                </div>
+
+                {/* SSH Tunnel - Collapsible */}
+                <div className="border rounded-lg">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 w-full px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-lg"
+                    onClick={() => setSshEnabled(!sshEnabled)}
+                  >
+                    {sshEnabled ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    SSH 通道
+                    {sshEnabled && sshConfig.host && (
+                      <span className="text-xs text-muted-foreground font-normal ml-1">
+                        ({sshConfig.host})
+                      </span>
+                    )}
+                  </button>
+                  {sshEnabled && (
+                    <div className="px-4 pb-4 space-y-4 border-t">
+                      {/* SSH Row 1: Host + Port */}
+                      <div className="grid grid-cols-[1fr_120px] gap-4 pt-4">
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="ssh-host" className="text-sm font-medium">
+                            SSH 主机
+                          </label>
+                          <Input
+                            id="ssh-host"
+                            placeholder="ssh.example.com"
+                            value={sshConfig.host}
+                            onChange={(e) =>
+                              setSshConfig({ ...sshConfig, host: e.target.value })
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="ssh-port" className="text-sm font-medium">
+                            SSH 端口
+                          </label>
+                          <Input
+                            id="ssh-port"
+                            placeholder="22"
+                            value={sshConfig.port}
+                            onChange={(e) =>
+                              setSshConfig({ ...sshConfig, port: e.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                      {/* SSH Row 2: Username + Auth Type */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="ssh-username" className="text-sm font-medium">
+                            SSH 用户名
+                          </label>
+                          <Input
+                            id="ssh-username"
+                            placeholder="root"
+                            value={sshConfig.username}
+                            onChange={(e) =>
+                              setSshConfig({ ...sshConfig, username: e.target.value })
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="ssh-auth-type" className="text-sm font-medium">
+                            认证方式
+                          </label>
+                          <Select
+                            value={sshConfig.authType}
+                            onValueChange={(value: "password" | "privateKey") =>
+                              setSshConfig({ ...sshConfig, authType: value })
+                            }
+                          >
+                            <SelectTrigger id="ssh-auth-type">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="password">密码</SelectItem>
+                              <SelectItem value="privateKey">私钥文件</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {/* SSH Row 3: Password or Private Key */}
+                      {sshConfig.authType === "password" ? (
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="ssh-password" className="text-sm font-medium">
+                            SSH 密码
+                          </label>
+                          <Input
+                            id="ssh-password"
+                            type="password"
+                            placeholder="••••••••"
+                            value={sshConfig.password}
+                            onChange={(e) =>
+                              setSshConfig({ ...sshConfig, password: e.target.value })
+                            }
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <label htmlFor="ssh-private-key" className="text-sm font-medium">
+                            私钥文件路径
+                          </label>
+                          <div className="flex gap-3">
+                            <Input
+                              id="ssh-private-key"
+                              placeholder="选择私钥文件..."
+                              value={sshConfig.privateKey}
+                              onChange={(e) =>
+                                setSshConfig({ ...sshConfig, privateKey: e.target.value })
+                              }
+                              className="flex-1"
+                            />
+                            <Button variant="outline" onClick={handleSshKeySelect}>
+                              <File className="h-4 w-4" />
+                              浏览
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <Button onClick={handleConnect} disabled={parseStatus === "parsing"}>
