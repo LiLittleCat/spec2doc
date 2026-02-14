@@ -79,6 +79,8 @@ export function DatabasePanel() {
 
   const [generateStatus, setGenerateStatus] = useState<GenerateStatus>("idle");
   const [generateProgress, setGenerateProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState("");
+  const [generatedFilePath, setGeneratedFilePath] = useState("");
 
   useEffect(() => {
     let isCancelled = false;
@@ -171,6 +173,8 @@ export function DatabasePanel() {
 
     setParseStatus("parsing");
     setError(null);
+    setGenerateStatus("idle");
+    setGeneratedFilePath("");
 
     try {
       let textToParse = ddlContent.trim();
@@ -207,6 +211,8 @@ export function DatabasePanel() {
         setParseStatus("idle");
         setParsedSchema(null);
         setFileName("");
+        setGenerateStatus("idle");
+        setGeneratedFilePath("");
       }
     } catch (err) {
       setError(`文件选择失败: ${String(err)}`);
@@ -224,6 +230,8 @@ export function DatabasePanel() {
 
       if (selected) {
         setOutputPath(selected as string);
+        setGenerateStatus("idle");
+        setGeneratedFilePath("");
       }
     } catch (err) {
       setError(`路径选择失败: ${String(err)}`);
@@ -238,6 +246,8 @@ export function DatabasePanel() {
       });
       if (selected) {
         setCustomTemplatePath(selected as string);
+        setGenerateStatus("idle");
+        setGeneratedFilePath("");
       }
     } catch (err) {
       setError(`模板选择失败: ${String(err)}`);
@@ -245,6 +255,16 @@ export function DatabasePanel() {
   };
 
   const handleGenerate = async () => {
+    if (!parsedSchema) {
+      setError("请先解析 DDL");
+      return;
+    }
+
+    if (!outputPath) {
+      setError("请先选择输出路径");
+      return;
+    }
+
     const trimmedFileName = fileName.trim();
     const normalizedFileName = trimmedFileName
       ? trimmedFileName.endsWith(".docx")
@@ -252,16 +272,51 @@ export function DatabasePanel() {
         : `${trimmedFileName}.docx`
       : getDefaultFileNameFromDatabase(parsedSchema?.database);
 
+    const separator =
+      outputPath.endsWith("\\") || outputPath.endsWith("/")
+        ? ""
+        : outputPath.includes("\\")
+          ? "\\"
+          : "/";
+    const fullOutputPath = `${outputPath}${separator}${normalizedFileName}`;
+
     setFileName(normalizedFileName);
+    setGeneratedFilePath(fullOutputPath);
     setGenerateStatus("generating");
     setGenerateProgress(0);
+    setProgressMessage("");
+    setError(null);
 
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setGenerateProgress(i);
+    try {
+      const effectiveTemplatePath =
+        templateType === "custom" ? customTemplatePath : builtInTemplatePath || undefined;
+
+      await documentService.generateDbDocument(
+        parsedSchema,
+        selectedTables,
+        fullOutputPath,
+        effectiveTemplatePath,
+        (message, percent) => {
+          setProgressMessage(message);
+          setGenerateProgress(percent);
+        },
+      );
+
+      setGenerateStatus("success");
+    } catch (err: any) {
+      setGenerateStatus("error");
+      const message = err.message || String(err);
+      setError(message.startsWith("模板") ? message : `文档生成失败: ${message}`);
     }
+  };
 
-    setGenerateStatus("success");
+  const handleOpenFolder = async () => {
+    if (!generatedFilePath) return;
+    try {
+      await invoke("reveal_in_file_manager", { path: generatedFilePath });
+    } catch (err) {
+      setError(`打开文件夹失败: ${String(err)}`);
+    }
   };
 
   const handleOpenBuiltInTemplateDir = async () => {
@@ -278,6 +333,11 @@ export function DatabasePanel() {
     }
   };
 
+  const resetGenerateState = () => {
+    setGenerateStatus("idle");
+    setGeneratedFilePath("");
+  };
+
   const toggleTable = (id: string) => {
     const newSet = new Set(selectedTables);
     if (newSet.has(id)) {
@@ -286,16 +346,19 @@ export function DatabasePanel() {
       newSet.add(id);
     }
     setSelectedTables(newSet);
+    resetGenerateState();
   };
 
   const selectAllTables = () => {
     if (parsedSchema) {
       setSelectedTables(new Set(parsedSchema.tables.map((t) => t.id)));
+      resetGenerateState();
     }
   };
 
   const deselectAllTables = () => {
     setSelectedTables(new Set());
+    resetGenerateState();
   };
 
   const canGenerate =
@@ -392,6 +455,8 @@ export function DatabasePanel() {
                     setParseStatus("idle");
                     setParsedSchema(null);
                     setFileName("");
+                    setGenerateStatus("idle");
+                    setGeneratedFilePath("");
                   }}
                 />
 
@@ -591,24 +656,32 @@ export function DatabasePanel() {
                                     onCheckedChange={() => toggleTable(table.id)}
                                     onClick={(e) => e.stopPropagation()}
                                   />
-                                  <Table2 className="h-4 w-4 text-muted-foreground" />
-                                  <span className="font-mono font-medium">{table.name}</span>
+                                  <Table2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                  <span className="font-mono font-medium truncate">{table.name}</span>
                                   {table.comment && (
-                                    <span className="text-sm text-muted-foreground ml-auto mr-2">
+                                    <span className="text-sm text-muted-foreground truncate">
                                       {table.comment}
                                     </span>
                                   )}
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge variant="secondary" className="text-xs ml-auto shrink-0">
                                     {table.columns.length} 字段
                                   </Badge>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent>
                                 <div className="px-4 py-3 bg-muted/50">
-                                  <table className="w-full text-sm">
+                                  <table className="w-full text-sm table-fixed">
+                                    <colgroup>
+                                      <col className="w-8" />
+                                      <col className="w-[22%]" />
+                                      <col className="w-[18%]" />
+                                      <col className="w-[8%]" />
+                                      <col className="w-[18%]" />
+                                      <col />
+                                    </colgroup>
                                     <thead>
                                       <tr className="text-left text-muted-foreground border-b">
-                                        <th className="pb-2 font-medium w-8"></th>
+                                        <th className="pb-2 font-medium"></th>
                                         <th className="pb-2 font-medium">字段名</th>
                                         <th className="pb-2 font-medium">类型</th>
                                         <th className="pb-2 font-medium">可空</th>
@@ -627,17 +700,17 @@ export function DatabasePanel() {
                                               <Key className="h-3 w-3 text-blue-500" />
                                             )}
                                           </td>
-                                          <td className="py-2 font-mono">{col.name}</td>
-                                          <td className="py-2 text-muted-foreground font-mono text-xs">
+                                          <td className="py-2 font-mono break-all">{col.name}</td>
+                                          <td className="py-2 text-muted-foreground font-mono text-xs break-all">
                                             {col.type}
                                           </td>
                                           <td className="py-2 text-muted-foreground">
                                             {col.nullable ? "YES" : "NO"}
                                           </td>
-                                          <td className="py-2 text-muted-foreground font-mono text-xs">
+                                          <td className="py-2 text-muted-foreground font-mono text-xs break-all">
                                             {col.default || "-"}
                                           </td>
-                                          <td className="py-2 text-muted-foreground">
+                                          <td className="py-2 text-muted-foreground break-words">
                                             {col.comment || "-"}
                                           </td>
                                         </tr>
@@ -690,7 +763,11 @@ export function DatabasePanel() {
         <div className="pl-9 space-y-5">
           <RadioGroup
             value={templateType}
-            onValueChange={(value) => setTemplateType(value as "builtin" | "custom")}
+            onValueChange={(value) => {
+              setTemplateType(value as "builtin" | "custom");
+              setGenerateStatus("idle");
+              setGeneratedFilePath("");
+            }}
             className="gap-4"
           >
             <div className="flex items-center space-x-2">
@@ -760,7 +837,11 @@ export function DatabasePanel() {
           <div className="flex gap-3">
             <Input
               value={outputPath}
-              onChange={(e) => setOutputPath(e.target.value)}
+              onChange={(e) => {
+                setOutputPath(e.target.value);
+                setGenerateStatus("idle");
+                setGeneratedFilePath("");
+              }}
               placeholder="选择输出目录..."
               className="flex-1"
             />
@@ -777,7 +858,11 @@ export function DatabasePanel() {
             <Input
               id="db-filename"
               value={fileName}
-              onChange={(e) => setFileName(e.target.value)}
+              onChange={(e) => {
+                setFileName(e.target.value);
+                setGenerateStatus("idle");
+                setGeneratedFilePath("");
+              }}
             />
           </div>
         </div>
@@ -829,7 +914,19 @@ export function DatabasePanel() {
                 <span>{generateProgress}%</span>
               </div>
               <Progress value={generateProgress} />
-              <p className="text-sm text-muted-foreground">正在生成文档，请稍候...</p>
+              <p className="text-sm text-muted-foreground">
+                {progressMessage || "正在生成文档，请稍候..."}
+              </p>
+            </div>
+          )}
+
+          {generateStatus === "error" && error && (
+            <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/30">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-medium">生成失败</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{error}</p>
             </div>
           )}
 
@@ -839,8 +936,8 @@ export function DatabasePanel() {
                 <Check className="h-5 w-5" />
                 <span className="font-medium">文档生成成功!</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                文件已保存至: {outputPath}/{fileName}
+              <p className="text-sm text-muted-foreground mt-2 break-all">
+                文件已保存至: {generatedFilePath}
               </p>
             </div>
           )}
@@ -865,7 +962,7 @@ export function DatabasePanel() {
               )}
             </Button>
             {generateStatus === "success" && (
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleOpenFolder}>
                 <FolderOpen className="h-4 w-4" />
                 打开目录
               </Button>

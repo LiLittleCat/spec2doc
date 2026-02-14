@@ -1,9 +1,10 @@
+import type { ParsedSchema } from "@/services/ddlParser";
 import { invoke } from "@tauri-apps/api/core";
 import { resolveResource } from "@tauri-apps/api/path";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readFile, writeFile } from "@tauri-apps/plugin-fs";
 import * as yaml from "js-yaml";
-import { OpenAPIDocGenerator } from "./docxGenerator";
+import { DatabaseDocGenerator, OpenAPIDocGenerator } from "./docxGenerator";
 
 /**
  * 文档生成服务
@@ -198,6 +199,42 @@ export class DocumentService {
       const uint8Array = new Uint8Array(arrayBuffer);
 
       // 保存文件
+      await writeFile(outputPath, uint8Array);
+
+      onProgress?.("文档生成完成！", 100);
+    } catch (error) {
+      console.error("文档生成失败:", error);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error(String(error));
+    }
+  }
+
+  /**
+   * 生成数据库文档
+   */
+  async generateDbDocument(
+    schema: ParsedSchema,
+    selectedTableIds: Set<string>,
+    outputPath: string,
+    templatePath?: string,
+    onProgress?: (message: string, percent: number) => void,
+  ): Promise<void> {
+    try {
+      onProgress?.("正在准备数据...", 10);
+
+      const effectiveTemplatePath = templatePath || (await this.getBuiltInDbTemplatePath());
+      const generator = new DatabaseDocGenerator(schema, selectedTableIds);
+
+      onProgress?.("正在生成文档内容...", 50);
+
+      const blob = await generator.generateFromTemplate(effectiveTemplatePath);
+
+      onProgress?.("正在保存文档...", 80);
+
+      const arrayBuffer = await blob.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
       await writeFile(outputPath, uint8Array);
 
       onProgress?.("文档生成完成！", 100);

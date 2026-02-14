@@ -1,4 +1,5 @@
 import { readGenerationSettings } from "@/lib/generationSettings";
+import type { ParsedSchema } from "@/services/ddlParser";
 import { readFile } from "@tauri-apps/plugin-fs";
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
@@ -488,6 +489,111 @@ export class OpenAPIDocGenerator {
   /**
    * 移除 Word 表格跨页重复表头标记（w:tblHeader）
    */
+  private removeRepeatTableHeaders(zip: PizZip): void {
+    const tableHeaderSelfClosingPattern = /<w:tblHeader(?:\s+[^>]*)?\/>/g;
+    const tableHeaderOpenClosePattern = /<w:tblHeader(?:\s+[^>]*)?>\s*<\/w:tblHeader>/g;
+
+    Object.keys(zip.files)
+      .filter((fileName) => fileName.startsWith("word/") && fileName.endsWith(".xml"))
+      .forEach((fileName) => {
+        const file = zip.file(fileName);
+        if (!file) return;
+
+        const xml = file.asText();
+        const patchedXml = xml
+          .replace(tableHeaderSelfClosingPattern, "")
+          .replace(tableHeaderOpenClosePattern, "");
+
+        if (patchedXml !== xml) {
+          zip.file(fileName, patchedXml);
+        }
+      });
+  }
+}
+
+/**
+ * 基于模板的数据库文档生成器
+ */
+export class DatabaseDocGenerator {
+  constructor(
+    private schema: ParsedSchema,
+    private selectedTableIds: Set<string>,
+  ) {}
+
+  async generateFromTemplate(templatePath: string): Promise<Blob> {
+    try {
+      const templateContent = await readFile(templatePath);
+      const templateBuffer = templateContent.buffer;
+
+      const zip = new PizZip(templateBuffer);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+      });
+
+      const templateData = this.prepareTemplateData();
+      doc.render(templateData);
+
+      const generationSettings = readGenerationSettings();
+      if (!generationSettings.repeatTableHeaderOnPageBreak) {
+        this.removeRepeatTableHeaders(doc.getZip());
+      }
+
+      const output = doc.getZip().generate({
+        type: "blob",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+
+      return output;
+    } catch (error) {
+      console.error("模板生成失败:", error);
+
+      const docxError = error as DocxtemplaterError;
+      if (docxError.properties?.errors || docxError.properties?.id) {
+        throw new Error(formatTemplateError(docxError));
+      }
+
+      if (error instanceof Error) {
+        const msg = error.message;
+        if (msg.includes("not a valid zip") || msg.includes("Corrupted")) {
+          throw new Error("模板文件无效：不是有效的 .docx 文件，请检查文件是否损坏");
+        }
+        throw new Error(`模板生成失败: ${msg}`);
+      }
+      throw new Error(`模板生成失败: ${error}`);
+    }
+  }
+
+  private prepareTemplateData() {
+    const tables = this.schema.tables
+      .filter((t) => this.selectedTableIds.has(t.id))
+      .map((t) => ({
+        name: t.name,
+        comment: t.comment || "",
+        hasIndexes: (t.indexes?.length ?? 0) > 0,
+        columns: t.columns.map((c) => ({
+          colName: c.name,
+          colType: c.type,
+          colNullable: c.nullable ? "是" : "否",
+          colIsPrimary: c.isPrimary ? "是" : "否",
+          colIsForeign: c.isForeign ? "是" : "否",
+          colDefault: c.default || "-",
+          colComment: c.comment || "-",
+        })),
+        indexes: (t.indexes ?? []).map((i) => ({
+          idxName: i.name,
+          idxType: i.unique ? "唯一索引" : "普通索引",
+          idxColumns: i.columns.join(", "),
+        })),
+      }));
+
+    return {
+      database: this.schema.database,
+      updateDate: new Date().toLocaleDateString("zh-CN"),
+      tables,
+    };
+  }
+
   private removeRepeatTableHeaders(zip: PizZip): void {
     const tableHeaderSelfClosingPattern = /<w:tblHeader(?:\s+[^>]*)?\/>/g;
     const tableHeaderOpenClosePattern = /<w:tblHeader(?:\s+[^>]*)?>\s*<\/w:tblHeader>/g;

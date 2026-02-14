@@ -21,11 +21,13 @@ import {
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import databaseGuide from "../../../docs/database-template-guide.md?raw";
 import openapiGuide from "../../../docs/openapi-template-guide.md?raw";
 
 const GITHUB_REPOSITORY_URL = "https://github.com/LiLittleCat/spec2doc";
 const GITHUB_ISSUES_URL = `${GITHUB_REPOSITORY_URL}/issues`;
-const GITHUB_GUIDE_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/openapi-template-guide.md`;
+const GITHUB_API_GUIDE_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/openapi-template-guide.md`;
+const GITHUB_DB_GUIDE_URL = `${GITHUB_REPOSITORY_URL}/blob/main/docs/database-template-guide.md`;
 
 const markdownComponents: Components = {
   h1: () => null,
@@ -44,9 +46,7 @@ const markdownComponents: Components = {
     return <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">{children}</code>;
   },
   pre: ({ children }) => (
-    <pre className="rounded-lg border bg-muted/50 p-3 text-xs overflow-auto font-mono my-3">
-      {children}
-    </pre>
+    <pre className="rounded-lg border bg-muted/50 p-3 text-xs overflow-auto font-mono my-3">{children}</pre>
   ),
   table: ({ children }) => (
     <table className="w-full text-sm border-collapse my-3">{children}</table>
@@ -159,7 +159,7 @@ export function HelpPanel() {
             <TabsContent value="openapi">
               <div className="pt-4 space-y-1">
                 <div className="flex justify-end">
-                  <Button variant="ghost" size="sm" onClick={() => openUrl(GITHUB_GUIDE_URL)}>
+                  <Button variant="ghost" size="sm" onClick={() => openUrl(GITHUB_API_GUIDE_URL)}>
                     <ExternalLink className="h-4 w-4" />在 GitHub 上查看完整文档
                   </Button>
                 </div>
@@ -169,53 +169,15 @@ export function HelpPanel() {
               </div>
             </TabsContent>
             <TabsContent value="database">
-              <div className="space-y-6 pt-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm">
-                    数据库模板用于生成数据字典文档，支持表结构、字段、索引等信息的展示
-                  </p>
+              <div className="pt-4 space-y-1">
+                <div className="flex justify-end">
+                  <Button variant="ghost" size="sm" onClick={() => openUrl(GITHUB_DB_GUIDE_URL)}>
+                    <ExternalLink className="h-4 w-4" />在 GitHub 上查看完整文档
+                  </Button>
                 </div>
-
-                <div>
-                  <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      1
-                    </div>
-                    基础信息字段
-                  </h4>
-                  <div className="space-y-2 pl-7">
-                    <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">
-                        {"{databaseName}"}
-                      </code>
-                      <span className="text-muted-foreground">数据库名称</span>
-                    </div>
-                    <div className="flex items-start gap-3 text-sm">
-                      <code className="min-w-[140px] rounded bg-muted px-2 py-1 font-mono text-xs">
-                        {"{tableCount}"}
-                      </code>
-                      <span className="text-muted-foreground">数据表总数</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                      2
-                    </div>
-                    表循环结构
-                  </h4>
-                  <div className="pl-7">
-                    <pre className="rounded-lg border border-border bg-muted/50 p-3 text-xs overflow-auto font-mono">
-                      {`{#tables}
-  {tableName}
-  {comment}
-  {columnCount}
-{/tables}`}
-                    </pre>
-                  </div>
-                </div>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {databaseGuide}
+                </ReactMarkdown>
               </div>
             </TabsContent>
           </Tabs>
