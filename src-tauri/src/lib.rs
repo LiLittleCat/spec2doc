@@ -1,3 +1,6 @@
+mod commands;
+mod db;
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -75,7 +78,9 @@ pub fn run() {
             greet,
             read_file_binary,
             write_file_binary,
-            reveal_in_file_manager
+            reveal_in_file_manager,
+            commands::test_db_connection,
+            commands::fetch_db_schema
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
