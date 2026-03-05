@@ -35,7 +35,7 @@ spec2doc/
     capabilities/         # Tauri permission capabilities
     tauri.conf.json       # Tauri configuration
     Cargo.toml            # Rust dependencies
-  assets/                 # Templates (.docx) and generation scripts (.cjs)
+  assets/                 # Document templates (.docx)
   public/                 # Static assets
 ```
 
@@ -44,8 +44,8 @@ spec2doc/
 - **Main Layout**: `src/pages/Index.tsx` uses tab-based navigation with a `Sidebar` component
 - **Four Main Panels**:
   - `OpenAPIPanel`: OpenAPI spec import (paste/file), parsing, and document generation
-  - `DatabasePanel`: Database structure import (DDL), parsing, and document generation
-  - `SettingsPanel`: Theme, output directory, template paths, generation options
+  - `DatabasePanel`: Database structure import (DDL/connection), parsing, and document generation; SSH tunnel with independent toggle/expand
+  - `SettingsPanel`: Theme, output directory, template paths, generation options, about section with version info and update check
   - `HelpPanel`: Quick start guide, template reference, FAQ
 - **UI Library**: shadcn/ui (Radix UI primitives) with Tailwind CSS v4
 - **Styling**: Tailwind CSS v4 via `@tailwindcss/vite` plugin (no tailwind.config.ts), CSS variables for theming in `src/index.css`
@@ -55,13 +55,22 @@ spec2doc/
 
 ### Tauri Configuration
 
+- **Product Name**: Spec2Doc
 - **Window**: 1200x800 default, 800x600 minimum
-- **Bundled Resources**: `assets/接口文档模板.docx`, `assets/数据库设计文档模板.docx`
+- **Bundle Target**: NSIS installer (Windows)
+- **Bundled Resources**: Templates are mapped to install root via resource map in `tauri.conf.json`:
+  ```json
+  "resources": {
+    "../assets/接口文档模板.docx": "接口文档模板.docx",
+    "../assets/数据库设计文档模板.docx": "数据库设计文档模板.docx"
+  }
+  ```
 - **Capabilities** (defined in `src-tauri/capabilities/default.json`):
   - `dialog`: File open/save dialogs
   - `fs`: File system access (read/write for document, desktop, download, home, resource scopes)
   - `updater`: Auto-update support
   - `process`: App restart (for applying updates)
+- **Updater**: Configured with minisign public key; signing keys stored in `.tauri/` (gitignored)
 - **Security**: CSP is disabled (`null`)
 
 ### Key Dependencies
@@ -93,7 +102,9 @@ pnpm build:dev
 # Production build
 pnpm build
 
-# Tauri desktop app build
+# Tauri desktop app build (requires signing key env vars)
+$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content .tauri\spec2doc.key -Raw
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = "your-password"
 pnpm tauri build
 ```
 
@@ -147,16 +158,18 @@ Triggered by pushing a tag matching `v*`. Builds Tauri installers for Linux, mac
 
 **Release process**:
 ```bash
-# Update version in package.json and src-tauri/tauri.conf.json, then:
+# 1. Update version in package.json and src-tauri/tauri.conf.json
+# 2. Commit and push
+# 3. Tag and push
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
 ## Current Status & Future Work
 
-- **Complete**: UI workflow, all panels functional, theme support, template-based docx generation with docxtemplater, OpenAPI parsing, DDL parsing, Tauri dialog/fs integration, auto-update with sidebar notification and update dialog, CI/CD workflows
+- **Complete**: UI workflow, all panels functional, theme support, template-based docx generation with docxtemplater, OpenAPI parsing, DDL parsing, database connection form with SSH tunnel, Tauri dialog/fs integration, auto-update with settings panel check and update dialog, CI/CD workflows, NSIS installer packaging, v0.1.0 release
 - **Planned**:
-  - Database connection-based schema import (currently DDL-only)
+  - Database connection-based schema extraction (backend implementation)
   - Additional template customization options
 
 ## Important Notes
@@ -165,4 +178,7 @@ git push origin v0.1.0
 - Frontend build output goes to `dist/` (referenced as `frontendDist` in Tauri config)
 - Tauri uses `HashRouter` for routing (file:// protocol compatibility)
 - Tailwind CSS v4 uses the Vite plugin (`@tailwindcss/vite`), not a separate config file
+- Biome ignores `assets/` and `scripts/` directories (configured in `biome.json`)
+- `.gitignore` uses `/test/` (root only) to avoid ignoring `src/test/` test files
+- Signing keys are stored in `.tauri/` and gitignored — never commit private keys
 - If you see "Unknown env config '_jsr-registry'" warnings from npm, ignore them — pnpm is the correct package manager

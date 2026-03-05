@@ -31,7 +31,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": "all",
     "resources": {
       "../assets/接口文档模板.docx": "接口文档模板.docx",
       "../assets/数据库设计文档模板.docx": "数据库设计文档模板.docx"
