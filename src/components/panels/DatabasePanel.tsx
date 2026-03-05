@@ -248,6 +248,22 @@ export function DatabasePanel() {
   };
 
   const handleTestConnection = async () => {
+    if (isSqlite) {
+      if (!connectionConfig.database.trim()) {
+        setTestResult({ ok: false, message: "请选择数据库文件" });
+        return;
+      }
+    } else {
+      if (!connectionConfig.host.trim()) {
+        setTestResult({ ok: false, message: "请填写主机地址" });
+        return;
+      }
+      if (!connectionConfig.database.trim()) {
+        setTestResult({ ok: false, message: "请填写数据库名" });
+        return;
+      }
+    }
+
     setTestingConnection(true);
     setTestResult(null);
 

@@ -11,11 +11,19 @@ const Index = () => {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex-1 overflow-auto bg-background">
-        {activeTab === "openapi" && <OpenAPIPanel />}
-        {activeTab === "database" && <DatabasePanel />}
-        {activeTab === "settings" && <SettingsPanel />}
-        {activeTab === "help" && <HelpPanel />}
+      <main className="flex-1 overflow-hidden bg-background">
+        <div className={activeTab === "openapi" ? "h-full overflow-auto" : "hidden"}>
+          <OpenAPIPanel />
+        </div>
+        <div className={activeTab === "database" ? "h-full overflow-auto" : "hidden"}>
+          <DatabasePanel />
+        </div>
+        <div className={activeTab === "settings" ? "h-full overflow-auto" : "hidden"}>
+          <SettingsPanel />
+        </div>
+        <div className={activeTab === "help" ? "h-full overflow-auto" : "hidden"}>
+          <HelpPanel />
+        </div>
       </main>
     </div>
   );
