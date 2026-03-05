@@ -12,6 +12,7 @@
       "build",
       "src-tauri/target",
       "assets",
+      "scripts",
       "*.lock",
       "pnpm-lock.yaml"
     ]
