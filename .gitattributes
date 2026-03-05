@@ -1,0 +1,10 @@
+# Enforce LF line endings in the repository for cross-platform consistency
+* text=auto eol=lf
+
+# Explicitly mark binary files
+*.docx binary
+*.png binary
+*.ico binary
+*.svg text eol=lf
+*.woff binary
+*.woff2 binary
