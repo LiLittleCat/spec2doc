@@ -1,8 +1,10 @@
+import { UpdateDialog } from "@/components/UpdateDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import { useUpdater } from "@/hooks/use-updater";
 import { getDefaultDocumentsPath } from "@/lib/defaultPath";
 import {
   getDefaultGenerationSettings,
@@ -17,8 +19,6 @@ import {
 } from "@/lib/templateSettings";
 import { documentService } from "@/services/documentService";
 import { open } from "@tauri-apps/plugin-dialog";
-import { UpdateDialog } from "@/components/UpdateDialog";
-import { useUpdater } from "@/hooks/use-updater";
 import {
   Check,
   File,
