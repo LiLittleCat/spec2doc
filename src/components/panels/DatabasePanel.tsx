@@ -65,7 +65,7 @@ export function DatabasePanel() {
   const [connectionConfig, setConnectionConfig] = useState({
     type: "mysql",
     host: "",
-    port: "",
+    port: "3306",
     database: "",
     username: "",
     password: "",
@@ -214,6 +214,20 @@ export function DatabasePanel() {
   };
 
   const isSqlite = connectionConfig.type === "sqlite";
+
+  const getDefaultPort = (dbType: string) => {
+    switch (dbType) {
+      case "mysql": return "3306";
+      case "postgresql": return "5432";
+      case "sqlserver": return "1433";
+      default: return "";
+    }
+  };
+
+  const handleDbTypeChange = (value: string) => {
+    setConnectionConfig({ ...connectionConfig, type: value, port: getDefaultPort(value) });
+    setTestResult(null);
+  };
 
   const handleConnect = async () => {
     if (!isSqlite && !connectionConfig.host.trim() && !connectionConfig.database.trim()) {
@@ -607,7 +621,7 @@ export function DatabasePanel() {
                             <Select
                               value={connectionConfig.type}
                               onValueChange={(value) =>
-                                setConnectionConfig({ ...connectionConfig, type: value })
+                                handleDbTypeChange(value)
                               }
                             >
                               <SelectTrigger id="db-type">
@@ -657,7 +671,7 @@ export function DatabasePanel() {
                             <Select
                               value={connectionConfig.type}
                               onValueChange={(value) =>
-                                setConnectionConfig({ ...connectionConfig, type: value })
+                                handleDbTypeChange(value)
                               }
                             >
                               <SelectTrigger id="db-type">
@@ -690,13 +704,7 @@ export function DatabasePanel() {
                             </label>
                             <Input
                               id="db-port"
-                              placeholder={
-                                connectionConfig.type === "mysql"
-                                  ? "3306"
-                                  : connectionConfig.type === "sqlserver"
-                                    ? "1433"
-                                    : "5432"
-                              }
+                              placeholder="端口"
                               value={connectionConfig.port}
                               onChange={(e) =>
                                 setConnectionConfig({ ...connectionConfig, port: e.target.value })
