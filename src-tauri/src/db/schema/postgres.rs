@@ -10,7 +10,7 @@ pub async fn extract(
 ) -> Result<ParsedSchema, String> {
     let url = build_postgres_url(config, host, port);
     let pool = PgPoolOptions::new()
-        .max_connections(2)
+        .max_connections(1)
         .acquire_timeout(std::time::Duration::from_secs(10))
         .connect(&url)
         .await

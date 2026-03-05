@@ -81,9 +81,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       {/* Main Navigation */}
       <nav className="flex-1 px-3 pt-2 space-y-1">
-        <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-          功能
-        </p>
         {navItems.map((item) => (
           <NavButton
             key={item.id}
