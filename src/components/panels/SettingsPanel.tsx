@@ -17,12 +17,23 @@ import {
 } from "@/lib/templateSettings";
 import { documentService } from "@/services/documentService";
 import { open } from "@tauri-apps/plugin-dialog";
-import { File, FolderOpen, Monitor, Moon, RotateCcw, Settings, Sun } from "lucide-react";
+import { UpdateDialog } from "@/components/UpdateDialog";
+import { useUpdater } from "@/hooks/use-updater";
+import { Check, File, FolderOpen, Loader2, Monitor, Moon, RefreshCw, RotateCcw, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export function SettingsPanel() {
   const { theme, setTheme } = useTheme();
+  const updater = useUpdater();
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [manualCheckDone, setManualCheckDone] = useState(false);
+
+  const handleCheckUpdate = async () => {
+    setManualCheckDone(false);
+    await updater.checkForUpdate();
+    setManualCheckDone(true);
+  };
   const [defaultOutputPath, setDefaultOutputPath] = useState("");
   const [repeatTableHeaderOnPageBreak, setRepeatTableHeaderOnPageBreak] = useState(
     getDefaultGenerationSettings().repeatTableHeaderOnPageBreak,
@@ -321,6 +332,80 @@ export function SettingsPanel() {
           </Button>
         </div>
       </section>
+
+      <div className="border-t border-border" />
+
+      {/* About */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-lg font-semibold">关于</h3>
+          <span className="text-sm text-muted-foreground/60">·</span>
+          <p className="text-sm text-muted-foreground">版本信息与更新</p>
+        </div>
+
+        <div className="pl-9 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">当前版本</label>
+              <p className="text-sm text-muted-foreground font-mono tabular-nums">
+                v{__APP_VERSION__}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {updater.status === "checking" && (
+                <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  检查中...
+                </span>
+              )}
+              {updater.hasUpdate && (
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:underline underline-offset-2"
+                  onClick={() => setUpdateDialogOpen(true)}
+                >
+                  新版本 {updater.version} 可用
+                </button>
+              )}
+              {manualCheckDone && updater.status === "idle" && !updater.hasUpdate && (
+                <span className="text-sm text-green-600 flex items-center gap-1.5">
+                  <Check className="h-3.5 w-3.5" />
+                  已是最新版本
+                </span>
+              )}
+              {manualCheckDone && updater.status === "error" && (
+                <span className="text-sm text-muted-foreground">
+                  暂无更新信息
+                </span>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCheckUpdate}
+                disabled={updater.status === "checking"}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                检查更新
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <UpdateDialog
+        open={updateDialogOpen}
+        onOpenChange={setUpdateDialogOpen}
+        status={updater.status}
+        version={updater.version}
+        body={updater.body}
+        date={updater.date}
+        progress={updater.progress}
+        downloadedBytes={updater.downloadedBytes}
+        totalBytes={updater.totalBytes}
+        error={updater.error}
+        onDownload={updater.downloadAndInstall}
+        onRetry={updater.checkForUpdate}
+      />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import logo from "@/assets/logo.svg";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpdateDialog } from "@/components/UpdateDialog";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUpdater } from "@/hooks/use-updater";
 import { cn } from "@/lib/utils";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -105,23 +104,16 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       {/* Version & GitHub */}
       <div className="mx-3 px-2 py-3 border-t border-sidebar-border flex items-center justify-between">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="relative text-[11px] text-muted-foreground hover:text-foreground transition-colors font-mono tabular-nums"
-              onClick={() => updater.hasUpdate && setDialogOpen(true)}
-            >
-              v{__APP_VERSION__}
-              {updater.hasUpdate && (
-                <span className="absolute -top-1 -right-2.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            {updater.hasUpdate ? `新版本 ${updater.version} 可用` : "已是最新版本"}
-          </TooltipContent>
-        </Tooltip>
+        <button
+          type="button"
+          className="relative text-[11px] text-muted-foreground hover:text-foreground transition-colors font-mono tabular-nums"
+          onClick={() => updater.hasUpdate && setDialogOpen(true)}
+        >
+          v{__APP_VERSION__}
+          {updater.hasUpdate && (
+            <span className="absolute -top-1 -right-2.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+          )}
+        </button>
         <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"

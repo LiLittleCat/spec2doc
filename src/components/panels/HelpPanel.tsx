@@ -280,17 +280,6 @@ export function HelpPanel() {
         </div>
       </section>
 
-      <div className="border-t border-border" />
-
-      {/* Footer */}
-      <section className="space-y-4">
-        <div className="pl-9">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Spec2Doc v{__APP_VERSION__}</span>
-            <span>基于 Tauri + React 构建</span>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

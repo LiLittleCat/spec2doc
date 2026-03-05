@@ -53,11 +53,13 @@ export function useUpdater() {
         setState((s) => ({ ...s, status: "idle" }));
       }
     } catch (e) {
-      setState((s) => ({
-        ...s,
-        status: "error",
-        error: e instanceof Error ? e.message : String(e),
-      }));
+      const msg = e instanceof Error ? e.message : String(e);
+      // Treat "no release found" as "no update" rather than a hard error
+      if (msg.includes("Could not fetch") || msg.includes("Network")) {
+        setState((s) => ({ ...s, status: "idle" }));
+      } else {
+        setState((s) => ({ ...s, status: "error", error: msg }));
+      }
     }
   }, []);
 
