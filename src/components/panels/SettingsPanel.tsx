@@ -187,11 +187,11 @@ export function SettingsPanel() {
   return (
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       <div className="space-y-2">
-        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Settings className="w-7 h-7" />
+        <h2 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight">
+          <Settings className="w-6 h-6 text-primary" />
           <span>设置</span>
         </h2>
-        <p className="text-muted-foreground">配置应用程序偏好设置和默认值</p>
+        <p className="text-sm text-muted-foreground">配置应用程序偏好设置和默认值</p>
       </div>
 
       {/* Appearance */}

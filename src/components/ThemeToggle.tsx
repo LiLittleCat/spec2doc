@@ -14,13 +14,18 @@ export function ThemeToggle() {
   };
 
   const icon = {
-    light: <Sun className="h-4 w-4" />,
-    dark: <Moon className="h-4 w-4" />,
-    system: <Monitor className="h-4 w-4" />,
+    light: <Sun className="h-3.5 w-3.5" />,
+    dark: <Moon className="h-3.5 w-3.5" />,
+    system: <Monitor className="h-3.5 w-3.5" />,
   }[theme ?? "system"];
 
   return (
-    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+      onClick={toggleTheme}
+    >
       {icon}
     </Button>
   );

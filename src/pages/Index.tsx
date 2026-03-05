@@ -11,7 +11,7 @@ const Index = () => {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-background">
         {activeTab === "openapi" && <OpenAPIPanel />}
         {activeTab === "database" && <DatabasePanel />}
         {activeTab === "settings" && <SettingsPanel />}

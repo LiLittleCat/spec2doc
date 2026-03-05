@@ -487,11 +487,11 @@ export function DatabasePanel() {
   return (
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       <div className="space-y-2">
-        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <Database className="w-7 h-7" />
+        <h2 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight">
+          <Database className="w-6 h-6 text-primary" />
           <span>数据库</span>
         </h2>
-        <p className="text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           导入数据库设计文档，或连接数据库提取结构，生成数据库设计文档。
         </p>
       </div>
@@ -499,7 +499,7 @@ export function DatabasePanel() {
       {/* Step 1: Import Data */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             1
           </div>
           <h3 className="text-lg font-semibold">导入数据</h3>
@@ -613,7 +613,10 @@ export function DatabasePanel() {
                                 placeholder="选择 SQLite 数据库文件..."
                                 value={connectionConfig.database}
                                 onChange={(e) =>
-                                  setConnectionConfig({ ...connectionConfig, database: e.target.value })
+                                  setConnectionConfig({
+                                    ...connectionConfig,
+                                    database: e.target.value,
+                                  })
                                 }
                                 className="flex-1"
                               />
@@ -694,7 +697,10 @@ export function DatabasePanel() {
                               placeholder="mydb"
                               value={connectionConfig.database}
                               onChange={(e) =>
-                                setConnectionConfig({ ...connectionConfig, database: e.target.value })
+                                setConnectionConfig({
+                                  ...connectionConfig,
+                                  database: e.target.value,
+                                })
                               }
                             />
                           </div>
@@ -713,7 +719,10 @@ export function DatabasePanel() {
                               }
                               value={connectionConfig.username}
                               onChange={(e) =>
-                                setConnectionConfig({ ...connectionConfig, username: e.target.value })
+                                setConnectionConfig({
+                                  ...connectionConfig,
+                                  username: e.target.value,
+                                })
                               }
                             />
                           </div>
@@ -729,7 +738,10 @@ export function DatabasePanel() {
                                 className="pr-9"
                                 value={connectionConfig.password}
                                 onChange={(e) =>
-                                  setConnectionConfig({ ...connectionConfig, password: e.target.value })
+                                  setConnectionConfig({
+                                    ...connectionConfig,
+                                    password: e.target.value,
+                                  })
                                 }
                               />
                               <button
@@ -1013,7 +1025,9 @@ export function DatabasePanel() {
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                   <Table2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                                  <span className="font-mono font-medium truncate">{table.name}</span>
+                                  <span className="font-mono font-medium truncate">
+                                    {table.name}
+                                  </span>
                                   {table.comment && (
                                     <span className="text-sm text-muted-foreground truncate">
                                       {table.comment}
@@ -1108,7 +1122,7 @@ export function DatabasePanel() {
       {/* Step 2: Template Selection */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             2
           </div>
           <h3 className="text-lg font-semibold">模版选择</h3>
@@ -1181,7 +1195,7 @@ export function DatabasePanel() {
       {/* Step 3: Output Directory */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             3
           </div>
           <h3 className="text-lg font-semibold">输出目录</h3>
@@ -1229,7 +1243,7 @@ export function DatabasePanel() {
       {/* Step 4: Generate Document */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             4
           </div>
           <h3 className="text-lg font-semibold">生成文档</h3>
@@ -1290,7 +1304,7 @@ export function DatabasePanel() {
             <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
               <div className="flex items-center gap-2 text-green-600">
                 <Check className="h-5 w-5" />
-                <span className="font-medium">文档生成成功!</span>
+                <span className="font-medium">文档生成成功</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2 break-all">
                 文件已保存至: {generatedFilePath}

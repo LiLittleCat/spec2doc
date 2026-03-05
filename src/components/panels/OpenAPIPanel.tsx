@@ -480,12 +480,12 @@ export function OpenAPIPanel() {
   return (
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="space-y-2">
-        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <FileJson className="w-7 h-7" />
+      <div className="space-y-1.5">
+        <h2 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight">
+          <FileJson className="w-6 h-6 text-primary" />
           <span>OpenAPI 规范</span>
         </h2>
-        <p className="text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           导入 OpenAPI/Swagger 规范文件，生成接口设计文档
         </p>
       </div>
@@ -493,7 +493,7 @@ export function OpenAPIPanel() {
       {/* Step 1: Import Data */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             1
           </div>
           <h3 className="text-lg font-semibold">导入数据</h3>
@@ -691,7 +691,7 @@ export function OpenAPIPanel() {
       {/* Step 2: Template Selection */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             2
           </div>
           <h3 className="text-lg font-semibold">模版选择</h3>
@@ -759,7 +759,7 @@ export function OpenAPIPanel() {
       {/* Step 3: Output Directory */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             3
           </div>
           <h3 className="text-lg font-semibold">输出目录</h3>
@@ -793,7 +793,7 @@ export function OpenAPIPanel() {
       {/* Step 4: Generate Document */}
       <section className="space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/15 text-primary text-xs font-semibold">
             4
           </div>
           <h3 className="text-lg font-semibold">生成文档</h3>
@@ -844,7 +844,7 @@ export function OpenAPIPanel() {
             <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/30">
               <div className="flex items-center gap-2 text-green-600">
                 <Check className="h-5 w-5" />
-                <span className="font-medium">文档生成成功!</span>
+                <span className="font-medium">文档生成成功</span>
               </div>
               {generatedFilePath && (
                 <p className="text-sm text-muted-foreground mt-2 break-all">

@@ -46,7 +46,9 @@ const markdownComponents: Components = {
     return <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">{children}</code>;
   },
   pre: ({ children }) => (
-    <pre className="rounded-lg border bg-muted/50 p-3 text-xs overflow-auto font-mono my-3">{children}</pre>
+    <pre className="rounded-lg border bg-muted/50 p-3 text-xs overflow-auto font-mono my-3">
+      {children}
+    </pre>
   ),
   table: ({ children }) => (
     <table className="w-full text-sm border-collapse my-3">{children}</table>
@@ -71,11 +73,11 @@ export function HelpPanel() {
   return (
     <div className="flex flex-col gap-10 p-8 max-w-6xl mx-auto">
       <div className="space-y-2">
-        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <HelpCircle className="w-7 h-7" />
+        <h2 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight">
+          <HelpCircle className="w-6 h-6 text-primary" />
           <span>帮助</span>
         </h2>
-        <p className="text-muted-foreground">了解如何使用 Spec2Doc 并获取支持</p>
+        <p className="text-sm text-muted-foreground">了解如何使用 Spec2Doc 并获取支持</p>
       </div>
 
       {/* Quick Start */}
@@ -90,7 +92,7 @@ export function HelpPanel() {
         <div className="pl-9">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-semibold">
                 1
               </div>
               <div className="space-y-1">
@@ -101,7 +103,7 @@ export function HelpPanel() {
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-semibold">
                 2
               </div>
               <div className="space-y-1">
@@ -110,7 +112,7 @@ export function HelpPanel() {
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-semibold">
                 3
               </div>
               <div className="space-y-1">
@@ -119,7 +121,7 @@ export function HelpPanel() {
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-semibold">
                 4
               </div>
               <div className="space-y-1">
