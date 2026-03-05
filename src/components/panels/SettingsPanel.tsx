@@ -19,7 +19,18 @@ import { documentService } from "@/services/documentService";
 import { open } from "@tauri-apps/plugin-dialog";
 import { UpdateDialog } from "@/components/UpdateDialog";
 import { useUpdater } from "@/hooks/use-updater";
-import { Check, File, FolderOpen, Loader2, Monitor, Moon, RefreshCw, RotateCcw, Settings, Sun } from "lucide-react";
+import {
+  Check,
+  File,
+  FolderOpen,
+  Loader2,
+  Monitor,
+  Moon,
+  RefreshCw,
+  RotateCcw,
+  Settings,
+  Sun,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -374,9 +385,7 @@ export function SettingsPanel() {
                 </span>
               )}
               {manualCheckDone && updater.status === "error" && (
-                <span className="text-sm text-muted-foreground">
-                  暂无更新信息
-                </span>
+                <span className="text-sm text-muted-foreground">暂无更新信息</span>
               )}
               <Button
                 variant="outline"

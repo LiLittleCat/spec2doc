@@ -279,7 +279,6 @@ export function HelpPanel() {
           </Button>
         </div>
       </section>
-
     </div>
   );
 }

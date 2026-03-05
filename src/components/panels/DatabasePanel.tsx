@@ -217,10 +217,14 @@ export function DatabasePanel() {
 
   const getDefaultPort = (dbType: string) => {
     switch (dbType) {
-      case "mysql": return "3306";
-      case "postgresql": return "5432";
-      case "sqlserver": return "1433";
-      default: return "";
+      case "mysql":
+        return "3306";
+      case "postgresql":
+        return "5432";
+      case "sqlserver":
+        return "1433";
+      default:
+        return "";
     }
   };
 
@@ -620,9 +624,7 @@ export function DatabasePanel() {
                             </label>
                             <Select
                               value={connectionConfig.type}
-                              onValueChange={(value) =>
-                                handleDbTypeChange(value)
-                              }
+                              onValueChange={(value) => handleDbTypeChange(value)}
                             >
                               <SelectTrigger id="db-type">
                                 <SelectValue />
@@ -670,9 +672,7 @@ export function DatabasePanel() {
                             </label>
                             <Select
                               value={connectionConfig.type}
-                              onValueChange={(value) =>
-                                handleDbTypeChange(value)
-                              }
+                              onValueChange={(value) => handleDbTypeChange(value)}
                             >
                               <SelectTrigger id="db-type">
                                 <SelectValue />
