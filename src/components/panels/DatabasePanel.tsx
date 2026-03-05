@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -19,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -28,7 +28,7 @@ import {
   readTemplateSettings,
   subscribeTemplateSettings,
 } from "@/lib/templateSettings";
-import { parseDDL, type ParsedSchema } from "@/services/ddlParser";
+import { type ParsedSchema, parseDDL } from "@/services/ddlParser";
 import { documentService } from "@/services/documentService";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -55,6 +55,9 @@ import { useEffect, useState } from "react";
 
 type ParseStatus = "idle" | "parsing" | "success" | "error";
 type GenerateStatus = "idle" | "generating" | "success" | "error";
+
+const getFileNameFromPath = (path: string) =>
+  path.split(/[\\\/]/).pop() || DEFAULT_DB_TEMPLATE_PLACEHOLDER;
 
 export function DatabasePanel() {
   const [ddlContent, setDdlContent] = useState("");
@@ -119,9 +122,6 @@ export function DatabasePanel() {
       isCancelled = true;
     };
   }, []);
-
-  const getFileNameFromPath = (path: string) =>
-    path.split(/[\\\/]/).pop() || DEFAULT_DB_TEMPLATE_PLACEHOLDER;
 
   useEffect(() => {
     let isCancelled = false;
@@ -1086,7 +1086,7 @@ export function DatabasePanel() {
                                     </colgroup>
                                     <thead>
                                       <tr className="text-left text-muted-foreground border-b">
-                                        <th className="pb-2 font-medium"></th>
+                                        <th className="pb-2 font-medium" />
                                         <th className="pb-2 font-medium">字段名</th>
                                         <th className="pb-2 font-medium">类型</th>
                                         <th className="pb-2 font-medium">可空</th>

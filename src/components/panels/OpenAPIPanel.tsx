@@ -58,6 +58,9 @@ interface ParsedSpec {
 type ParseStatus = "idle" | "parsing" | "success" | "error";
 type GenerateStatus = "idle" | "generating" | "success" | "error";
 
+const getFileNameFromPath = (path: string) =>
+  path.split(/[\\\/]/).pop() || DEFAULT_API_TEMPLATE_PLACEHOLDER;
+
 export function OpenAPIPanel() {
   const [specContent, setSpecContent] = useState("");
   const [filePath, setFilePath] = useState("");
@@ -106,9 +109,6 @@ export function OpenAPIPanel() {
       isCancelled = true;
     };
   }, []);
-
-  const getFileNameFromPath = (path: string) =>
-    path.split(/[\\\/]/).pop() || DEFAULT_API_TEMPLATE_PLACEHOLDER;
 
   useEffect(() => {
     let isCancelled = false;

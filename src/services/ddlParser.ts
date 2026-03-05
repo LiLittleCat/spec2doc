@@ -33,7 +33,6 @@ export interface ParsedSchema {
 
 // ── Internal types ─────────────────────────────────────────────────
 
-// biome-ignore lint/suspicious/noExplicitAny: node-sql-parser AST nodes are deeply nested and untyped
 type AST = any;
 
 const DIALECTS = ["MySQL", "Postgresql", "TransactSQL", "Sqlite"] as const;

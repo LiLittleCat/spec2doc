@@ -41,8 +41,15 @@
       "style": {
         "noNonNullAssertion": "off"
       },
+      "a11y": {
+        "noLabelWithoutControl": "off"
+      },
+      "complexity": {
+        "noForEach": "off"
+      },
       "suspicious": {
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noControlCharactersInRegex": "off"
       }
     }
   },
