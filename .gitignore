@@ -27,7 +27,7 @@ dist-ssr
 *.sw?
 
 output
-test/
+/test/
 
 # =========================
 # docx templates
