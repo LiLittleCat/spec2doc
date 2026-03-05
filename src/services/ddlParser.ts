@@ -70,10 +70,7 @@ export function parseDDL(ddl: string): ParsedSchema {
  * (e.g. SET NAMES, SET CHARACTER SET — session-level, not structural DDL).
  */
 function stripUnsupportedStatements(ddl: string): string {
-  return ddl.replace(
-    /^\s*SET\s+(?:NAMES|CHARACTER\s+SET)\s+[^;]*;\s*$/gim,
-    "",
-  );
+  return ddl.replace(/^\s*SET\s+(?:NAMES|CHARACTER\s+SET)\s+[^;]*;\s*$/gim, "");
 }
 
 // ── AST-based parsing ──────────────────────────────────────────────
@@ -135,11 +132,7 @@ function astToTableInfo(stmt: AST, idx: number): TableInfo {
 
 // ── Column processing ──────────────────────────────────────────────
 
-function processColumn(
-  def: AST,
-  pkCols: Set<string>,
-  fkCols: Set<string>,
-): Column | null {
+function processColumn(def: AST, pkCols: Set<string>, fkCols: Set<string>): Column | null {
   const name = getColumnName(def.column);
   if (!name) return null;
 
@@ -150,8 +143,7 @@ function processColumn(
     name,
     type,
     nullable: def.nullable?.type !== "not null",
-    isPrimary:
-      !!def.primary_key || !!def.primary || pkCols.has(nameLower),
+    isPrimary: !!def.primary_key || !!def.primary || pkCols.has(nameLower),
     isForeign: !!def.reference_definition || fkCols.has(nameLower),
     comment: extractStringValue(def.comment?.value),
     default: extractDefaultValue(def.default_val),
@@ -227,10 +219,7 @@ function formatType(definition: AST): string {
     return `${base}(${definition.length})`;
   }
 
-  const suffix =
-    definition.suffix != null
-      ? ` ${String(definition.suffix).toUpperCase()}`
-      : "";
+  const suffix = definition.suffix != null ? ` ${String(definition.suffix).toUpperCase()}` : "";
   return `${base}${suffix}`;
 }
 
@@ -251,9 +240,7 @@ function extractDefaultValue(defaultVal: AST): string | undefined {
   return undefined;
 }
 
-function extractTableComment(
-  options: AST[] | undefined,
-): string | undefined {
+function extractTableComment(options: AST[] | undefined): string | undefined {
   if (!options) return undefined;
   for (const opt of options) {
     const kw = String(opt.keyword ?? "").toLowerCase();
@@ -288,9 +275,7 @@ function mergeCommentOn(ddl: string, tables: TableInfo[]): void {
     const colName = m[5] || m[6] || "";
     const table = tableMap.get(tableName.toLowerCase());
     if (table) {
-      const col = table.columns.find(
-        (c) => c.name.toLowerCase() === colName.toLowerCase(),
-      );
+      const col = table.columns.find((c) => c.name.toLowerCase() === colName.toLowerCase());
       if (col && !col.comment) {
         col.comment = m[7].replace(/''/g, "'");
       }
@@ -310,13 +295,9 @@ function mergeAlterTableConstraints(ddl: string, tables: TableInfo[]): void {
     const tableName = m[5] || m[6] || m[7] || m[8] || "";
     const table = tableMap.get(tableName.toLowerCase());
     if (table) {
-      const pkCols = m[9]
-        .split(",")
-        .map((c) => c.trim().replace(/^["'`[\]]+|["'`[\]]+$/g, ""));
+      const pkCols = m[9].split(",").map((c) => c.trim().replace(/^["'`[\]]+|["'`[\]]+$/g, ""));
       for (const pkCol of pkCols) {
-        const col = table.columns.find(
-          (c) => c.name.toLowerCase() === pkCol.toLowerCase(),
-        );
+        const col = table.columns.find((c) => c.name.toLowerCase() === pkCol.toLowerCase());
         if (col) col.isPrimary = true;
       }
     }
@@ -339,9 +320,7 @@ function inferDatabaseName(ddl: string): string {
     /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|`([^`]+)`|\[([^\]]+)\]|(\w+))\./i,
   );
   if (schemaMatch) {
-    return (
-      schemaMatch[1] || schemaMatch[2] || schemaMatch[3] || schemaMatch[4] || ""
-    );
+    return schemaMatch[1] || schemaMatch[2] || schemaMatch[3] || schemaMatch[4] || "";
   }
 
   return "database";
