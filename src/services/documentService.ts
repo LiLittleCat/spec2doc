@@ -12,15 +12,9 @@ import { DatabaseDocGenerator, OpenAPIDocGenerator } from "./docxGenerator";
 export class DocumentService {
   private readonly builtInApiTemplateCandidates = [
     "接口文档模板.docx",
-    "assets/接口文档模板.docx",
-    "_up_/接口文档模板.docx",
-    "_up_/assets/接口文档模板.docx",
   ];
   private readonly builtInDbTemplateCandidates = [
     "数据库设计文档模板.docx",
-    "assets/数据库设计文档模板.docx",
-    "_up_/数据库设计文档模板.docx",
-    "_up_/assets/数据库设计文档模板.docx",
   ];
 
   private isTauriRuntime(): boolean {
