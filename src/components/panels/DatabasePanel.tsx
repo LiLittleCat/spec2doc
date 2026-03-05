@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -76,6 +77,7 @@ export function DatabasePanel() {
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const [sshEnabled, setSshEnabled] = useState(false);
+  const [sshExpanded, setSshExpanded] = useState(false);
   const [sshConfig, setSshConfig] = useState({
     host: "",
     port: "22",
@@ -782,24 +784,33 @@ export function DatabasePanel() {
                   {/* SSH Tunnel — hidden for SQLite */}
                   {!isSqlite && (
                     <div className="border-t">
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 w-full px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
-                        onClick={() => setSshEnabled(!sshEnabled)}
-                      >
-                        {sshEnabled ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        SSH 通道
-                        {!sshEnabled && sshConfig.host && (
-                          <Badge variant="secondary" className="text-xs font-normal ml-1">
+                      <div className="flex items-center gap-2 px-5 py-3">
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 text-sm font-medium hover:text-foreground transition-colors text-muted-foreground"
+                          onClick={() => setSshExpanded(!sshExpanded)}
+                        >
+                          {sshExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                          SSH 通道
+                        </button>
+                        {!sshExpanded && sshConfig.host && (
+                          <Badge variant="secondary" className="text-xs font-normal">
                             {sshConfig.host}:{sshConfig.port || "22"}
                           </Badge>
                         )}
-                      </button>
-                      {sshEnabled && (
+                        <div className="ml-auto flex items-center gap-2">
+                          <Switch
+                            id="ssh-toggle"
+                            checked={sshEnabled}
+                            onCheckedChange={setSshEnabled}
+                          />
+                        </div>
+                      </div>
+                      {sshExpanded && (
                         <div className="px-5 pb-5 space-y-5 border-t">
                           {/* SSH Row 1: Username + Host + Port — mirrors DB row 1 */}
                           <div className="grid grid-cols-[160px_1fr_80px] gap-4 pt-4">
