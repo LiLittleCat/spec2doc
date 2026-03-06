@@ -67,13 +67,16 @@ jobs:
         shell: bash
         run: |
           mkdir -p release-assets
-          find src-tauri/target -type f \( \
-            -name "*.dmg" -o \
-            -name "*.app.tar.gz" -o -name "*.app.tar.gz.sig" -o \
-            -name "*.exe" -o -name "*.exe.sig" -o \
-            -name "*.deb" -o \
-            -name "*.AppImage" -o -name "*.AppImage.sig" \
-          \) -exec cp {} release-assets/ \;
+          for dir in src-tauri/target/*/release/bundle src-tauri/target/release/bundle; do
+            [ -d "$dir" ] || continue
+            find "$dir" -type f \( \
+              -name "*.dmg" -o \
+              -name "*.app.tar.gz" -o -name "*.app.tar.gz.sig" -o \
+              -name "*.exe" -o -name "*.exe.sig" -o \
+              -name "*.deb" -o \
+              -name "*.AppImage" -o -name "*.AppImage.sig" \
+            \) -exec cp {} release-assets/ \;
+          done
           echo "Collected artifacts:"
           ls -la release-assets/
 
