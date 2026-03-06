@@ -100,16 +100,6 @@ jobs:
       contents: write
 
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all-artifacts
-          pattern: 'release-assets-*'
-          merge-multiple: true
-
-      - name: List downloaded artifacts
-        run: find all-artifacts -type f | head -50
-
       - name: Checkout for CHANGELOG
         uses: actions/checkout@v4
         with:
@@ -131,6 +121,16 @@ jobs:
           fi
           echo "Release notes:"
           cat release_notes.txt
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
+          pattern: 'release-assets-*'
+          merge-multiple: true
+
+      - name: List downloaded artifacts
+        run: find all-artifacts -type f | head -50
 
       - name: Build latest.json from signatures
         env:
