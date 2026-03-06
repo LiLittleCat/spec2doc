@@ -101,6 +101,28 @@ jobs:
       - name: List downloaded artifacts
         run: find all-artifacts -type f | head -50
 
+      - name: Checkout for CHANGELOG
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          # Extract content between "## vX.Y.Z" and the next "## v"
+          awk -v tag="$TAG" '
+            BEGIN { found=0 }
+            $0 ~ "^## " tag { found=1; next }
+            found && /^## v/ { exit }
+            found { print }
+          ' CHANGELOG.md | sed '/^$/N;/^\n$/d' > release_notes.txt
+          if [ ! -s release_notes.txt ]; then
+            echo "Release $TAG" > release_notes.txt
+          fi
+          echo "Release notes:"
+          cat release_notes.txt
+
       - name: Build latest.json from signatures
         env:
           VERSION: ${{ github.ref_name }}
@@ -108,6 +130,7 @@ jobs:
         run: |
           DOWNLOAD_BASE="https://github.com/${REPO}/releases/download/${VERSION}"
           VER="${VERSION#v}"
+          NOTES=$(cat release_notes.txt 2>/dev/null || echo "See release page for details")
 
           read_sig() {
             local pattern="$1"
@@ -143,7 +166,7 @@ jobs:
 
           jq -n \
             --arg version "$VER" \
-            --arg notes "See release page for details" \
+            --arg notes "$NOTES" \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg dl "$DOWNLOAD_BASE" \
             --arg mac_name "$(url_encode "$MAC_NAME")" \
@@ -180,7 +203,7 @@ jobs:
         with:
           allowUpdates: true
           name: 'Spec2Doc ${{ github.ref_name }}'
-          body: 'See the assets to download and install this version.'
+          bodyFile: 'release_notes.txt'
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: 'all-artifacts/**/*,latest.json'
           artifactErrorsFailBuild: false
