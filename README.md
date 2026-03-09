@@ -9,13 +9,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/LiLittleCat/spec2doc/releases/latest">
-    <img src="https://img.shields.io/github/v/release/LiLittleCat/spec2doc" alt="Release" />
-  </a>
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue" alt="Platform" />
-  <a href="https://github.com/LiLittleCat/spec2doc/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/LiLittleCat/spec2doc" alt="License" />
-  </a>
+  <a href="https://github.com/LiLittleCat/spec2doc/releases/latest"><img src="https://img.shields.io/github/v/release/LiLittleCat/spec2doc" alt="Release" /></a>&nbsp;
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue" alt="Platform" />&nbsp;
+  <a href="https://github.com/LiLittleCat/spec2doc/blob/main/LICENSE"><img src="https://img.shields.io/github/license/LiLittleCat/spec2doc" alt="License" /></a>
 </p>
 
 ## 截图
