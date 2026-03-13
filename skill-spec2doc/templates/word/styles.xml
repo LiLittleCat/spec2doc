@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+          xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+          mc:Ignorable="w14">
+
+  <!-- Default run/paragraph properties -->
+  <w:docDefaults>
+    <w:rPrDefault>
+      <w:rPr>
+        <w:rFonts w:ascii="Microsoft YaHei" w:eastAsia="Microsoft YaHei" w:hAnsi="Microsoft YaHei" w:cs="Microsoft YaHei"/>
+        <w:sz w:val="21"/>
+        <w:szCs w:val="21"/>
+        <w:color w:val="333333"/>
+        <w:lang w:val="en-US" w:eastAsia="zh-CN"/>
+      </w:rPr>
+    </w:rPrDefault>
+    <w:pPrDefault>
+      <w:pPr>
+        <w:spacing w:line="360" w:lineRule="auto" w:after="0"/>
+      </w:pPr>
+    </w:pPrDefault>
+  </w:docDefaults>
+
+  <!-- Normal -->
+  <w:style w:type="paragraph" w:default="1" w:styleId="Normal">
+    <w:name w:val="Normal"/>
+    <w:qFormat/>
+    <w:pPr>
+      <w:spacing w:after="120" w:line="360" w:lineRule="auto"/>
+    </w:pPr>
+  </w:style>
+
+  <!-- Default Paragraph Font -->
+  <w:style w:type="character" w:default="1" w:styleId="DefaultParagraphFont">
+    <w:name w:val="Default Paragraph Font"/>
+    <w:uiPriority w:val="1"/>
+    <w:semiHidden/>
+    <w:unhideWhenUsed/>
+  </w:style>
+
+  <!-- Default Table -->
+  <w:style w:type="table" w:default="1" w:styleId="TableNormal">
+    <w:name w:val="Normal Table"/>
+    <w:uiPriority w:val="99"/>
+    <w:semiHidden/>
+    <w:unhideWhenUsed/>
+    <w:tblPr>
+      <w:tblInd w:w="0" w:type="dxa"/>
+      <w:tblCellMar>
+        <w:top w:w="0" w:type="dxa"/>
+        <w:left w:w="108" w:type="dxa"/>
+        <w:bottom w:w="0" w:type="dxa"/>
+        <w:right w:w="108" w:type="dxa"/>
+      </w:tblCellMar>
+    </w:tblPr>
+  </w:style>
+
+  <!-- Title: 22pt (二号), bold, centered -->
+  <w:style w:type="paragraph" w:styleId="Title">
+    <w:name w:val="Title"/>
+    <w:basedOn w:val="Normal"/>
+    <w:next w:val="Normal"/>
+    <w:qFormat/>
+    <w:pPr>
+      <w:spacing w:before="480" w:after="240"/>
+      <w:jc w:val="center"/>
+    </w:pPr>
+    <w:rPr>
+      <w:b/>
+      <w:bCs/>
+      <w:sz w:val="44"/>
+      <w:szCs w:val="44"/>
+      <w:color w:val="1F2937"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- Subtitle -->
+  <w:style w:type="paragraph" w:styleId="Subtitle">
+    <w:name w:val="Subtitle"/>
+    <w:basedOn w:val="Normal"/>
+    <w:next w:val="Normal"/>
+    <w:qFormat/>
+    <w:pPr>
+      <w:spacing w:before="60" w:after="60"/>
+      <w:jc w:val="center"/>
+    </w:pPr>
+    <w:rPr>
+      <w:sz w:val="24"/>
+      <w:szCs w:val="24"/>
+      <w:color w:val="6B7280"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- Heading 1: 16pt (三号), bold, outline level 0 -->
+  <w:style w:type="paragraph" w:styleId="Heading1">
+    <w:name w:val="heading 1"/>
+    <w:basedOn w:val="Normal"/>
+    <w:next w:val="Normal"/>
+    <w:qFormat/>
+    <w:pPr>
+      <w:keepNext/>
+      <w:keepLines/>
+      <w:spacing w:before="480" w:after="240"/>
+      <w:outlineLvl w:val="0"/>
+    </w:pPr>
+    <w:rPr>
+      <w:b/>
+      <w:bCs/>
+      <w:sz w:val="32"/>
+      <w:szCs w:val="32"/>
+      <w:color w:val="1F2937"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- Heading 2: 14pt (四号), bold, outline level 1 -->
+  <w:style w:type="paragraph" w:styleId="Heading2">
+    <w:name w:val="heading 2"/>
+    <w:basedOn w:val="Normal"/>
+    <w:next w:val="Normal"/>
+    <w:qFormat/>
+    <w:pPr>
+      <w:keepNext/>
+      <w:keepLines/>
+      <w:spacing w:before="360" w:after="180"/>
+      <w:outlineLvl w:val="1"/>
+    </w:pPr>
+    <w:rPr>
+      <w:b/>
+      <w:bCs/>
+      <w:sz w:val="28"/>
+      <w:szCs w:val="28"/>
+      <w:color w:val="1F2937"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- Heading 3: 12pt (小四), bold, outline level 2 -->
+  <w:style w:type="paragraph" w:styleId="Heading3">
+    <w:name w:val="heading 3"/>
+    <w:basedOn w:val="Normal"/>
+    <w:next w:val="Normal"/>
+    <w:qFormat/>
+    <w:pPr>
+      <w:keepNext/>
+      <w:keepLines/>
+      <w:spacing w:before="240" w:after="120"/>
+      <w:outlineLvl w:val="2"/>
+    </w:pPr>
+    <w:rPr>
+      <w:b/>
+      <w:bCs/>
+      <w:sz w:val="24"/>
+      <w:szCs w:val="24"/>
+      <w:color w:val="1F2937"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- TOC Heading -->
+  <w:style w:type="paragraph" w:styleId="TOCHeading">
+    <w:name w:val="TOC Heading"/>
+    <w:basedOn w:val="Heading1"/>
+    <w:next w:val="Normal"/>
+    <w:qFormat/>
+    <w:pPr>
+      <w:outlineLvl w:val="9"/>
+    </w:pPr>
+  </w:style>
+
+  <!-- TOC 1 -->
+  <w:style w:type="paragraph" w:styleId="TOC1">
+    <w:name w:val="toc 1"/>
+    <w:basedOn w:val="Normal"/>
+    <w:uiPriority w:val="39"/>
+    <w:pPr>
+      <w:tabs>
+        <w:tab w:val="right" w:leader="dot" w:pos="9350"/>
+      </w:tabs>
+      <w:spacing w:before="120" w:after="60"/>
+    </w:pPr>
+    <w:rPr>
+      <w:b/>
+      <w:bCs/>
+      <w:sz w:val="22"/>
+      <w:szCs w:val="22"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- TOC 2 -->
+  <w:style w:type="paragraph" w:styleId="TOC2">
+    <w:name w:val="toc 2"/>
+    <w:basedOn w:val="Normal"/>
+    <w:uiPriority w:val="39"/>
+    <w:pPr>
+      <w:tabs>
+        <w:tab w:val="right" w:leader="dot" w:pos="9350"/>
+      </w:tabs>
+      <w:spacing w:before="60" w:after="40"/>
+      <w:ind w:left="240"/>
+    </w:pPr>
+    <w:rPr>
+      <w:sz w:val="21"/>
+      <w:szCs w:val="21"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- TOC 3 -->
+  <w:style w:type="paragraph" w:styleId="TOC3">
+    <w:name w:val="toc 3"/>
+    <w:basedOn w:val="Normal"/>
+    <w:uiPriority w:val="39"/>
+    <w:pPr>
+      <w:tabs>
+        <w:tab w:val="right" w:leader="dot" w:pos="9350"/>
+      </w:tabs>
+      <w:spacing w:before="40" w:after="40"/>
+      <w:ind w:left="480"/>
+    </w:pPr>
+    <w:rPr>
+      <w:sz w:val="20"/>
+      <w:szCs w:val="20"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- Table Grid -->
+  <w:style w:type="table" w:styleId="TableGrid">
+    <w:name w:val="Table Grid"/>
+    <w:basedOn w:val="TableNormal"/>
+    <w:uiPriority w:val="39"/>
+    <w:tblPr>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>
+        <w:left w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>
+        <w:bottom w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>
+        <w:right w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>
+        <w:insideH w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>
+        <w:insideV w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>
+      </w:tblBorders>
+      <w:tblCellMar>
+        <w:top w:w="60" w:type="dxa"/>
+        <w:left w:w="120" w:type="dxa"/>
+        <w:bottom w:w="60" w:type="dxa"/>
+        <w:right w:w="120" w:type="dxa"/>
+      </w:tblCellMar>
+    </w:tblPr>
+  </w:style>
+
+  <!-- Hyperlink -->
+  <w:style w:type="character" w:styleId="Hyperlink">
+    <w:name w:val="Hyperlink"/>
+    <w:basedOn w:val="DefaultParagraphFont"/>
+    <w:uiPriority w:val="99"/>
+    <w:unhideWhenUsed/>
+    <w:rPr>
+      <w:color w:val="2563EB"/>
+      <w:u w:val="single"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- Header -->
+  <w:style w:type="paragraph" w:styleId="Header">
+    <w:name w:val="header"/>
+    <w:basedOn w:val="Normal"/>
+    <w:pPr>
+      <w:tabs>
+        <w:tab w:val="center" w:pos="4680"/>
+        <w:tab w:val="right" w:pos="9360"/>
+      </w:tabs>
+      <w:spacing w:after="0" w:line="240" w:lineRule="auto"/>
+    </w:pPr>
+    <w:rPr>
+      <w:sz w:val="18"/>
+      <w:szCs w:val="18"/>
+      <w:color w:val="6B7280"/>
+    </w:rPr>
+  </w:style>
+
+  <!-- Footer -->
+  <w:style w:type="paragraph" w:styleId="Footer">
+    <w:name w:val="footer"/>
+    <w:basedOn w:val="Normal"/>
+    <w:pPr>
+      <w:tabs>
+        <w:tab w:val="center" w:pos="4680"/>
+        <w:tab w:val="right" w:pos="9360"/>
+      </w:tabs>
+      <w:spacing w:after="0" w:line="240" w:lineRule="auto"/>
+      <w:jc w:val="center"/>
+    </w:pPr>
+    <w:rPr>
+      <w:sz w:val="18"/>
+      <w:szCs w:val="18"/>
+      <w:color w:val="6B7280"/>
+    </w:rPr>
+  </w:style>
+
+</w:styles>
